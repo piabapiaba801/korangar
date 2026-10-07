@@ -70,4 +70,17 @@ impl<K> ResourceSet<'_, K> {
 pub struct ResourceMetadata {
     pub texture: Option<Arc<Texture>>,
     pub name: String,
+    pub item_id: u32,
+    pub item_type: u8,
+    pub weight: Option<u16>,
+    pub description: Vec<String>,
+    pub cards: Vec<ItemCardMetadata>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ItemCardMetadata {
+    pub item_id: u32,
+    pub texture: Option<Arc<Texture>>,
+    pub name: String,
+    pub description: Vec<String>,
 }

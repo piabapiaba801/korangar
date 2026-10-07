@@ -6,12 +6,61 @@ use rust_state::RustState;
 
 use crate::state::skills::LearnableSkill;
 
-#[derive(Default, RustState, StateElement)]
+pub const HOTBAR_ROWS: usize = 4;
+pub const HOTBAR_SLOTS_PER_ROW: usize = 9;
+pub const HOTBAR_SLOTS: usize = HOTBAR_ROWS * HOTBAR_SLOTS_PER_ROW;
+
+#[derive(RustState, StateElement)]
 pub struct Hotbar {
-    skills: [Option<LearnableSkill>; 10],
+    skills: [Option<LearnableSkill>; HOTBAR_SLOTS],
+    visible_rows: usize,
+    bindings: [String; 18],
+    capture_slot: Option<usize>,
+}
+
+impl Default for Hotbar {
+    fn default() -> Self {
+        let bindings = std::fs::read_to_string("client/hotkey_settings.ron")
+            .ok()
+            .and_then(|data| ron::from_str::<[String; 18]>(&data).ok())
+            .unwrap_or_else(|| std::array::from_fn(|_| String::new()));
+        Self {
+            skills: std::array::from_fn(|_| None),
+            visible_rows: 1,
+            bindings,
+            capture_slot: None,
+        }
+    }
 }
 
 impl Hotbar {
+    pub fn capture_slot(&self) -> Option<usize> {
+        self.capture_slot
+    }
+
+    pub fn set_binding(&mut self, index: usize, binding: String) {
+        if !binding.is_empty() {
+            for (other_index, other_binding) in self.bindings.iter_mut().enumerate() {
+                if other_index != index && *other_binding == binding {
+                    other_binding.clear();
+                }
+            }
+        }
+        self.bindings[index] = binding;
+        self.capture_slot = None;
+        if let Ok(data) = ron::ser::to_string_pretty(&self.bindings, ron::ser::PrettyConfig::new()) {
+            let _ = std::fs::write("client/hotkey_settings.ron", data);
+        }
+    }
+
+    pub fn cancel_capture(&mut self) {
+        self.capture_slot = None;
+    }
+
+    pub fn binding(&self, index: usize) -> &str {
+        &self.bindings[index]
+    }
+
     /// Set the slot without notifying the map server.
     pub fn set_slot(&mut self, slot: HotbarSlot, skill: LearnableSkill) {
         self.skills[slot.0 as usize] = Some(skill);

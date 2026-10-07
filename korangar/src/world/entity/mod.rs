@@ -906,6 +906,10 @@ pub struct Player {
     pub maximum_activity_points: usize,
     pub base_level: usize,
     pub job_level: usize,
+    pub base_experience: u64,
+    pub job_experience: u64,
+    pub next_base_experience: u64,
+    pub next_job_experience: u64,
     pub stat_points: u32,
     pub strength: i32,
     pub bonus_strength: i32,
@@ -941,6 +945,8 @@ impl Player {
         let maximum_activity_points = 0;
         let base_level = character_information.base_level as usize;
         let job_level = character_information.job_level as usize;
+        let base_experience = character_information.experience.max(0) as u64;
+        let job_experience = character_information.job_experience.max(0) as u64;
         let stat_points = character_information.stat_points as u32;
 
         let entity_data = EntityData::from_character(account_id, character_information, WorldPosition::origin());
@@ -960,6 +966,10 @@ impl Player {
             maximum_activity_points,
             base_level,
             job_level,
+            base_experience,
+            job_experience,
+            next_base_experience: 0,
+            next_job_experience: 0,
             stat_points,
             strength: character_information.strength as i32,
             bonus_strength: 0,
@@ -1003,6 +1013,10 @@ impl Player {
             StatType::MovementSpeed(value) => self.common.movement_speed = value as usize,
             StatType::BaseLevel(value) => self.base_level = value as usize,
             StatType::JobLevel(value) => self.job_level = value as usize,
+            StatType::BaseExperience(value) => self.base_experience = value,
+            StatType::JobExperience(value) => self.job_experience = value,
+            StatType::NextBaseExperience(value) => self.next_base_experience = value,
+            StatType::NextJobExperience(value) => self.next_job_experience = value,
             StatType::StatPoints(stat_points) => self.stat_points = stat_points,
             StatType::Strength(base, bonus) => {
                 self.strength = base;
@@ -1041,17 +1055,25 @@ impl Player {
     }
 
     pub fn render_status(&self, renderer: &GameInterfaceRenderer, camera: &dyn Camera, theme: &WorldTheme, window_size: ScreenSize) {
-        let clip_space_position = camera.view_projection_matrix() * self.common.world_position.to_homogeneous();
+        let mut bar_anchor = self.common.world_position;
+        bar_anchor.y += 18.0;
+        let clip_space_position = camera.view_projection_matrix() * bar_anchor.to_homogeneous();
+        if clip_space_position.w <= 0.1 {
+            return;
+        }
         let screen_position = camera.clip_to_screen_space(clip_space_position);
-        let final_position = ScreenPosition {
-            left: screen_position.x * window_size.width,
-            top: screen_position.y * window_size.height + 5.0,
-        };
+        if !screen_position.x.is_finite() || !screen_position.y.is_finite() {
+            return;
+        }
 
         let bar_width = theme.status_bar.player_bar_width;
         let gap = theme.status_bar.gap;
         let total_height =
             theme.status_bar.health_height + theme.status_bar.spell_point_height + theme.status_bar.activity_point_height + gap * 2.0;
+        let final_position = ScreenPosition {
+            left: screen_position.x * window_size.width,
+            top: screen_position.y * window_size.height - total_height - 6.0,
+        };
 
         let mut offset = 0.0;
 
@@ -1318,6 +1340,10 @@ impl Entity {
 
     pub fn get_tile_position(&self) -> TilePosition {
         self.get_common().tile_position
+    }
+
+    pub fn is_dead(&self) -> bool {
+        self.get_common().is_dead()
     }
 
     pub fn get_position(&self) -> Point3<f32> {

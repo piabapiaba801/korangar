@@ -1,16 +1,63 @@
 <img align="left" alt="" src=".github/logo.png" height="130" />
 
-# [Korangar](https://github.com/vE5li/korangar)
+# 🎮 FreokRO Korangar
 
-[![Build](https://github.com/ve5li/korangar/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/ve5li/korangar/actions?query=workflow%3ABuild)
-[![Tests](https://github.com/ve5li/korangar/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/ve5li/korangar/actions?query=workflow%3ATests)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![Discord](https://img.shields.io/discord/1010572689536204931?label=discord)](https://discord.gg/2CqRZsvKja)
 
-Korangar is a next-gen Ragnarok Online client written in Rust. It features real-time lighting with drop shadows. It adds a completely new and very customizable user interface and removes limitations of the official client, such as the fixed aspect ratio. It also supports Linux, Windows and MacOS!
+FreokRO adapts [Korangar](https://github.com/vE5li/korangar), a Rust Ragnarok Online client with real-time lighting and a customizable interface. Upstream Korangar supports Linux, Windows, and macOS; the FreokRO build and local installation documented here were validated on Windows.
 
-##### Screenshot of the current state
-![geffen](.github/geffen.png)
+## 🧩 FreokRO adaptation
+
+This fork adapts [upstream Korangar](https://github.com/vE5li/korangar). The FreokRO `dev` branch was reconstructed from tag [`v0.1.1-20260220`](https://github.com/vE5li/korangar/releases/tag/v0.1.1-20260220) and preserves the original FreokRO development snapshot. The `rebase` branch integrates that work with newer upstream commits. The client requires the [FreokRO rAthena fork](https://github.com/piabapiaba801/freokro-rathena-korangar), configured for protocol `20220406` without packet obfuscation. The original Ragexe line uses `PACKETVER 20250716` and runs separately.
+
+The [FreokRO Auction HUD](https://github.com/piabapiaba801/freokro-auction-hud) is a separate process in a **private** repository. The base game does not require it; the **Black Market** interface does. The server handles **Black Market (7007)** and opens the local HUD bridge when the skill is used in town. This client implements the regular item and equipment windows. Check protocol, skill, and auction changes across all three projects.
+
+### 📥 Downloads and Windows requirements
+
+| Purpose | Official dependencies |
+| --- | --- |
+| Play with prebuilt binaries | Install [MariaDB Server](https://mariadb.org/download/) and the [Visual C++ Redistributable v14 x64](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) for the [FreokRO server](https://github.com/piabapiaba801/freokro-rathena-korangar). Prepare compatible game assets from your own installation. |
+| Build this client | Install [Rustup](https://rustup.rs/) (`rust-toolchain.toml` selects `nightly-2026-02-01`), [Git for Windows](https://git-scm.com/install/windows), [Slang `slangc`](https://github.com/shader-slang/slang/releases) **2025.18.2 or newer**, and [NASM](https://www.nasm.us/) in `PATH`. The [LunarG Vulkan SDK](https://vulkan.lunarg.com/sdk/home) is another source for `slangc`. Rust may also request the [Visual Studio MSVC prerequisites](https://rust-lang.github.io/rustup/installation/windows-msvc.html). |
+| Use the auction | In addition to the server and client, install the [private HUD](https://github.com/piabapiaba801/freokro-auction-hud), [.NET Desktop Runtime 8 x64](https://dotnet.microsoft.com/en-us/download/dotnet/8.0), and the [WebView2 Evergreen Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/). |
+
+`slangc` is needed **to compile shaders**, as specified by `korangar/build.rs`; it is not required separately to start an already-built executable. This repository does not distribute `data-freokro.7z` or other game assets.
+
+### 🏗️ Build
+
+The reference build on Windows is:
+
+```powershell
+cargo +nightly-2026-02-01 build --release --locked -p korangar --features unicode,debug
+```
+
+Upstream Korangar's build requirements also apply. Game assets, `data-freokro.7z`, local server configuration, and the deployed executable stay outside this source repository.
+
+### ▶️ Run and validate
+
+The in-game menu includes **Skin**. **Classic** is the first choice and the default; **Original** keeps the previous theme. Classic applies the auction's dark green palette to controls and windows using the in-game theme, with a separate adjustment to item descriptions. Item descriptions preserve Ragnarok color codes, render separator lines, and show equipped card icons when their sprites load. The choice is saved in `client/interface_settings.ron` when the client exits.
+
+Prepare assets in the installation directory, start the database and servers before the client, and run the HUD agent to use the auction. The local **FreokRO Client (iniciar tudo)** shortcut performs that sequence but is not part of this repository. Auction window opening was confirmed. After the October 7, 2026 database schema fix, the user confirmed escrow passed in the client; bidding, buying, cancellation, and item return need separate checks. Compilation alone does not validate every feature.
+
+See [TECHNICAL_STATUS_DEV.md](TECHNICAL_STATUS_DEV.md) for the current development checkpoint.
+
+### 📸 FreokRO client captures
+
+These October 7, 2026 captures show the locally running client. The auction is supplied by the separate private HUD. The client and auction item descriptions are visibly different here, so these images are a reference for the ongoing Classic skin work.
+
+![FreokRO client with the Black Market auction and item descriptions](docs/screenshots/freokro-auction-and-item-details.jpg)
+
+*Black Market, inventory, and item descriptions open together.*
+
+![FreokRO client inventory and item description](docs/screenshots/freokro-client-item-details.jpg)
+
+*The client item description and inventory with the auction closed.*
+
+## Upstream Korangar reference
+
+The screenshots, installation pages, community links, and package overview below come from the upstream project. They may not reflect this FreokRO build or the Classic skin.
+
+##### Upstream Korangar screenshots (not a validation of the FreokRO Classic skin)
+![Upstream Korangar screenshot](.github/geffen.png)
 
 ## 🚀 Running
 

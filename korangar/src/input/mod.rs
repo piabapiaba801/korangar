@@ -15,6 +15,7 @@ pub use self::event::InputEvent;
 pub use self::key::Key;
 pub use self::mode::{Grabbed, MouseInputMode, MouseModeExt};
 use crate::graphics::{PickerTarget, ScreenPosition, ScreenSize};
+use crate::state::hotbar::Hotbar;
 
 const MOUSE_SCOLL_MULTIPLIER: f32 = 30.0;
 const KEY_COUNT: usize = variant_count::<KeyCode>();
@@ -49,6 +50,8 @@ pub struct InputSystem {
     left_mouse_button: Key,
     right_mouse_button: Key,
     keys: [Key; KEY_COUNT],
+    key_names: [Option<String>; KEY_COUNT],
+    active_hotkey_slots: [Option<HotbarSlot>; KEY_COUNT],
     input_buffer: Vec<char>,
     picker_value: Arc<AtomicU64>,
     previous_mouse_button: Option<PreviousMouseButton>,
@@ -81,6 +84,8 @@ impl InputSystem {
             left_mouse_button,
             right_mouse_button,
             keys,
+            key_names: std::array::from_fn(|_| None),
+            active_hotkey_slots: [None; KEY_COUNT],
             input_buffer,
             picker_value,
             previous_mouse_button,
@@ -119,6 +124,7 @@ impl InputSystem {
 
     pub fn update_keyboard(&mut self, key_code: KeyCode, state: ElementState) {
         let pressed = matches!(state, ElementState::Pressed);
+        self.key_names[key_code as usize].get_or_insert_with(|| format!("{key_code:?}"));
         self.keys[key_code as usize].set_down(pressed);
     }
 
@@ -196,6 +202,133 @@ impl InputSystem {
         &self.keys[key_code as usize]
     }
 
+    pub fn escape_pressed(&self) -> bool {
+        self.get_key(KeyCode::Escape).pressed()
+    }
+
+    pub fn key_pressed(&self, key_code: KeyCode) -> bool {
+        self.get_key(key_code).pressed()
+    }
+
+    pub fn handle_skill_hotkeys(&mut self, events: &mut Vec<InputEvent>, hotbar: &mut Hotbar, text_input_has_focus: bool) {
+        let shift_down = self.get_key(KeyCode::ShiftLeft).down() || self.get_key(KeyCode::ShiftRight).down();
+        let control_down = self.get_key(KeyCode::ControlLeft).down() || self.get_key(KeyCode::ControlRight).down();
+        let alt_down = self.get_key(KeyCode::AltLeft).down() || self.get_key(KeyCode::AltRight).down();
+        let fixed_function_keys = [
+            KeyCode::F1,
+            KeyCode::F2,
+            KeyCode::F3,
+            KeyCode::F4,
+            KeyCode::F5,
+            KeyCode::F6,
+            KeyCode::F7,
+            KeyCode::F8,
+            KeyCode::F9,
+        ];
+        let fixed_digit_keys = [
+            KeyCode::Digit1,
+            KeyCode::Digit2,
+            KeyCode::Digit3,
+            KeyCode::Digit4,
+            KeyCode::Digit5,
+            KeyCode::Digit6,
+            KeyCode::Digit7,
+            KeyCode::Digit8,
+            KeyCode::Digit9,
+        ];
+
+        for index in 0..KEY_COUNT {
+            if self.keys[index].released() && !self.keys[index].pressed() {
+                if let Some(slot) = self.active_hotkey_slots[index].take() {
+                    events.push(InputEvent::StopSkill { slot });
+                }
+            }
+            if !self.keys[index].pressed() {
+                continue;
+            }
+            let Some(name) = self.key_names[index].as_deref() else { continue };
+            if name.starts_with("Shift") || name.starts_with("Control") || name.starts_with("Alt") || name.starts_with("Super") {
+                continue;
+            }
+            let bare_fixed_key = !control_down
+                && !shift_down
+                && !alt_down
+                && (fixed_function_keys.iter().any(|key| *key as usize == index)
+                    || fixed_digit_keys.iter().any(|key| *key as usize == index));
+            if let Some(slot) = hotbar.capture_slot() {
+                if name == "Escape" {
+                    hotbar.cancel_capture();
+                } else if bare_fixed_key {
+                    // Reserved keys always activate their rows, even when the binding editor
+                    // was closed while it was still waiting for a custom key.
+                    hotbar.cancel_capture();
+                } else if name == "Delete" || name == "Backspace" {
+                    hotbar.set_binding(slot, String::new());
+                } else if !(alt_down && name == "F4")
+                    && !(name == "Escape"
+                        || (!control_down
+                            && !shift_down
+                            && !alt_down
+                            && (fixed_function_keys.iter().any(|key| *key as usize == index)
+                                || fixed_digit_keys.iter().any(|key| *key as usize == index))))
+                    && !(alt_down && matches!(name, "KeyE" | "KeyS" | "KeyA" | "KeyZ" | "KeyQ"))
+                    && !(control_down
+                        && matches!(
+                            name,
+                            "KeyS" | "KeyI" | "KeyG" | "KeyA" | "KeyH" | "KeyQ" | "KeyM" | "KeyC" | "KeyR" | "KeyP" | "KeyO" | "KeyN"
+                        ))
+                {
+                    let binding = format!(
+                        "{}{}{}{}",
+                        if control_down { "Ctrl+" } else { "" },
+                        if shift_down { "Shift+" } else { "" },
+                        if alt_down { "Alt+" } else { "" },
+                        name
+                    );
+                    hotbar.set_binding(slot, binding);
+                }
+                if !bare_fixed_key {
+                    continue;
+                }
+            }
+            // Numbers and custom letter bindings must not activate while the player types
+            // in chat. The fixed function keys remain usable even if an old
+            // text focus was left behind.
+            let bare_function_key =
+                !control_down && !shift_down && !alt_down && fixed_function_keys.iter().any(|key| *key as usize == index);
+            if text_input_has_focus && !bare_function_key {
+                continue;
+            }
+            let binding = format!(
+                "{}{}{}{}",
+                if control_down { "Ctrl+" } else { "" },
+                if shift_down { "Shift+" } else { "" },
+                if alt_down { "Alt+" } else { "" },
+                name
+            );
+            let fixed = if !control_down && !shift_down && !alt_down {
+                fixed_function_keys
+                    .iter()
+                    .position(|key| *key as usize == index)
+                    .or_else(|| fixed_digit_keys.iter().position(|key| *key as usize == index).map(|slot| slot + 9))
+            } else {
+                None
+            };
+            let slot = fixed.or_else(|| (0..18).find(|slot| hotbar.binding(*slot) == binding).map(|slot| slot + 18));
+            if let Some(slot) = slot {
+                let slot = HotbarSlot(slot as u16);
+                #[cfg(feature = "debug")]
+                println!("[hotbar] tecla={} slot={}", name, slot.0);
+                self.active_hotkey_slots[index] = Some(slot);
+                events.push(InputEvent::CastSkill { slot });
+                if self.keys[index].released() {
+                    self.active_hotkey_slots[index] = None;
+                    events.push(InputEvent::StopSkill { slot });
+                }
+            }
+        }
+    }
+
     #[cfg_attr(feature = "debug", korangar_debug::profile)]
     pub fn handle_keyboard_input(
         &mut self,
@@ -205,10 +338,6 @@ impl InputSystem {
     ) {
         let alt_down = self.get_key(KeyCode::AltLeft).down();
         let control_down = self.get_key(KeyCode::ControlLeft).down();
-
-        if self.get_key(KeyCode::Escape).pressed() {
-            events.push(InputEvent::ToggleMenuWindow);
-        }
 
         if alt_down && self.get_key(KeyCode::KeyE).pressed() {
             events.push(InputEvent::ToggleInventoryWindow);

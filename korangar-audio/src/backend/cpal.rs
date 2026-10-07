@@ -27,7 +27,9 @@ pub(crate) fn default_device_and_config() -> Result<(Device, StreamConfig), Erro
     let config = StreamConfig {
         channels: 2,
         sample_rate: 48000,
-        buffer_size: BufferSize::Fixed(1200),
+        // Windows audio endpoints can reject a fixed 1200-frame buffer even
+        // when they support stereo 48 kHz output. Let the driver choose it.
+        buffer_size: BufferSize::Default,
     };
     Ok((device, config))
 }

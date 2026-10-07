@@ -1,9 +1,7 @@
 use std::cell::{Ref, RefCell};
 use std::sync::Arc;
 
-#[cfg(feature = "debug")]
-use cgmath::Point3;
-use cgmath::{EuclideanSpace, Vector2};
+use cgmath::{EuclideanSpace, Point3, Vector2};
 
 use crate::graphics::{Color, RectangleInstruction, ScreenClip, ScreenPosition, ScreenSize, Texture};
 use crate::loaders::{FontLoader, FontSize, GLYPH_PADDING, GlyphInstruction, Scaling, TEXT_SHADOW_RADIUS};
@@ -12,7 +10,6 @@ use crate::loaders::{ImageType, TextureLoader};
 #[cfg(feature = "debug")]
 use crate::renderer::MarkerRenderer;
 use crate::renderer::SpriteRenderer;
-#[cfg(feature = "debug")]
 use crate::world::Camera;
 #[cfg(feature = "debug")]
 use crate::world::MarkerIdentifier;
@@ -228,6 +225,118 @@ impl GameInterfaceRenderer {
         });
     }
 
+    /// Ragnarok-style speech bubble anchored to an entity in the world.
+    pub fn render_speech_bubble(&self, camera: &dyn Camera, world_position: Point3<f32>, text: &str, text_color: Color) {
+        let clip_position = camera.view_projection_matrix() * world_position.to_homogeneous();
+        if clip_position.w <= 0.1 {
+            return;
+        }
+        let screen = camera.clip_to_screen_space(clip_position);
+        if !screen.x.is_finite() || !screen.y.is_finite() || screen.x < -0.05 || screen.x > 1.05 || screen.y < -0.05 || screen.y > 1.05 {
+            return;
+        }
+
+        let scale = self.scaling.get_factor();
+        let padding = 8.0 * scale;
+        let max_text_width = (self.window_size.width - 32.0 * scale).min(300.0 * scale).max(64.0);
+        let mut glyphs = self.glyphs.borrow_mut();
+        glyphs.clear();
+        let text_size = self.font_loader.layout_text(
+            text,
+            text_color,
+            text_color,
+            FontSize(14.0 * scale),
+            1.0,
+            Some(max_text_width),
+            Some(&mut glyphs),
+        );
+        let bubble_width = text_size.x + padding * 2.0;
+        let bubble_height = text_size.y + padding * 2.0;
+        let anchor_x = screen.x * self.window_size.width;
+        let anchor_y = screen.y * self.window_size.height;
+        let left = (anchor_x - bubble_width / 2.0).clamp(8.0, (self.window_size.width - bubble_width - 8.0).max(8.0));
+        let top = (anchor_y - bubble_height - 10.0 * scale).clamp(8.0, (self.window_size.height - bubble_height - 8.0).max(8.0));
+        let border = 2.0 * scale;
+
+        self.render_rectangle(
+            ScreenPosition {
+                left: left + 3.0 * scale,
+                top: top + 3.0 * scale,
+            },
+            ScreenSize {
+                width: bubble_width,
+                height: bubble_height,
+            },
+            Color::rgba_u8(12, 19, 28, 90),
+        );
+        self.render_rectangle(
+            ScreenPosition { left, top },
+            ScreenSize {
+                width: bubble_width,
+                height: bubble_height,
+            },
+            Color::rgb_u8(59, 52, 46),
+        );
+        self.render_rectangle(
+            ScreenPosition {
+                left: left + border,
+                top: top + border,
+            },
+            ScreenSize {
+                width: bubble_width - border * 2.0,
+                height: bubble_height - border * 2.0,
+            },
+            Color::rgb_u8(255, 251, 234),
+        );
+        let tail_left = anchor_x.clamp(left + 10.0 * scale, left + bubble_width - 10.0 * scale) - 5.0 * scale;
+        self.render_rectangle(
+            ScreenPosition {
+                left: tail_left,
+                top: top + bubble_height,
+            },
+            ScreenSize {
+                width: 10.0 * scale,
+                height: 5.0 * scale,
+            },
+            Color::rgb_u8(59, 52, 46),
+        );
+        self.render_rectangle(
+            ScreenPosition {
+                left: tail_left + 2.0 * scale,
+                top: top + bubble_height,
+            },
+            ScreenSize {
+                width: 6.0 * scale,
+                height: 3.0 * scale,
+            },
+            Color::rgb_u8(255, 251, 234),
+        );
+
+        let mut instructions = self.instructions.borrow_mut();
+        for glyph in glyphs.drain(..) {
+            let GlyphInstruction {
+                position,
+                em_coordinate,
+                glyph_index,
+                color,
+            } = glyph.dilated(GLYPH_PADDING + TEXT_SHADOW_RADIUS * 14.0 * scale, FontSize(14.0 * scale));
+            instructions.push(RectangleInstruction::Text {
+                screen_position: ScreenPosition {
+                    left: left + padding + position.min.x,
+                    top: top + padding + position.min.y,
+                } / self.window_size,
+                screen_size: ScreenSize {
+                    width: position.width(),
+                    height: position.height(),
+                } / self.window_size,
+                color,
+                em_position: em_coordinate.min.to_vec(),
+                em_size: em_coordinate.max - em_coordinate.min,
+                glyph_index,
+            });
+        }
+    }
+
     pub fn render_hover_text(&self, text: &str, scaling: Scaling, mouse_position: ScreenPosition) {
         let offset = ScreenPosition {
             left: 15.0 * scaling.get_factor(),
@@ -255,6 +364,64 @@ impl GameInterfaceRenderer {
         };
 
         self.render_rectangle(position - bar_offset, bar_size, color);
+    }
+
+    /// Translucent progression bars fixed to the top and bottom edges.
+    pub fn render_experience_bars(&self, base: u64, next_base: u64, job: u64, next_job: u64) {
+        let width = self.window_size.width;
+        let height = self.window_size.height;
+        if width <= 0.0 || height < 16.0 {
+            return;
+        }
+
+        let bar_height = 14.0;
+        let background = Color::rgba_u8(17, 24, 20, 210);
+        let fill = Color::rgba_u8(93, 177, 71, 220);
+        for (top, current, next, label) in [(0.0, base, next_base, "XP Base"), (height - bar_height, job, next_job, "XP Job")] {
+            let position = ScreenPosition { left: 0.0, top };
+            self.render_rectangle(position, ScreenSize { width, height: bar_height }, background);
+            self.render_rectangle(
+                ScreenPosition {
+                    left: 0.0,
+                    top: top + bar_height - 2.0,
+                },
+                ScreenSize { width, height: 2.0 },
+                fill,
+            );
+            if next > 0 {
+                let progress = (current as f64 / next as f64).clamp(0.0, 1.0) as f32;
+                if progress > 0.0 {
+                    self.render_rectangle(
+                        position,
+                        ScreenSize {
+                            width: width * progress,
+                            height: bar_height - 2.0,
+                        },
+                        fill,
+                    );
+                }
+            }
+            for segment in 1..10 {
+                self.render_rectangle(
+                    ScreenPosition {
+                        left: width * segment as f32 / 10.0,
+                        top: top + 1.0,
+                    },
+                    ScreenSize {
+                        width: 2.0,
+                        height: bar_height - 3.0,
+                    },
+                    Color::rgba_u8(8, 16, 11, 215),
+                );
+            }
+            self.render_text(
+                label,
+                ScreenPosition { left: 6.0, top: top + 1.0 },
+                Color::rgba_u8(245, 248, 252, 235),
+                FontSize(11.0),
+                AlignHorizontal::Left,
+            );
+        }
     }
 
     pub fn render_rectangle(&self, position: ScreenPosition, size: ScreenSize, color: Color) {

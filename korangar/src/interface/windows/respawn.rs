@@ -27,8 +27,8 @@ impl CustomWindow<ClientState> for RespawnWindow {
                     event: InputEvent::Respawn,
                 },
                 button! {
-                    text: client_state().localization().disconnect_button_text(),
-                    event: InputEvent::LogOut,
+                    text: "Selecionar personagem",
+                    event: InputEvent::ReturnToCharacterSelection,
                 },
             ),
         }

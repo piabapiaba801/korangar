@@ -90,6 +90,7 @@ pub struct LearnableSkill {
     pub maximum_level: SkillLevel,
     pub file_name: String,
     pub skill_name: String,
+    pub description: String,
     pub can_select_level: bool,
     pub acquisition: SkillAcquisition,
     // TODO: Unhide this

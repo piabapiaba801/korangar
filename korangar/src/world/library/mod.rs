@@ -114,10 +114,20 @@ pub trait Table {
         Self: Sized;
 }
 
-fn fix_encoding(broken: String) -> String {
-    let bytes: Vec<u8> = broken.chars().map(|char| char as u8).collect();
-    match EUC_KR.decode_without_bom_handling_and_without_replacement(&bytes) {
-        None => broken.to_string(),
-        Some(char) => char.to_string(),
+fn decode_lua_string(value: mlua::String) -> String {
+    let bytes = value.as_bytes();
+    if let Ok(valid) = std::str::from_utf8(bytes.as_ref()) {
+        // Some Lua tables represent each EUC-KR byte as a Latin-1 code point.
+        // Reconstruct those bytes before decoding resource and display names.
+        if valid.chars().all(|char| (char as u32) <= 0xFF) {
+            let original_bytes: Vec<u8> = valid.chars().map(|char| char as u8).collect();
+            if let Some(decoded) = EUC_KR.decode_without_bom_handling_and_without_replacement(&original_bytes) {
+                return decoded.into_owned();
+            }
+        }
+        valid.to_owned()
+    } else {
+        // Older Ragnarok Lua tables store display names as EUC-KR bytes.
+        EUC_KR.decode_without_bom_handling(bytes.as_ref()).0.into_owned()
     }
 }

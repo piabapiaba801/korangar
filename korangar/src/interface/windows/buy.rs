@@ -3,15 +3,16 @@ use std::fmt::Display;
 
 use korangar_interface::element::store::{ElementStore, ElementStoreMut};
 use korangar_interface::element::{Element, ElementBox};
-use korangar_interface::event::ClickHandler;
+use korangar_interface::event::{ClickHandler, EventQueue};
 use korangar_interface::layout::area::Area;
-use korangar_interface::layout::{Resolvers, WindowLayout, with_single_resolver};
+use korangar_interface::layout::{MouseButton, Resolvers, WindowLayout, with_single_resolver};
 use korangar_interface::prelude::{HorizontalAlignment, VerticalAlignment};
 use korangar_interface::window::{CustomWindow, Window};
 use korangar_networking::{ItemQuantity, ShopItem};
 use rust_state::{ManuallyAssertExt, Path, PathExt, Selector, State, VecIndexExt};
 
-use super::WindowClass;
+use super::{ItemDetailsData, WindowClass};
+use crate::InputEvent;
 use crate::graphics::{Color, CornerDiameter, ShadowPadding};
 use crate::loaders::{FontSize, OverflowBehavior};
 use crate::renderer::LayoutExt;
@@ -58,15 +59,37 @@ struct ItemLayoutInfo<A> {
 
 struct ItemElement<A, B> {
     item_path: A,
+    inspect_handler: InspectHandler<A>,
     children: B,
     amount_string: PartialEqDisplayStr<u32>,
     price_string: PartialEqDisplayStr<u32>,
 }
 
-impl<A, B> ItemElement<A, B> {
+struct InspectHandler<A> {
+    item_path: A,
+}
+
+impl<A> ClickHandler<ClientState> for InspectHandler<A>
+where
+    A: Path<ClientState, ShopItem<ResourceMetadata>>,
+{
+    fn handle_click(&self, state: &State<ClientState>, queue: &mut EventQueue<ClientState>) {
+        let item = state.get(&self.item_path);
+        let quantity = match item.quantity {
+            ItemQuantity::Fixed(count) => Some(count),
+            ItemQuantity::Infinite => None,
+        };
+        queue.queue(InputEvent::InspectItem {
+            details: ItemDetailsData::shop(&item.metadata, quantity, item.price.0),
+        });
+    }
+}
+
+impl<A: Copy, B> ItemElement<A, B> {
     fn new(item_path: A, children: B) -> Self {
         Self {
             item_path,
+            inspect_handler: InspectHandler { item_path },
             children,
             amount_string: PartialEqDisplayStr::new(),
             price_string: PartialEqDisplayStr::new(),
@@ -133,6 +156,11 @@ where
         layout: &mut WindowLayout<'a, ClientState>,
     ) {
         let item = state.get(&self.item_path);
+
+        if layout_info.area.check().run(layout) {
+            layout.register_click_handler(MouseButton::Right, &self.inspect_handler);
+            layout.register_click_handler(MouseButton::DoubleRight, &self.inspect_handler);
+        }
 
         layout.add_rectangle(
             layout_info.area,

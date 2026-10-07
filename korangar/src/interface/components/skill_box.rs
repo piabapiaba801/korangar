@@ -4,7 +4,7 @@ use korangar_interface::element::{BaseLayoutInfo, Element};
 use korangar_interface::event::{ClickHandler, DropHandler, Event, EventQueue};
 use korangar_interface::layout::tooltip::TooltipExt;
 use korangar_interface::layout::{MouseButton, Resolvers, WindowLayout, with_single_resolver};
-use ragnarok_packets::SkillLevel;
+use ragnarok_packets::{HotbarSlot, SkillLevel};
 use rust_state::{Path, State};
 
 use crate::graphics::{Color, CornerDiameter, ShadowPadding};
@@ -42,6 +42,16 @@ impl LevelDisplay {
 struct SkillBoxHandler<A> {
     skill_path: A,
     source: SkillSource,
+}
+
+struct SkillCastHandler {
+    slot: HotbarSlot,
+}
+
+impl ClickHandler<ClientState> for SkillCastHandler {
+    fn handle_click(&self, _: &State<ClientState>, queue: &mut EventQueue<ClientState>) {
+        queue.queue(InputEvent::CastSkill { slot: self.slot });
+    }
 }
 
 impl<A> SkillBoxHandler<A> {
@@ -92,6 +102,7 @@ pub struct SkillBox<A, B> {
     learnable_skill_path: A,
     learned_skill_path: B,
     handler: SkillBoxHandler<A>,
+    cast_handler: Option<SkillCastHandler>,
     level_display: LevelDisplay,
     source: SkillSource,
 }
@@ -109,6 +120,10 @@ where
             learnable_skill_path,
             learned_skill_path,
             handler: SkillBoxHandler::new(learnable_skill_path, source),
+            cast_handler: match source {
+                SkillSource::Hotbar { slot } => Some(SkillCastHandler { slot }),
+                SkillSource::SkillTree => None,
+            },
             level_display: LevelDisplay::default(),
             source,
         }
@@ -213,9 +228,12 @@ where
 
             if is_hovered {
                 layout.register_click_handler(MouseButton::Left, &self.handler);
+                if let Some(cast_handler) = &self.cast_handler {
+                    layout.register_click_handler(MouseButton::Right, cast_handler);
+                }
 
                 struct SkillBoxTooltip;
-                layout.add_tooltip(&learnable_skill.skill_name, SkillBoxTooltip.tooltip_id());
+                layout.add_tooltip(&learnable_skill.description, SkillBoxTooltip.tooltip_id());
             }
 
             layout.add_text(

@@ -11,6 +11,7 @@ use ragnarok_packets::{
 use rust_state::State;
 
 use crate::interface::resource::{ItemSource, SkillSource};
+use crate::interface::windows::ItemDetailsData;
 use crate::loaders::ServiceId;
 use crate::state::ClientState;
 use crate::state::skills::LearnableSkill;
@@ -37,6 +38,8 @@ pub enum InputEvent {
     },
     /// Respawn the player.
     Respawn,
+    /// Leave the map and return to character selection.
+    ReturnToCharacterSelection,
     /// Log out of the map server.
     LogOut,
     /// Log out of the character server.
@@ -69,10 +72,13 @@ pub enum InputEvent {
     ToggleGameSettingsWindow,
     /// Open or close the interface settings window.
     ToggleInterfaceSettingsWindow,
+    /// Open or close the in-game skin selector.
+    ToggleSkinWindow,
     /// Open or close the graphics settings window.
     ToggleGraphicsSettingsWindow,
     /// Open or close the audio settings window.
     ToggleAudioSettingsWindow,
+    ToggleHotkeySettingsWindow,
     /// Open or close the friend list window. Only works while playing.
     ToggleFriendListWindow,
     /// Close the most recently opened or clicked closable window.
@@ -160,6 +166,10 @@ pub enum InputEvent {
         /// Id of the emotion.
         emotion: u8,
     },
+    /// Show the native item information panel.
+    InspectItem {
+        details: ItemDetailsData,
+    },
     /// Move a skill in the user interface.
     MoveSkill {
         /// Source of the move.
@@ -225,7 +235,9 @@ pub enum InputEvent {
         items: Vec<SoldItemInformation>,
     },
     /// Up a stat.
-    StatUp { stat_type: StatUpType },
+    StatUp {
+        stat_type: StatUpType,
+    },
     /// Distribute skill points to meet all requirements for a given skill and
     /// put a single point into the provided skill. If the player does not
     /// have enough skill points, this will skill as much of the
@@ -317,7 +329,9 @@ pub enum InputEvent {
     CameraDecelerate,
     /// Open a window to inspect a frame.
     #[cfg(feature = "debug")]
-    InspectFrame { measurement: FrameMeasurement },
+    InspectFrame {
+        measurement: FrameMeasurement,
+    },
 }
 
 impl From<InputEvent> for Event<ClientState> {

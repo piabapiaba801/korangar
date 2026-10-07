@@ -11,6 +11,7 @@ use rust_state::{Path, State};
 use crate::graphics::{Color, CornerDiameter, ShadowPadding};
 use crate::input::{InputEvent, MouseInputMode};
 use crate::interface::resource::ItemSource;
+use crate::interface::windows::ItemDetailsData;
 use crate::loaders::{FontSize, OverflowBehavior};
 use crate::renderer::LayoutExt;
 use crate::state::ClientState;
@@ -77,9 +78,27 @@ where
     }
 }
 
+struct ItemInspectHandler<P> {
+    item_path: P,
+}
+
+impl<P> ClickHandler<ClientState> for ItemInspectHandler<P>
+where
+    P: Path<ClientState, InventoryItem<ResourceMetadata>, false>,
+{
+    fn handle_click(&self, state: &State<ClientState>, queue: &mut EventQueue<ClientState>) {
+        if let Some(item) = state.try_get(&self.item_path) {
+            queue.queue(InputEvent::InspectItem {
+                details: ItemDetailsData::inventory(item),
+            });
+        }
+    }
+}
+
 pub struct ItemBox<A> {
     item_path: A,
     handler: ItemBoxHandler<A>,
+    inspect_handler: ItemInspectHandler<A>,
     amount_display: AmountDisplay,
 }
 
@@ -94,6 +113,7 @@ where
         Self {
             item_path,
             handler: ItemBoxHandler::new(item_path, source),
+            inspect_handler: ItemInspectHandler { item_path },
             amount_display: AmountDisplay::default(),
         }
     }
@@ -161,6 +181,10 @@ where
 
         if is_hovered {
             layout.register_drop_handler(&self.handler);
+            if state.try_get(&self.item_path).is_some() {
+                layout.register_click_handler(MouseButton::Right, &self.inspect_handler);
+                layout.register_click_handler(MouseButton::DoubleRight, &self.inspect_handler);
+            }
         }
 
         if let Some(item) = state.try_get(&self.item_path)

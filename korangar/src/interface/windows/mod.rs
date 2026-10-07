@@ -19,8 +19,10 @@ mod friend_request;
 mod game_settings;
 mod graphics_settings;
 mod hotbar;
+mod hotkey_settings;
 mod interface_settings;
 mod inventory;
+mod item_details;
 mod login;
 #[cfg(feature = "debug")]
 mod maps;
@@ -36,6 +38,7 @@ mod sell;
 mod sell_cart;
 mod server_selection;
 mod skill_tree;
+mod skin;
 mod stats;
 #[cfg(feature = "debug")]
 mod theme_inspector;
@@ -63,8 +66,10 @@ pub use self::friend_request::FriendRequestWindow;
 pub use self::game_settings::GameSettingsWindow;
 pub use self::graphics_settings::GraphicsSettingsWindow;
 pub use self::hotbar::HotbarWindow;
+pub use self::hotkey_settings::HotkeySettingsWindow;
 pub use self::interface_settings::InterfaceSettingsWindow;
 pub use self::inventory::InventoryWindow;
+pub use self::item_details::{ItemDetailsData, ItemDetailsWindow};
 pub use self::login::{LoginWindow, LoginWindowState, LoginWindowStatePathExt};
 #[cfg(feature = "debug")]
 pub use self::maps::MapsWindow;
@@ -80,6 +85,7 @@ pub use self::sell::SellWindow;
 pub use self::sell_cart::SellCartWindow;
 pub use self::server_selection::ServerSelectionWindow;
 pub use self::skill_tree::{SkillTreeWindow, SkillTreeWindowState, SkillTreeWindowStatePathExt};
+pub use self::skin::SkinWindow;
 pub use self::stats::StatsWindow;
 #[cfg(feature = "debug")]
 pub use self::theme_inspector::{ThemeInspectorWindow, ThemeInspectorWindowState};
@@ -99,7 +105,9 @@ pub enum WindowClass {
     InterfaceSettings,
     GraphicsSettings,
     Hotbar,
+    HotkeySettings,
     Inventory,
+    ItemDetails,
     Equipment,
     SkillTree,
     Stats,
@@ -111,6 +119,7 @@ pub enum WindowClass {
     SelectServer,
     Sell,
     SellCart,
+    Skin,
     #[cfg(feature = "debug")]
     Maps,
     #[cfg(feature = "debug")]

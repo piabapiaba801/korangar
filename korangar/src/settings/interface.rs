@@ -13,6 +13,7 @@ use crate::state::localization::Language;
 /// to the default theme. The only issue is that loading the default theme will
 /// cause an error to appear when running Korangar with debug features.
 pub const DEFAULT_THEME_NAME: &str = "^000001default^000000\0";
+pub const CLASSIC_SKIN_NAME: &str = "Classic";
 pub const MENU_THEMES_PATH: &str = "client/menu_themes";
 pub const IN_GAME_THEMES_PATH: &str = "client/in_game_themes";
 pub const WORLD_THEMES_PATH: &str = "client/world_themes";
@@ -32,7 +33,7 @@ impl Default for InterfaceSettings {
             language: Language::English,
             scaling: Scaling::new(1.0),
             menu_theme: DEFAULT_THEME_NAME.to_string(),
-            in_game_theme: DEFAULT_THEME_NAME.to_string(),
+            in_game_theme: CLASSIC_SKIN_NAME.to_string(),
             world_theme: DEFAULT_THEME_NAME.to_string(),
         }
     }
@@ -54,9 +55,13 @@ impl InterfaceSettings {
         #[cfg(feature = "debug")]
         print_debug!("loading interface settings from {}", Self::FILE_NAME.magenta());
 
-        std::fs::read_to_string(Self::FILE_NAME)
+        let mut settings: Self = std::fs::read_to_string(Self::FILE_NAME)
             .ok()
-            .and_then(|data| ron::from_str(&data).ok())
+            .and_then(|data| ron::from_str(&data).ok())?;
+        if settings.in_game_theme == DEFAULT_THEME_NAME {
+            settings.in_game_theme = CLASSIC_SKIN_NAME.to_string();
+        }
+        Some(settings)
     }
 
     pub fn save(&self) {
@@ -112,6 +117,10 @@ impl InterfaceSettingsCapabilities {
 
 impl Default for InterfaceSettingsCapabilities {
     fn default() -> Self {
+        let mut in_game_themes = Self::load_themes(IN_GAME_THEMES_PATH);
+        in_game_themes.retain(|theme| theme != CLASSIC_SKIN_NAME && theme != DEFAULT_THEME_NAME && theme != "Original");
+        in_game_themes.insert(0, "Original".to_string());
+        in_game_themes.insert(0, CLASSIC_SKIN_NAME.to_string());
         Self {
             // TODO: Don't hardcode this, load it from the disk instead.
             languages: vec![Language::English, Language::German],
@@ -134,7 +143,7 @@ impl Default for InterfaceSettingsCapabilities {
                 Scaling::new(2.0),
             ],
             menu_themes: Self::load_themes(MENU_THEMES_PATH),
-            in_game_themes: Self::load_themes(IN_GAME_THEMES_PATH),
+            in_game_themes,
             world_themes: Self::load_themes(WORLD_THEMES_PATH),
         }
     }
