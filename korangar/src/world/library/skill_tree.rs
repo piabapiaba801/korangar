@@ -2,7 +2,7 @@ use hashbrown::HashMap;
 use mlua::Lua;
 use ragnarok_packets::{JobId, SkillId};
 
-use super::{HashMapExt, Library, Table, fix_encoding};
+use super::{HashMapExt, Library, Table, decode_lua_string};
 use crate::loaders::GameFileLoader;
 use crate::world::library::LuaExt;
 
@@ -83,8 +83,8 @@ fn evaluate_job(
         .enumerate()
         .map(|(tab_index, hash_map)| {
             let name = skill_tab_names
-                .get(tab_index)
-                .map(fix_encoding)
+                .get::<mlua::String>(tab_index)
+                .map(decode_lua_string)
                 .unwrap_or_else(|_| "<unnamed>".to_owned());
             let skills = hash_map.compact();
 

@@ -92,7 +92,7 @@ where
         } else {
             let learned_skill = state.try_get(&self.learned_skill_path);
 
-            if learned_skill.is_some_and(|skill| !skill.upgradable) {
+            if !learned_skill.is_some_and(|skill| skill.skill_level.0 > 0) {
                 return;
             }
 
@@ -452,7 +452,7 @@ where
                 layout.register_click_handler(MouseButton::Left, &self.click_handler);
 
                 struct SkillSlotTooltip;
-                layout.add_tooltip(&skill.skill_name, SkillSlotTooltip.tooltip_id());
+                layout.add_tooltip(&skill.description, SkillSlotTooltip.tooltip_id());
 
                 state.update_value(self.window_state_path.highlighted_skill(), Some(skill.skill_id));
             }

@@ -4,7 +4,7 @@ use hashbrown::HashMap;
 use mlua::Lua;
 use ragnarok_packets::{SkillId, SkillLevel};
 
-use super::{HashMapExt, Library, Table, fix_encoding};
+use super::{HashMapExt, Library, Table, decode_lua_string};
 use crate::loaders::GameFileLoader;
 use crate::state::skills::SkillAcquisition;
 use crate::world::library::LuaExt;
@@ -12,6 +12,7 @@ use crate::world::library::LuaExt;
 static NOT_FOUND_ENTRY: LazyLock<SkillListInformation> = LazyLock::new(|| SkillListInformation {
     file_name: "notfound".to_owned(),
     name: "notfound".to_owned(),
+    description: "Skill description unavailable".to_owned(),
     maximum_level: SkillLevel(100),
     can_select_level: false,
     // To make it unskillable.
@@ -21,9 +22,29 @@ static NOT_FOUND_ENTRY: LazyLock<SkillListInformation> = LazyLock::new(|| SkillL
 pub struct SkillListInformation {
     pub file_name: String,
     pub name: String,
+    pub description: String,
     pub maximum_level: SkillLevel,
     pub can_select_level: bool,
     pub acquisition: SkillAcquisition,
+}
+
+fn plain_skill_description(text: &str) -> String {
+    let bytes = text.as_bytes();
+    let mut output = String::with_capacity(text.len());
+    let mut index = 0;
+    while index < bytes.len() {
+        if bytes[index] == b'^'
+            && index + 7 <= bytes.len()
+            && bytes[index + 1..index + 7].iter().all(u8::is_ascii_hexdigit)
+        {
+            index += 7;
+        } else {
+            let character = text[index..].chars().next().unwrap();
+            output.push(character);
+            index += character.len_utf8();
+        }
+    }
+    output
 }
 
 impl Table for SkillListInformation {
@@ -37,16 +58,32 @@ impl Table for SkillListInformation {
             // Needed to get the `SKID` table.
             "data\\luafiles514\\lua files\\skillinfoz\\skillid.lub",
             "data\\luafiles514\\lua files\\skillinfoz\\skillinfolist.lub",
+            "data\\luafiles514\\lua files\\skillinfoz\\skilldescript.lub",
         ])?;
 
         let globals = state.globals();
         let skill_info_list = globals.get::<mlua::Table>("SKILL_INFO_LIST")?;
+        let skill_descriptions = globals.get::<mlua::Table>("SKILL_DESCRIPT")?;
 
         let mut result = HashMap::new();
 
         for (skill_id, table) in skill_info_list.pairs::<u16, mlua::Table>().flatten() {
             let file_name = table.get(1)?;
-            let name = table.get("SkillName").map(fix_encoding)?;
+            let name = table.get::<mlua::String>("SkillName").map(decode_lua_string)?;
+            let description = skill_descriptions
+                .get::<mlua::Table>(skill_id)
+                .ok()
+                .map(|lines| {
+                    lines
+                        .sequence_values::<mlua::String>()
+                        .filter_map(Result::ok)
+                        .map(decode_lua_string)
+                        .map(|line| plain_skill_description(&line))
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                })
+                .filter(|text| !text.is_empty())
+                .unwrap_or_else(|| name.clone());
             let maximum_level = table.get("MaxLv")?;
             let can_select_level = table.get("bSeperateLv")?;
             let acquisition = match table.get::<String>("Type").ok().as_deref() {
@@ -59,6 +96,7 @@ impl Table for SkillListInformation {
             result.insert(SkillId(skill_id), SkillListInformation {
                 file_name,
                 name,
+                description,
                 maximum_level: SkillLevel(maximum_level),
                 can_select_level,
                 acquisition,

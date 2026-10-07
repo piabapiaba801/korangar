@@ -181,10 +181,10 @@ where
         }
     })?;
     packet_handler.register(|packet: OverheadMessagePacket| {
-        // FIX: This should be a different event.
-        NetworkEvent::ChatMessage {
+        NetworkEvent::EntitySpeech {
+            entity_id: packet.entity_id,
             text: packet.message,
-            color: MessageColor::Broadcast,
+            color: MessageColor::Information,
         }
     })?;
     packet_handler.register(|packet: ServerMessagePacket| NetworkEvent::ChatMessage {
@@ -199,7 +199,8 @@ where
             green: packet.color.green,
             blue: packet.color.blue,
         };
-        NetworkEvent::ChatMessage {
+        NetworkEvent::EntitySpeech {
+            entity_id: packet.entity_id,
             text: packet.message,
             color,
         }

@@ -482,7 +482,8 @@ where
                 height: layout_info.title_area.height - offset,
             };
 
-            let close_button_color = match close_button_area.check().run(layout) {
+            let close_button_hovered = close_button_area.check().run(layout);
+            let close_button_color = match close_button_hovered {
                 true => {
                     layout.register_click_handler(MouseButton::Left, &self.close_click_action);
 
@@ -491,14 +492,16 @@ where
                 false => *state.get(&self.title_color),
             };
 
-            Some((close_button_area, close_button_color))
+            Some((close_button_area, close_button_color, close_button_hovered))
         } else {
             None
         };
 
         let is_title_hovered = layout_info.title_area.check().run(layout);
 
-        if is_title_hovered {
+        // The close button sits inside the title area. Do not also start a
+        // window drag when its X is clicked.
+        if is_title_hovered && !close_button.as_ref().is_some_and(|(_, _, hovered)| *hovered) {
             layout.register_click_handler(MouseButton::Left, &self.move_click_action);
         }
 
@@ -619,7 +622,7 @@ where
             );
         }
 
-        if let Some((close_button_area, close_button_color)) = close_button {
+        if let Some((close_button_area, close_button_color, _)) = close_button {
             layout.add_rectangle(
                 close_button_area,
                 *state.get(&self.close_button_corner_diameter),

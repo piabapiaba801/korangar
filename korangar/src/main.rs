@@ -48,6 +48,7 @@ use std::net::{SocketAddr, ToSocketAddrs};
 use std::ops::Deref;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, LazyLock, Mutex};
+use std::time::{Duration, Instant};
 
 use cgmath::{Point3, Vector3};
 use image::{EncodableLayout, ImageFormat, ImageReader};
@@ -70,8 +71,8 @@ use networking::{PacketHistory, PacketHistoryCallback};
 #[cfg(not(feature = "debug"))]
 use ragnarok_packets::handler::NoPacketCallback;
 use ragnarok_packets::{
-    AttackRange, BuyShopItemsResult, CharacterServerInformation, Direction, DisappearanceReason, HotbarSlot, SellItemsResult, SkillId,
-    SkillLevel, SkillType, TilePosition, UnitId, WorldPosition,
+    AttackRange, BuyShopItemsResult, CharacterServerInformation, Direction, DisappearanceReason, EntityId, HotbarSlot, SellItemsResult, SkillId,
+    SkillLevel, SkillType, StatType, TilePosition, UnitId, WorldPosition,
 };
 use renderer::InterfaceRenderer;
 use rust_state::{Context, ManuallyAssertExt};
@@ -98,7 +99,7 @@ use winit::application::ApplicationHandler;
 use winit::dpi::{LogicalSize, PhysicalSize};
 use winit::event::WindowEvent;
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
-use winit::keyboard::PhysicalKey;
+use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Icon, Window, WindowId};
 
 use crate::graphics::*;
@@ -142,6 +143,13 @@ const INITIAL_SCALING_FACTOR: Scaling = Scaling::new(1.0);
 const FALLBACK_PACKET_VERSION: SupportedPacketVersion = SupportedPacketVersion::_20220406;
 
 static ICON_DATA: &[u8] = include_bytes!("../archive/data/icon.png");
+
+struct SpeechBubble {
+    entity_id: EntityId,
+    text: String,
+    color: MessageColor,
+    expires_at: Instant,
+}
 
 /// CTR+C was sent, and the client is supposed to close.
 pub static SHUTDOWN_SIGNAL: LazyLock<AtomicBool> = LazyLock::new(|| AtomicBool::new(false));
@@ -283,6 +291,7 @@ struct Client {
 
     input_event_buffer: Vec<InputEvent>,
     network_event_buffer: NetworkEventBuffer,
+    speech_bubbles: Vec<SpeechBubble>,
     // TODO: Move or remove this.
     saved_login_data: Option<LoginServerLoginData>,
     // TODO: Move or remove this.
@@ -329,6 +338,7 @@ struct Client {
     window: Option<Arc<Window>>,
 
     map: Option<Box<Map>>,
+    current_map_name: Option<String>,
     client_state: Context<ClientState>,
 }
 
@@ -699,6 +709,7 @@ impl Client {
             point_shadow_camera,
             input_event_buffer,
             network_event_buffer,
+            speech_bubbles: Vec::new(),
             saved_login_data,
             saved_character_server,
             saved_login_server_address,
@@ -731,6 +742,7 @@ impl Client {
             window: None,
 
             map: Some(map),
+            current_map_name: None,
             client_state,
         })
     }
@@ -984,6 +996,9 @@ impl Client {
                         .try_follow(this_entity())
                         .is_some_and(|player| player.get_entity_id() == entity_id)
                     {
+                        if let Some(player) = self.client_state.try_follow_mut(this_entity()) {
+                            player.set_idle(client_tick);
+                        }
                         self.interface.close_window_with_class(WindowClass::Respawn);
                     }
                 }
@@ -1089,6 +1104,8 @@ impl Client {
                         // TODO: Check that manually asserting is fine. Technically this window should only
                         // be open while the player is selected.
                         this_player().manually_asserted().job_level(),
+                        this_player(),
+                        self.library.clone(),
                     ));
                     self.interface
                         .open_window(ChatWindow::new(client_state().chat_window(), client_state().chat_messages()));
@@ -1309,7 +1326,9 @@ impl Client {
                     }
                 }
                 NetworkEvent::ChangeMap { map_name, position } => {
+                    self.current_map_name = Some(map_name.clone());
                     self.map = None;
+                    self.speech_bubbles.clear();
                     self.particle_holder.clear();
                     self.effect_holder.clear();
                     self.point_light_manager.clear();
@@ -1333,6 +1352,29 @@ impl Client {
                     self.client_state
                         .follow_mut(client_state().chat_messages())
                         .push(ChatMessage::new(text, color));
+                }
+                NetworkEvent::EntitySpeech { entity_id, text, color } => {
+                    self.client_state
+                        .follow_mut(client_state().chat_messages())
+                        .push(ChatMessage::new(text.clone(), color));
+                    if text.trim().is_empty() {
+                        continue;
+                    }
+                    self.speech_bubbles.retain(|bubble| bubble.entity_id != entity_id);
+                    if self.speech_bubbles.len() >= 32 {
+                        self.speech_bubbles.remove(0);
+                    }
+                    let lifetime = (2600 + text.chars().count().min(110) as u64 * 35).min(6500);
+                    self.speech_bubbles.push(SpeechBubble {
+                        entity_id,
+                        text: if text.chars().count() > 160 {
+                            format!("{}…", text.chars().take(160).collect::<String>())
+                        } else {
+                            text
+                        },
+                        color,
+                        expires_at: Instant::now() + Duration::from_millis(lifetime),
+                    });
                 }
                 NetworkEvent::UpdateEntityDetails { entity_id, name } => {
                     let entity = self
@@ -1446,6 +1488,8 @@ impl Client {
                     health_points,
                     maximum_health_points,
                 } => {
+                    let is_current_player = self.client_state.try_follow(this_entity())
+                        .is_some_and(|player| player.get_entity_id() == entity_id);
                     let entity = self
                         .client_state
                         .follow_mut(client_state().entities())
@@ -1454,11 +1498,20 @@ impl Client {
 
                     if let Some(entity) = entity {
                         entity.update_health(health_points, maximum_health_points);
+                        if is_current_player && health_points > 0 && entity.is_dead() {
+                            entity.set_idle(client_tick);
+                            self.interface.close_window_with_class(WindowClass::Respawn);
+                        }
                     }
                 }
                 NetworkEvent::UpdateStat { stat_type } => {
+                    let revived = matches!(&stat_type, StatType::HealthPoints(value) if *value > 0);
                     if let Some(player) = self.client_state.try_follow_mut(this_player()) {
                         player.update_stat(stat_type);
+                    }
+                    if revived && self.client_state.try_follow(this_entity()).is_some_and(|entity| entity.is_dead()) {
+                        self.client_state.follow_mut(this_entity().manually_asserted()).set_idle(client_tick);
+                        self.interface.close_window_with_class(WindowClass::Respawn);
                     }
                 }
                 NetworkEvent::OpenDialog { text, npc_id } => {
@@ -1703,7 +1756,7 @@ impl Client {
                     }
 
                     if let Some(job_id) = self.client_state.try_follow(this_entity()).map(Entity::get_job_id) {
-                        for (index, hotkey) in hotkeys.into_iter().take(10).enumerate() {
+                        for (index, hotkey) in hotkeys.into_iter().take(crate::state::hotbar::HOTBAR_SLOTS).enumerate() {
                             match hotkey {
                                 HotkeyState::Bound(hotkey) => {
                                     // TODO: Properly distinguish between skill and item.
@@ -1775,15 +1828,14 @@ impl Client {
                                 .find(|inventory_item| inventory_item.index == item.inventory_index)
                                 .expect("item not in inventory");
 
-                            let name = inventory_item.metadata.name.clone();
-                            let texture = inventory_item.metadata.texture.clone();
+                            let metadata = inventory_item.metadata.clone();
                             let quantity = match &inventory_item.details {
                                 korangar_networking::InventoryItemDetails::Regular { amount, .. } => *amount,
                                 korangar_networking::InventoryItemDetails::Equippable { .. } => 1,
                             };
 
                             SellItem {
-                                metadata: (ResourceMetadata { name, texture }, quantity),
+                                metadata: (metadata, quantity),
                                 inventory_index: item.inventory_index,
                                 price: item.price,
                                 overcharge_price: item.overcharge_price,
@@ -1881,7 +1933,40 @@ impl Client {
             self.input_event_buffer.push(InputEvent::RotateCamera { rotation });
         }
 
-        if !interface_has_focus {
+        if !self.interface.is_window_with_class_open(WindowClass::HotkeySettings) {
+            self.client_state.follow_mut(client_state().hotbar()).cancel_capture();
+        }
+        let capture_was_active = self.client_state.follow(client_state().hotbar()).capture_slot().is_some();
+        let dialog_open = self.interface.is_window_with_class_open(WindowClass::Dialog);
+        if dialog_open {
+            if self.input_system.key_pressed(KeyCode::ArrowUp) || self.input_system.key_pressed(KeyCode::ArrowLeft) {
+                self.client_state.follow_mut(client_state().dialog_window()).move_selection(-1);
+            }
+            if self.input_system.key_pressed(KeyCode::ArrowDown) || self.input_system.key_pressed(KeyCode::ArrowRight) {
+                self.client_state.follow_mut(client_state().dialog_window()).move_selection(1);
+            }
+            if self.input_system.key_pressed(KeyCode::Enter) || self.input_system.key_pressed(KeyCode::NumpadEnter) {
+                if let Some(event) = self.client_state.follow(client_state().dialog_window()).enter_event() {
+                    self.input_event_buffer.push(event);
+                }
+            }
+            if self.input_system.escape_pressed() {
+                let event = self.client_state.follow(client_state().dialog_window()).escape_event();
+                self.input_event_buffer.push(event);
+            }
+        } else {
+            self.input_system.handle_skill_hotkeys(
+                &mut self.input_event_buffer,
+                self.client_state.follow_mut(client_state().hotbar()),
+                interface_has_focus,
+            );
+        }
+        let player_dead = self.client_state.try_follow(this_entity()).is_some_and(|entity| entity.is_dead());
+        if !dialog_open && !capture_was_active && self.input_system.escape_pressed() && (!interface_has_focus || player_dead) {
+            self.input_event_buffer.push(InputEvent::ToggleMenuWindow);
+        }
+
+        if !interface_has_focus && !dialog_open {
             self.input_system.handle_keyboard_input(
                 &mut self.input_event_buffer,
                 #[cfg(feature = "debug")]
@@ -1947,8 +2032,16 @@ impl Client {
                         .connect_to_character_server(self.saved_packet_version, login_data, character_server_information);
                 }
                 InputEvent::Respawn => {
-                    let _ = self.networking_system.respawn();
-                    self.interface.close_window_with_class(WindowClass::Respawn);
+                    #[cfg(feature = "debug")]
+                    println!("[respawn] pedido enviado; conectado={}", self.networking_system.is_map_server_connected());
+                    if self.networking_system.respawn().is_err() {
+                        self.client_state.follow_mut(client_state().chat_messages()).push(
+                            ChatMessage::new("Falha ao solicitar respawn: servidor desconectado.".to_owned(), MessageColor::Error)
+                        );
+                    }
+                }
+                InputEvent::ReturnToCharacterSelection => {
+                    self.networking_system.disconnect_from_map_server();
                 }
                 InputEvent::LogOut => {
                     let _ = self.networking_system.log_out();
@@ -1962,6 +2055,12 @@ impl Client {
                 InputEvent::ResetCameraRotation => self.player_camera.reset_rotation(),
                 InputEvent::ToggleMenuWindow => {
                     if self.client_state.try_follow(this_entity()).is_some() {
+                        if self.client_state.follow(this_entity().manually_asserted()).is_dead() {
+                            if !self.interface.is_window_with_class_open(WindowClass::Respawn) {
+                                self.interface.open_window(RespawnWindow);
+                            }
+                            continue;
+                        }
                         match self.interface.is_window_with_class_open(WindowClass::Menu) {
                             true => self.interface.close_window_with_class(WindowClass::Menu),
                             false => self.interface.open_window(MenuWindow),
@@ -2009,10 +2108,21 @@ impl Client {
                     true => self.interface.close_window_with_class(WindowClass::GameSettings),
                     false => self.interface.open_window(GameSettingsWindow::new(client_state().game_settings())),
                 },
+                InputEvent::ToggleHotkeySettingsWindow => match self.interface.is_window_with_class_open(WindowClass::HotkeySettings) {
+                    true => self.interface.close_window_with_class(WindowClass::HotkeySettings),
+                    false => self.interface.open_window(HotkeySettingsWindow),
+                },
                 InputEvent::ToggleInterfaceSettingsWindow => match self.interface.is_window_with_class_open(WindowClass::InterfaceSettings)
                 {
                     true => self.interface.close_window_with_class(WindowClass::InterfaceSettings),
                     false => self.interface.open_window(InterfaceSettingsWindow::new(
+                        client_state().interface_settings(),
+                        client_state().interface_settings_capabilities(),
+                    )),
+                },
+                InputEvent::ToggleSkinWindow => match self.interface.is_window_with_class_open(WindowClass::Skin) {
+                    true => self.interface.close_window_with_class(WindowClass::Skin),
+                    false => self.interface.open_window(SkinWindow::new(
                         client_state().interface_settings(),
                         client_state().interface_settings_capabilities(),
                     )),
@@ -2159,6 +2269,17 @@ impl Client {
                 }
                 InputEvent::SendMessage { text } => {
                     // Handle special client commands.
+                    if text.trim().eq_ignore_ascii_case("/where") {
+                        if let Some(player) = self.client_state.try_follow(this_entity()) {
+                            let position = player.get_tile_position();
+                            let map = self.current_map_name.as_deref().unwrap_or("mapa desconhecido");
+                            self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::new(
+                                format!("Localização: {map} ({}, {})", position.x, position.y),
+                                MessageColor::Server,
+                            ));
+                        }
+                        continue;
+                    }
                     if text.as_str() == "/nc" {
                         let auto_attack = self.client_state.follow_mut(client_state().game_settings().auto_attack());
                         *auto_attack = !*auto_attack;
@@ -2193,6 +2314,10 @@ impl Client {
                     }
                     _ => {}
                 },
+                InputEvent::InspectItem { details } => {
+                    self.interface.close_window_with_class(WindowClass::ItemDetails);
+                    self.interface.open_window(ItemDetailsWindow::new(details));
+                }
                 InputEvent::MoveSkill {
                     source,
                     destination,
@@ -2218,6 +2343,22 @@ impl Client {
                     _ => {}
                 },
                 InputEvent::CastSkill { slot } => {
+                    #[cfg(feature = "debug")]
+                    println!("[hotbar] cast slot={}", slot.0);
+                    // Custom server skills can be usable before the client's learned-skill
+                    // packet is complete. The server remains authoritative about ownership.
+                    if let Some(learnable_skill) = self.client_state.follow(client_state().hotbar()).get_skill_in_slot(slot).as_ref()
+                        && learnable_skill.skill_id.0 == 7007
+                    {
+                        #[cfg(feature = "debug")]
+                        println!("[hotbar] Black Market 7007 level={}", learnable_skill.maximum_level.0);
+                        let _ = self.networking_system.cast_skill(
+                            learnable_skill.skill_id,
+                            learnable_skill.maximum_level,
+                            self.client_state.follow(this_entity().manually_asserted()).get_entity_id(),
+                        );
+                        continue;
+                    }
                     if let Some(learnable_skill) = self.client_state.follow(client_state().hotbar()).get_skill_in_slot(slot).as_ref()
                         && let Some(learned_skill) =
                             self.client_state
@@ -3202,6 +3343,31 @@ impl Client {
                     );
                 }
 
+                self.speech_bubbles.retain(|bubble| bubble.expires_at > Instant::now());
+                for bubble in &self.speech_bubbles {
+                    let entity = self
+                        .client_state
+                        .follow(client_state().entities())
+                        .iter()
+                        .find(|entity| entity.get_entity_id() == bubble.entity_id)
+                        .or_else(|| self.client_state.try_follow(this_entity()));
+                    if let Some(entity) = entity.filter(|entity| entity.get_entity_id() == bubble.entity_id) {
+                        let mut position = entity.get_position();
+                        position.y += 16.0;
+                        let color = match bubble.color {
+                            MessageColor::Rgb { red, green, blue } if u16::from(red) + u16::from(green) + u16::from(blue) < 620 => {
+                                Color::rgb_u8(red, green, blue)
+                            }
+                            MessageColor::Rgb { .. } => Color::rgb_u8(35, 39, 45),
+                            MessageColor::Broadcast => Color::rgb_u8(30, 93, 170),
+                            MessageColor::Server => Color::rgb_u8(130, 55, 150),
+                            MessageColor::Error => Color::rgb_u8(190, 55, 55),
+                            MessageColor::Information => Color::rgb_u8(35, 39, 45),
+                        };
+                        self.middle_interface_renderer.render_speech_bubble(current_camera, position, &bubble.text, color);
+                    }
+                }
+
                 let mouse_mode = self.interface.get_mouse_mode();
                 let is_mouse_mode_default = mouse_mode.is_default();
                 let last_walking_destination = mouse_mode.walk_destination();
@@ -3440,6 +3606,14 @@ impl Client {
                 }
 
                 if self.show_interface {
+                    if let Some(player) = self.client_state.try_follow(this_player()) {
+                        self.top_interface_renderer.render_experience_bars(
+                            player.base_experience,
+                            player.next_base_experience,
+                            player.job_experience,
+                            player.next_job_experience,
+                        );
+                    }
                     self.mouse_cursor.render(
                         &self.top_interface_renderer,
                         input_report.mouse_position,

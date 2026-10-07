@@ -26,20 +26,30 @@ pub struct DialogElement {
     #[hidden_element]
     element: UnsafeCell<ElementBox<ClientState>>,
     is_next_button: bool,
+    is_choice_button: bool,
 }
 
 impl DialogElement {
     /// Creates a new dialog element.
     #[inline(always)]
-    fn new<E>(element: E, is_next_button: bool) -> Self
+    fn new<E>(element: E, is_next_button: bool, is_choice_button: bool) -> Self
     where
         E: Element<ClientState> + 'static,
     {
         Self {
             element: UnsafeCell::new(ErasedElement::new(element)),
             is_next_button,
+            is_choice_button,
         }
     }
+}
+
+#[derive(Clone, Copy)]
+pub(super) enum DialogAction {
+    None,
+    Next,
+    Close,
+    Choice,
 }
 
 /// Internal state of the dialog window.
@@ -52,6 +62,10 @@ pub struct DialogWindowState {
     /// Whether or not the elements should be cleared the next time
     /// [`start`](Self::start) is called.
     clear_next: bool,
+    #[hidden_element]
+    action: DialogAction,
+    choices: Vec<String>,
+    selected_choice: usize,
 }
 
 impl DialogWindowState {
@@ -76,6 +90,7 @@ impl DialogWindowState {
                 text: text,
             },
             false,
+            false,
         ));
     }
 
@@ -96,8 +111,11 @@ impl DialogWindowState {
                 },
             },
             true,
+            false,
         ));
 
+        self.action = DialogAction::Next;
+        self.choices.clear();
         self.clear_next = true;
     }
 
@@ -121,7 +139,10 @@ impl DialogWindowState {
                 },
             },
             false,
+            false,
         ));
+        self.action = DialogAction::Close;
+        self.choices.clear();
     }
 
     /// Add multiple buttons, one for each choice.
@@ -130,23 +151,58 @@ impl DialogWindowState {
     ///
     /// I am unsure why that's the behavior of the official client.
     pub fn add_choice_buttons(&mut self, choices: Vec<String>) {
+        self.elements.retain(|element| !element.is_next_button && !element.is_choice_button);
+        self.choices = choices;
+        self.selected_choice = 0;
+        self.action = DialogAction::Choice;
+        self.render_choice_buttons();
+    }
+
+    fn render_choice_buttons(&mut self) {
         use korangar_interface::prelude::*;
 
-        self.elements.retain(|element| !element.is_next_button);
+        self.elements.retain(|element| !element.is_choice_button);
 
         let npc_id = self.npc_id;
 
-        choices.into_iter().enumerate().for_each(|(index, text)| {
+        self.choices.iter().enumerate().for_each(|(index, text)| {
+            let label = format!("{} {}", if index == self.selected_choice { ">" } else { " " }, text);
             self.elements.push(DialogElement::new(
                 button! {
-                    text: text,
+                    text: label,
                     event: move |_: &Context<ClientState>, queue: &mut EventQueue<ClientState>| {
                         queue.queue(InputEvent::ChooseDialogOption { npc_id, option: index as i8 + 1 });
                     },
                 },
                 false,
+                true,
             ))
         });
+    }
+
+    pub fn move_selection(&mut self, direction: i32) {
+        if !matches!(self.action, DialogAction::Choice) || self.choices.is_empty() {
+            return;
+        }
+        self.selected_choice = (self.selected_choice as i32 + direction)
+            .rem_euclid(self.choices.len() as i32) as usize;
+        self.render_choice_buttons();
+    }
+
+    pub fn enter_event(&self) -> Option<InputEvent> {
+        match self.action {
+            DialogAction::Next => Some(InputEvent::NextDialog { npc_id: self.npc_id }),
+            DialogAction::Close => Some(InputEvent::CloseDialog { npc_id: self.npc_id }),
+            DialogAction::Choice if !self.choices.is_empty() => Some(InputEvent::ChooseDialogOption {
+                npc_id: self.npc_id,
+                option: self.selected_choice as i8 + 1,
+            }),
+            _ => None,
+        }
+    }
+
+    pub fn escape_event(&self) -> InputEvent {
+        InputEvent::CloseDialog { npc_id: self.npc_id }
     }
 
     /// End the dialog.
@@ -155,6 +211,9 @@ impl DialogWindowState {
     pub fn end(&mut self) {
         self.elements.clear();
         self.clear_next = false;
+        self.action = DialogAction::None;
+        self.choices.clear();
+        self.selected_choice = 0;
     }
 }
 
@@ -165,6 +224,9 @@ impl Default for DialogWindowState {
             // Arguably not very clean but avoids using an Option.
             npc_id: EntityId(0),
             clear_next: false,
+            action: DialogAction::None,
+            choices: Vec::new(),
+            selected_choice: 0,
         }
     }
 }

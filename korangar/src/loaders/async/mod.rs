@@ -6,7 +6,7 @@ use hashbrown::HashMap;
 use korangar_debug::logging::print_debug;
 #[cfg(feature = "debug")]
 use korangar_debug::profiling::Profiler;
-use korangar_networking::{InventoryItem, NoMetadata, ShopItem};
+use korangar_networking::{InventoryItem, InventoryItemDetails, NoMetadata, ShopItem};
 use ragnarok_packets::{ClientTick, EntityId, ItemId, JobId, SkillId, TilePosition};
 use rayon::{ThreadPool, ThreadPoolBuilder};
 
@@ -18,7 +18,7 @@ use crate::state::skills::{LearnableSkill, SkillTabLayout, SkillTreeLayout};
 #[cfg(feature = "debug")]
 use crate::threads;
 use crate::world::{
-    Actions, AnimationData, EntityType, ItemName, ItemNameKey, ItemResource, ItemResourceKey, Library, Map, ResourceMetadata,
+    Actions, AnimationData, EntityType, ItemCardMetadata, ItemInfo, ItemName, ItemNameKey, ItemResource, ItemResourceKey, Library, Map, ResourceMetadata,
     SkillListInformation, SkillListKey, SkillListRequirements, SpriteAnimationState,
 };
 
@@ -217,7 +217,29 @@ impl AsyncLoader {
             })
             .to_string();
 
-        let metadata = ResourceMetadata { texture, name };
+        let description = self.library.get::<ItemInfo>(item.item_id).description(is_identified).to_vec();
+        let card_slots: &[u32] = if is_identified && matches!(&item.details, InventoryItemDetails::Equippable { .. }) {
+            &item.slot
+        } else {
+            &[]
+        };
+        let cards = card_slots
+            .iter()
+            .copied()
+            .filter(|id| *id >= 4000 && *id < 100_000)
+            .map(|id| {
+                let card_id = ItemId(id);
+                let resource_name = self.library.get::<ItemResource>(ItemResourceKey { item_id: card_id, is_identified: true });
+                let full_path = format!("유저인터페이스\\item\\{resource_name}.bmp");
+                ItemCardMetadata {
+                    item_id: id,
+                    texture: self.request_item_sprite_load(card_id, &full_path, ImageType::Color),
+                    name: self.library.get::<ItemName>(ItemNameKey { item_id: card_id, is_identified: true }).to_string(),
+                    description: self.library.get::<ItemInfo>(card_id).description(true).to_vec(),
+                }
+            })
+            .collect();
+        let metadata = ResourceMetadata { texture, name, item_id: item.item_id.0, item_type: item.item_type, weight: None, description, cards };
 
         InventoryItem { metadata, ..item }
     }
@@ -237,7 +259,8 @@ impl AsyncLoader {
             })
             .to_string();
 
-        let metadata = ResourceMetadata { texture, name };
+        let description = self.library.get::<ItemInfo>(item.item_id).description(true).to_vec();
+        let metadata = ResourceMetadata { texture, name, item_id: item.item_id.0, item_type: item.item_type, weight: Some(item.weight), description, cards: Vec::new() };
 
         ShopItem { metadata, ..item }
     }
@@ -255,6 +278,7 @@ impl AsyncLoader {
             maximum_level: skill_information.maximum_level,
             file_name: skill_information.file_name.clone(),
             skill_name: skill_information.name.clone(),
+            description: skill_information.description.clone(),
             can_select_level: skill_information.can_select_level,
             acquisition: skill_information.acquisition,
             required_skills: skill_requirements.required_skills.clone(),

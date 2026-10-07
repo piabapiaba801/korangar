@@ -130,6 +130,12 @@ pub enum NetworkEvent {
         text: String,
         color: MessageColor,
     },
+    /// Show a temporary speech balloon above the source entity and add it to chat.
+    EntitySpeech {
+        entity_id: EntityId,
+        text: String,
+        color: MessageColor,
+    },
     CharacterSlotSwitched,
     CharacterSlotSwitchFailed,
     /// Update entity details. Mostly received when the client sends

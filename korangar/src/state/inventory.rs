@@ -43,9 +43,16 @@ impl Inventory {
     }
 
     pub fn update_item_sprite(&mut self, item_id: ItemId, texture: Arc<Texture>) {
-        self.items.iter_mut().filter(|item| item.item_id == item_id).for_each(|item| {
-            item.metadata.texture = Some(texture.clone());
-        });
+        for item in &mut self.items {
+            if item.item_id == item_id {
+                item.metadata.texture = Some(texture.clone());
+            }
+            for card in &mut item.metadata.cards {
+                if card.item_id == item_id.0 {
+                    card.texture = Some(texture.clone());
+                }
+            }
+        }
     }
 
     pub fn remove_item(&mut self, index: InventoryIndex, remove_amount: u16) {

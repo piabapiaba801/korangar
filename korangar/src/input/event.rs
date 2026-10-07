@@ -11,6 +11,7 @@ use ragnarok_packets::{
 use rust_state::Context;
 
 use crate::interface::resource::{ItemSource, SkillSource};
+use crate::interface::windows::ItemDetailsData;
 use crate::loaders::ServiceId;
 use crate::state::ClientState;
 use crate::state::skills::LearnableSkill;
@@ -37,6 +38,8 @@ pub enum InputEvent {
     },
     /// Respawn the player.
     Respawn,
+    /// Leave the map and return to character selection.
+    ReturnToCharacterSelection,
     /// Log out of the map server.
     LogOut,
     /// Log out of the character server.
@@ -69,10 +72,13 @@ pub enum InputEvent {
     ToggleGameSettingsWindow,
     /// Open or close the interface settings window.
     ToggleInterfaceSettingsWindow,
+    /// Open or close the in-game skin selector.
+    ToggleSkinWindow,
     /// Open or close the graphics settings window.
     ToggleGraphicsSettingsWindow,
     /// Open or close the audio settings window.
     ToggleAudioSettingsWindow,
+    ToggleHotkeySettingsWindow,
     /// Open or close the friend list window. Only works while playing.
     ToggleFriendListWindow,
     /// Close the most recently opened or clicked closable window.
@@ -155,6 +161,8 @@ pub enum InputEvent {
         /// Item to move.
         item: InventoryItem<ResourceMetadata>,
     },
+    /// Show the native item information panel.
+    InspectItem { details: ItemDetailsData },
     /// Move a skill in the user interface.
     MoveSkill {
         /// Source of the move.
