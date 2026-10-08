@@ -1,0 +1,8 @@
+{
+  "name": "prontera",
+  "gat_width": 400,
+  "gat_height": 420,
+  "plaza_center": [170, 200],
+  "road_half_width": 16,
+  "design_note": "Original FreokRO crossroads and open plaza. All cells stay walkable until obstacle painting and playtesting in BrowEdit3."
+}

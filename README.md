@@ -64,6 +64,8 @@ See [TECHNICAL_STATUS_FREOKRO.md](TECHNICAL_STATUS_FREOKRO.md) for the current F
 
 *Prontera pilot, October 8, 2026. Four project-supplied ground textures replace the original ground art, and static map scenery is hidden. Navigation issues and a remaining flag/banner are still being investigated. Other maps have not yet been migrated.*
 
+An [original structural Prontera draft](map-authoring/README.md) now provides project-authored RSW, GND, and GAT files for BrowEdit3 refinement. It is staged in the source checkout and has not replaced the live game or server map cache.
+
 ### 📸 Earlier FreokRO client captures
 
 These October 7, 2026 captures show the locally running client. The auction is supplied by the separate private HUD. The client and auction item windows are visibly different here, so these images are a reference for the ongoing Classic skin work. Item description text and item sprites are mosaicked in both captures.

@@ -28,11 +28,19 @@
 - **No original assets have been deleted.** The 12 original ground textures referenced by Prontera are in [blocked removals](reports/blocked_removals.csv); [delete candidates](reports/delete_candidates.csv) is empty. No reduction in distribution size has been verified.
 - The project-supplied ground PNGs total **14,382,481 bytes**. They still require repeated-tile seam testing and possible optimization.
 
+## Original map authoring checkpoint
+
+- The local BrowEdit3 installation was identified at D:\ragnarok\ferramentas do servidor\browedite 3. Its 2022 configuration still targeted unrelated SkyRO GRFs. A separate portable BrowEdit3 v3.660 was prepared locally under Desktop/freokro/tools/browedit3-660, with the source archive as its data directory and an empty GRF list. That editor installation is outside Git.
+- Blender 5.2 is installed locally. BrowEdit3 is the primary editor for .rsw, .gnd, and .gat; Blender will be used for original 3D props after an import/export path is validated.
+- [The authored Prontera design](map-authoring/prontera.json) now defines an original 400 × 420 GAT and 200 × 210 GND. [The map generator](tools/freokro_generate_maps.py) reads this design only and wrote korangar/archive/data/prontera.rsw, .gnd, and .gat. It does not read the legacy map files, GRFs, or the old map cache. The dimensions were chosen to contain current server script coordinates, whose observed maxima were x=299 and y=379.
+- The generated map is a flat, fully walkable authoring baseline with the four supplied FreokRO ground textures and no static scenery. It is **not yet a finished Prontera**, is **not installed in the live game directory**, and the server still uses its existing map cache. No original map assets have been removed.
+- The Korangar integration test in [authored_map.rs](korangar/tests/authored_map.rs) passed: the client format parser read all three files without trailing bytes and confirmed the dimensions, texture names, empty static scenery, and walkable GAT cells. BrowEdit3 inspection and an in-client/server navigation test still remain before promotion.
+
 ## Remaining work, in order
 
-1. Identify the source of the remaining flag/banner and hide only visual resources that can be removed without losing NPC, warp, or interaction behavior.
-2. Extend the ground and static scenery override to all supported maps with safe bounds for maps that have no terrain vertices. Keep `.gat` and server logic unchanged. Record exceptions for maps that rely on bridges, multiple heights, or other essential geometry.
-3. Test representative cities, fields, interiors, dungeons, water maps, and warps in the client. Check loading, movement, missing textures, NPCs, FPS, and crashes before declaring any group migrated.
-4. Complete the cross-resource dependency audit. Remove old map-only files from the active distribution only after proving they have no remaining consumers, then measure actual bytes saved.
+1. Inspect and refine this original Prontera in BrowEdit3, then validate file parsing, visual appearance, NPC locations, warps, and movement in a controlled client/server test.
+2. Rebuild the server map cache from the new FreokRO GAT when the pilot is ready, so client and server use matching cell dimensions and navigation.
+3. Repeat original authoring for adjacent and then remaining active maps. Keep technical map names and scripted NPC/warp coordinates during this stage as agreed with the user; do not copy legacy geometry or navigation cells.
+4. Replace runtime dependencies map by map and remove legacy assets only after checking all consumers. Record each proven removal and the actual distribution size change.
 
-The current milestone is a **working visual pilot**, not a completed all-map migration. See [validation.md](reports/validation.md) for the test matrix and open checks.
+The current live milestone remains the **working visual pilot**. The original structural Prontera files are an **unpromoted authoring draft**.
