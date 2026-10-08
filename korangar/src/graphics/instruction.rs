@@ -15,6 +15,7 @@ use crate::world::MarkerIdentifier;
 
 #[derive(Default)]
 pub struct RenderInstruction<'a> {
+    pub render_world: bool,
     pub show_interface: bool,
     pub picker_position: ScreenPosition,
     pub uniforms: Uniforms,

@@ -3657,6 +3657,7 @@ impl Client {
             let top_layer_instructions = self.top_interface_renderer.get_instructions();
 
             let render_instruction = RenderInstruction {
+                render_world: true,
                 show_interface: self.show_interface,
                 picker_position,
                 uniforms: Uniforms {

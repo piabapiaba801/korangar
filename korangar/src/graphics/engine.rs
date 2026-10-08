@@ -1127,6 +1127,11 @@ impl GraphicsEngine {
 
             // Directional Shadow Caster Passes
             scope.spawn(|_| {
+                // Menu frames have no map or shadow partitions. Creating the
+                // partition passes would bind offsets beyond the empty buffer.
+                if !instruction.render_world {
+                    return;
+                }
                 for partition_index in 0..PARTITION_COUNT {
                     let mut render_pass = engine_context.directional_shadow_pass_context.create_pass(
                         &mut directional_shadow_encoder,
