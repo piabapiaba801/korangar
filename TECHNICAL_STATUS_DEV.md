@@ -33,3 +33,11 @@ This file records the **initial FreokRO `dev` snapshot before any integration**.
 
 - **DOCUMENTED:** both README captures now mosaic item-description text and visible item sprites. The original JPEGs were removed from the current branch tree and the README points to PNG replacements at the original 1920 × 1057 dimensions.
 - **VERIFIED:** decoded-pixel comparison found 26,112 changed pixels inside the marked regions of the auction capture and 13,094 inside the client capture, with zero changed pixels outside those regions. This documentation-only edit does not change the client build. Earlier Git commits still contain the original JPEGs.
+
+## October 8, 2026 — Startup archive hash optimization
+
+- **IMPLEMENTED:** ordinary client startup skips the full game archive content hash. `sync-cache` still calculates it, and a debug build can request the previous verification with `KORANGAR_VERIFY_GAME_FILES=1`. The cache archive format is unchanged.
+- **BUILD AND DEPLOYMENT:** `cargo +nightly-2026-02-01 build --release --locked -p korangar --features unicode,debug` passed in the local development tree. The installed client executable matches the new build at SHA256 `E85454528ABB3D56C2CD62799F6B7A73BB40D7E4319037FD77FDF30EBB336C18`. This supersedes the installed executable hash in the earlier shortcut checkpoint above.
+- **STARTUP CHECK:** direct Vulkan launches reached a responsive window in 11.129 seconds with the prior executable and 7.856 seconds with the optimized build. The hash phase fell from 2,961 ms to 0 ms. The previously observed DX12 shortcut launch took 15.6 seconds; the optimized executable took 12.640 seconds in a separate DX12 launch. Single-run startup comparisons can vary with launch conditions and disk caching.
+- **VERIFICATION:** with `KORANGAR_VERIFY_GAME_FILES=1`, the optimized build still calculated the same game file hash as before. Test client instances were closed after reaching the login window; gameplay login was not repeated for this change.
+- **REMAINING COST:** opening `data-freokro.7z` took about 4–5 seconds. DX12 resource manager creation took about 5.1 seconds in the optimized run.
