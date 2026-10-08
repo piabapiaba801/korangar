@@ -1,14 +1,18 @@
-<img align="left" alt="" src=".github/logo.png" height="130" />
+<p align="center">
+  <img src="docs/assets/freokro-logo.png" alt="FreokRO emerald forest logo" width="900" />
+</p>
 
-# 🎮 FreokRO Korangar
+# 🌿 FreokRO
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
-FreokRO adapts [Korangar](https://github.com/vE5li/korangar), a Rust Ragnarok Online client with real-time lighting and a customizable interface. Upstream Korangar supports Linux, Windows, and macOS; the FreokRO build and local installation documented here were validated on Windows.
+FreokRO is a custom game project with its own visual identity. Its client adapts [Korangar](https://github.com/vE5li/korangar), a Rust Ragnarok Online client with real-time lighting and a customizable interface. Upstream Korangar supports Linux, Windows, and macOS; the FreokRO build and local installation documented here were validated on Windows.
+
+The emblem above is the project's visual direction. The first terrain pilot applies four project-supplied ground textures to Prontera and removes its static scenery at load time. See the [map migration baseline](reports/baseline.md) and [validation status](reports/validation.md) for the current scope and remaining checks.
 
 ## 🧩 FreokRO adaptation
 
-This fork's `dev` branch replays the preserved FreokRO client snapshot on [upstream Korangar](https://github.com/vE5li/korangar) tag [`v0.1.1-20260220`](https://github.com/vE5li/korangar/releases/tag/v0.1.1-20260220). The separate `rebase` branch integrates those changes with newer upstream `main`; neither upstream nor fork `main` is modified by this work. The client requires the [FreokRO rAthena fork](https://github.com/piabapiaba801/freokro-rathena-korangar), configured for protocol `20220406` without packet obfuscation. The original Ragexe line uses `PACKETVER 20250716` and runs separately.
+`freokro` is the active FreokRO development branch. The `dev` branch preserves the earlier client line based on [upstream Korangar](https://github.com/vE5li/korangar) tag [`v0.1.1-20260220`](https://github.com/vE5li/korangar/releases/tag/v0.1.1-20260220); `rebase` integrates that line with newer upstream `main`. Neither upstream nor fork `main` is modified by this work. The client requires the [FreokRO rAthena fork](https://github.com/piabapiaba801/freokro-rathena-korangar), configured for protocol `20220406` without packet obfuscation. The original Ragexe line uses `PACKETVER 20250716` and runs separately.
 
 The [FreokRO Auction HUD](https://github.com/piabapiaba801/freokro-auction-hud) is a separate process in a **private** repository. The base game does not require it; the **Black Market** interface does. The server handles **Black Market (7007)** and opens the local HUD bridge when the skill is used in town. This client implements the regular item and equipment windows. Check protocol, skill, and auction changes across all three projects.
 
