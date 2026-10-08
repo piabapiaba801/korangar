@@ -1,4 +1,4 @@
-# FreokRO Korangar — development checkpoint — October 7, 2026
+# FreokRO Korangar — development and integration checkpoint — October 7–8, 2026
 
 This file records the FreokRO development snapshot and its integration into the public [Korangar fork](https://github.com/piabapiaba801/korangar). The independent FreokRO repository originally had no Git base or `main`. A matching source tree was subsequently reconstructed on upstream tag `v0.1.1-20260220` as the fork's `dev` branch. The fork's `rebase` branch starts at upstream `main` commit `e14d3203ad63f35962f6492d8a6b348eb8f47d47` and applies the FreokRO changes there. The upstream and fork `main` branches were not changed. The separate FreokRO rAthena server and private Auction HUD are linked in the README.
 
@@ -8,6 +8,7 @@ This file records the FreokRO development snapshot and its integration into the 
 - **SOURCE:** FreokRO client snapshot reconstructed as commit `da7a188328ab33bbae1db5660d4e3316e62fe3d8`; README screenshots were added to fork `dev` afterward.
 - **CONFLICTS RESOLVED:** retained upstream's new `lib.rs` application layout and Rust `State` API while porting FreokRO event handling, windows, and overlays. Kept the upstream font files and emotion handling, then adapted FreokRO speech-bubble glyph rendering to the new glyph instruction fields. `main.rs` remains upstream's thin wrapper.
 - **COMPILE CHECK:** `cargo +nightly-2026-02-01 check --release --locked -p korangar --features unicode,debug` passed on October 7, 2026 with NASM and Slang 2025.18.2 on `PATH`.
+- **RELEASE BUILD:** `cargo +nightly-2026-02-01 build --release --locked -p korangar --features unicode,debug` passed on October 8, 2026. The resulting `korangar.exe` is 51,777,536 bytes with SHA256 `452A1991C3AFC520F67ACC4E99763863CD9125D871BED0148B2586FE076AF050`. `cargo fmt --all -- --check` passed as well.
 - **GAME CHECK:** the two README captures document the earlier local `dev` client. The integrated `rebase` binary has not been installed or tested in the live game. Item-text language and metadata remain visibly different between the client and auction HUD.
 
 ## Architecture and implemented work
