@@ -223,7 +223,7 @@ impl GameFileLoader {
     }
 
     #[allow(unused_variables)]
-    pub fn load_cache_archive(&self, game_file_hash: Hash) {
+    pub fn load_cache_archive(&self, game_file_hash: Option<Hash>) {
         let path = Path::new(CACHE_FILE_NAME);
 
         if !path.exists() && !path.is_dir() {
@@ -245,7 +245,7 @@ impl GameFileLoader {
         };
 
         #[cfg(feature = "debug")]
-        if _hash != game_file_hash {
+        if game_file_hash.is_some_and(|expected_hash| _hash != expected_hash) {
             print_debug!("[{}] Cache is out of sync. Please re-sync or delete the cache", "error".red());
         }
 

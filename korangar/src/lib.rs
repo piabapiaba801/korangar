@@ -409,9 +409,15 @@ impl Client {
         });
 
         time_phase!("calculate game file hash", {
-            let game_file_hash = game_file_loader.calculate_hash();
+            // Hashing all game archives delays every launch, even for an optimized
+            // build with the debug feature enabled. Cache sync always needs the
+            // content hash; explicit verification keeps the debug check available.
+            let verify_game_files = cfg!(feature = "debug") && std::env::var_os("KORANGAR_VERIFY_GAME_FILES").is_some();
+            let game_file_hash = (sync_cache || verify_game_files).then(|| game_file_loader.calculate_hash());
             #[cfg(feature = "debug")]
-            print_debug!("game file hash: {}", game_file_hash);
+            if let Some(hash) = game_file_hash {
+                print_debug!("game file hash: {}", hash);
+            }
         });
 
         time_phase!("create audio engine", {
@@ -470,7 +476,11 @@ impl Client {
             }));
 
             if sync_cache {
-                sync_cache_archive(&game_file_loader, texture_loader, game_file_hash);
+                sync_cache_archive(
+                    &game_file_loader,
+                    texture_loader,
+                    game_file_hash.expect("cache sync requires a game file hash"),
+                );
                 return None;
             }
 
