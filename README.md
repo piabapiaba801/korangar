@@ -48,7 +48,7 @@ Normal startup skips the full content hash of the game archives. `sync-cache` st
 
 In one controlled local Windows comparison on October 8, 2026, direct Vulkan launches reached a responsive window in **11.1 seconds** with the prior executable and **7.9 seconds** with the optimized build, using the same game directory. The hash phase fell from **2,961 ms** to **0 ms**. The regular DX12 launcher was observed at **15.6 seconds** before this change; the updated executable reached a responsive DX12 window in **12.6 seconds** in a separate test. These are single-run measurements and can vary with launch conditions and disk cache state. Opening `data-freokro.7z` still took about **4–5 seconds**.
 
-See [TECHNICAL_STATUS_DEV.md](TECHNICAL_STATUS_DEV.md) for the current development checkpoint.
+See [TECHNICAL_STATUS_FREOKRO.md](TECHNICAL_STATUS_FREOKRO.md) for the current FreokRO state. The earlier client checkpoint remains in [TECHNICAL_STATUS_DEV.md](TECHNICAL_STATUS_DEV.md).
 
 ### 📸 FreokRO client captures
 
