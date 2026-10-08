@@ -6,6 +6,12 @@
 - The preserved client work before map migration is documented in [TECHNICAL_STATUS_DEV.md](TECHNICAL_STATUS_DEV.md). The server is in the [FreokRO rAthena repository](https://github.com/piabapiaba801/freokro-rathena-korangar); the Auction HUD is a separate private project.
 - `5573be9b` introduced the FreokRO emblem and project identity in the README. `cc374ebd` introduced the first map inventory and Prontera terrain pilot.
 
+## Startup identity and map loading
+
+- The client starts with no map loaded. Login and character selection render their own 2D background and interactive windows; Geffen is no longer decoded solely for the menu. The server-provided map still loads when the player enters the world.
+- The supplied eight-second H.264 MP4 was converted to a 1280 × 720, 20 fps AV1/IVF file. The runtime reads `client/branding/intro.ivf` and loops it behind the menus. There is no separate logo layer because the FreokRO artwork is already in the video. Missing or invalid video falls back to a dark background.
+- The client compiled successfully with `--release --locked --features unicode,debug`, and the rebuilt executable was installed in the local game directory. Video playback, menu interaction, character selection, and transition into the world still require a visual run before this change can be considered complete.
+
 ## Map migration: implemented scope
 
 - The current code changes **Prontera only**. At load time, it replaces `.gnd` ground texture references with four project-supplied PNGs, removes static `.rsw` scenery objects from the rendered map, and disables the legacy water plane. The original `.rsw`, `.gnd`, `.gat`, GRF, and 7z files remain unchanged.

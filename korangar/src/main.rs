@@ -40,6 +40,7 @@ mod loaders;
 mod networking;
 mod renderer;
 mod settings;
+mod startup;
 mod system;
 mod world;
 
@@ -71,8 +72,8 @@ use networking::{PacketHistory, PacketHistoryCallback};
 #[cfg(not(feature = "debug"))]
 use ragnarok_packets::handler::NoPacketCallback;
 use ragnarok_packets::{
-    AttackRange, BuyShopItemsResult, CharacterServerInformation, Direction, DisappearanceReason, EntityId, HotbarSlot, SellItemsResult, SkillId,
-    SkillLevel, SkillType, StatType, TilePosition, UnitId, WorldPosition,
+    AttackRange, BuyShopItemsResult, CharacterServerInformation, Direction, DisappearanceReason, EntityId, HotbarSlot, SellItemsResult,
+    SkillId, SkillLevel, SkillType, StatType, TilePosition, UnitId, WorldPosition,
 };
 use renderer::InterfaceRenderer;
 use rust_state::{Context, ManuallyAssertExt};
@@ -122,9 +123,8 @@ use crate::system::GameTimer;
 use crate::world::MarkerIdentifier;
 use crate::world::*;
 
-const CLIENT_NAME: &str = "Korangar";
+const CLIENT_NAME: &str = "FreokRO";
 const ROLLING_CUTTER_ID: SkillId = SkillId(2036);
-const DEFAULT_MAP: &str = "geffen";
 const START_CAMERA_FOCUS_POINT: Point3<f32> = Point3::new(600.0, 0.0, 240.0);
 const DEFAULT_BACKGROUND_MUSIC: Option<&str> = Some("bgm\\01.mp3");
 const MAIN_MENU_CLICK_SOUND_EFFECT: &str = "버튼소리.wav";
@@ -337,6 +337,7 @@ struct Client {
     device: Device,
     window: Option<Arc<Window>>,
 
+    startup_scene: startup::StartupScene,
     map: Option<Box<Map>>,
     current_map_name: Option<String>,
     client_state: Context<ClientState>,
@@ -446,6 +447,7 @@ impl Client {
                 &capabilities,
                 game_file_loader.clone(),
             ));
+            let startup_scene = startup::StartupScene::new(&texture_loader);
             let video_loader = Arc::new(VideoLoader::new(game_file_loader.clone(), texture_loader.clone()));
             let font_loader = Arc::new(FontLoader::new(
                 &["NotoSans".to_owned(), "NotoSansKR".to_owned()],
@@ -571,7 +573,7 @@ impl Client {
             let debug_camera = DebugCamera::new();
             let mut start_camera = StartCamera::new();
             let player_camera = PlayerCamera::new();
-            let mut directional_shadow_camera = DirectionalShadowCamera::new();
+            let directional_shadow_camera = DirectionalShadowCamera::new();
             let point_shadow_camera = PointShadowCamera::new();
             start_camera.set_focus_point(START_CAMERA_FOCUS_POINT);
         });
@@ -634,22 +636,7 @@ impl Client {
             let main_menu_click_sound_effect = audio_engine.load(MAIN_MENU_CLICK_SOUND_EFFECT);
         });
 
-        time_phase!("load default map", {
-            let map = map_loader
-                .load(
-                    DEFAULT_MAP.to_string(),
-                    &model_loader,
-                    texture_loader.clone(),
-                    video_loader,
-                    &library,
-                )
-                .expect("failed to load initial map");
-
-            directional_shadow_camera.set_level_bound(map.get_level_bound());
-
-            audio_engine.play_background_music_track(DEFAULT_BACKGROUND_MUSIC);
-            map.set_ambient_sound_sources(&audio_engine);
-        });
+        audio_engine.play_background_music_track(DEFAULT_BACKGROUND_MUSIC);
 
         time_phase!("create client state", {
             let client_state = Context::new(ClientState::new(
@@ -751,7 +738,8 @@ impl Client {
             device,
             window: None,
 
-            map: Some(map),
+            startup_scene,
+            map: None,
             current_map_name: None,
             client_state,
         })
@@ -979,8 +967,8 @@ impl Client {
                     #[cfg(feature = "debug")]
                     self.interface.close_all_windows_except(DEBUG_WINDOWS);
 
-                    self.async_loader
-                        .request_map_load(DEFAULT_MAP.to_string(), Some(TilePosition::new(0, 0)));
+                    // CharacterList opens character selection without loading a
+                    // menu map.
                 }
                 NetworkEvent::InitialStats {
                     strength_stat_points_cost,
@@ -1498,7 +1486,9 @@ impl Client {
                     health_points,
                     maximum_health_points,
                 } => {
-                    let is_current_player = self.client_state.try_follow(this_entity())
+                    let is_current_player = self
+                        .client_state
+                        .try_follow(this_entity())
                         .is_some_and(|player| player.get_entity_id() == entity_id);
                     let entity = self
                         .client_state
@@ -1520,7 +1510,9 @@ impl Client {
                         player.update_stat(stat_type);
                     }
                     if revived && self.client_state.try_follow(this_entity()).is_some_and(|entity| entity.is_dead()) {
-                        self.client_state.follow_mut(this_entity().manually_asserted()).set_idle(client_tick);
+                        self.client_state
+                            .follow_mut(this_entity().manually_asserted())
+                            .set_idle(client_tick);
                         self.interface.close_window_with_class(WindowClass::Respawn);
                     }
                 }
@@ -2043,11 +2035,15 @@ impl Client {
                 }
                 InputEvent::Respawn => {
                     #[cfg(feature = "debug")]
-                    println!("[respawn] pedido enviado; conectado={}", self.networking_system.is_map_server_connected());
+                    println!(
+                        "[respawn] pedido enviado; conectado={}",
+                        self.networking_system.is_map_server_connected()
+                    );
                     if self.networking_system.respawn().is_err() {
-                        self.client_state.follow_mut(client_state().chat_messages()).push(
-                            ChatMessage::new("Falha ao solicitar respawn: servidor desconectado.".to_owned(), MessageColor::Error)
-                        );
+                        self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::new(
+                            "Falha ao solicitar respawn: servidor desconectado.".to_owned(),
+                            MessageColor::Error,
+                        ));
                     }
                 }
                 InputEvent::ReturnToCharacterSelection => {
@@ -3388,7 +3384,8 @@ impl Client {
                             MessageColor::Error => Color::rgb_u8(190, 55, 55),
                             MessageColor::Information => Color::rgb_u8(35, 39, 45),
                         };
-                        self.middle_interface_renderer.render_speech_bubble(current_camera, position, &bubble.text, color);
+                        self.middle_interface_renderer
+                            .render_speech_bubble(current_camera, position, &bubble.text, color);
                     }
                 }
 
@@ -3720,7 +3717,71 @@ impl Client {
             #[cfg(feature = "debug")]
             let render_frame_measurement = Profiler::start_measurement("prepare next frame");
 
-            self.graphics_engine.render_next_frame(frame, RenderInstruction::default());
+            self.startup_scene.advance(&self.queue, delta_time);
+            self.audio_engine.update();
+            self.mouse_cursor.update(client_tick);
+
+            let screen_size: ScreenSize = self.graphics_engine.get_window_size().into();
+            self.startup_scene.render(&self.bottom_interface_renderer, screen_size);
+
+            let mut interface_frame = self
+                .interface
+                .lay_out_windows(&self.client_state, scaling.get_factor(), input_report.mouse_position);
+            self.mouse_cursor.set_state(MouseCursorState::Default, client_tick);
+
+            if let Some(mouse_button) = input_report.mouse_click {
+                if interface_frame.is_interface_hovered() {
+                    interface_frame.click(&self.client_state, mouse_button);
+                } else {
+                    interface_frame.unfocus();
+                }
+            }
+            if input_report.mouse_button_released {
+                interface_frame.drop(&self.client_state);
+            }
+            if let Some(delta) = input_report.scroll {
+                if interface_frame.is_interface_hovered() {
+                    interface_frame.scroll(&self.client_state, delta);
+                }
+            }
+            interface_frame.input_characters(&self.client_state, &input_report.characters);
+
+            let tooltip_theme = self.client_state.follow(client_state().menu_theme().tooltip());
+            interface_frame.render(
+                &self.client_state,
+                &self.interface_renderer,
+                tooltip_theme,
+                input_report.mouse_position,
+            );
+            drop(interface_frame);
+
+            if let Some(delta) = input_report.drag {
+                self.interface.handle_drag(delta, scaling.get_factor());
+            }
+            if self.show_interface {
+                self.mouse_cursor.render(
+                    &self.top_interface_renderer,
+                    input_report.mouse_position,
+                    self.interface.get_mouse_mode().grabbed(),
+                    *self.client_state.follow(client_state().world_theme().cursor().color()),
+                    scaling.get_factor(),
+                );
+            }
+
+            let interface_instructions = self.interface_renderer.get_instructions();
+            let background_instructions = self.bottom_interface_renderer.get_instructions();
+            let cursor_instructions = self.top_interface_renderer.get_instructions();
+            let instruction = RenderInstruction {
+                show_interface: self.show_interface,
+                interface: interface_instructions.as_slice(),
+                bottom_layer_rectangles: background_instructions.as_slice(),
+                top_layer_rectangles: cursor_instructions.as_slice(),
+                font_map_texture: Some(self.font_loader.get_font_map()),
+                #[cfg(feature = "debug")]
+                render_options: *self.client_state.follow(client_state().render_options()),
+                ..RenderInstruction::default()
+            };
+            self.graphics_engine.render_next_frame(frame, instruction);
 
             #[cfg(feature = "debug")]
             render_frame_measurement.stop();

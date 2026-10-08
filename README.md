@@ -48,6 +48,14 @@ Normal startup skips the full content hash of the game archives. `sync-cache` st
 
 In one controlled local Windows comparison on October 8, 2026, direct Vulkan launches reached a responsive window in **11.1 seconds** with the prior executable and **7.9 seconds** with the optimized build, using the same game directory. The hash phase fell from **2,961 ms** to **0 ms**. The regular DX12 launcher was observed at **15.6 seconds** before this change; the updated executable reached a responsive DX12 window in **12.6 seconds** in a separate test. These are single-run measurements and can vary with launch conditions and disk cache state. Opening `data-freokro.7z` still took about **4–5 seconds**.
 
+### 🎞️ FreokRO startup screen
+
+The login and character selection screens no longer load Geffen as a background map. They play the project-supplied eight-second video in a loop, with the FreokRO emblem already embedded in the footage. The client draws no additional logo. A dark background keeps the menus usable when the video is missing or invalid; the actual game map loads after a character enters the world.
+
+The [source MP4](docs/assets/freokro-intro-source.mp4) and [runtime AV1/IVF file](korangar/client/branding/intro.ivf) are kept separately. Copy `intro.ivf` to `client/branding/intro.ivf` beside the game executable. [Video preparation notes](korangar/client/branding/README.md) explain how to convert a replacement MP4. The video has no audio; game music remains separate.
+
+![Still frame from the current FreokRO startup video](docs/assets/freokro-intro-preview.png)
+
 See [TECHNICAL_STATUS_FREOKRO.md](TECHNICAL_STATUS_FREOKRO.md) for the current FreokRO state. The earlier client checkpoint remains in [TECHNICAL_STATUS_DEV.md](TECHNICAL_STATUS_DEV.md).
 
 ### 🗺️ Current FreokRO map state
