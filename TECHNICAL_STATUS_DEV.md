@@ -39,3 +39,8 @@ This file records the FreokRO development snapshot and its integration into the 
 - **VALIDATED:** the matching `dev` keyboard test passed with `unicode` and `unicode,debug`; the user confirmed close and reopen in the live `dev` client. This integration branch passed `cargo +nightly-2026-02-01 fmt --check --package korangar` and `cargo +nightly-2026-02-01 build --release --locked -p korangar --features unicode,debug`.
 - **INTEGRATION BUILD:** the `rebase` executable is 51,755,008 bytes with SHA256 `90834E8D7A8764B88827CCD51E6A60C24D372DB6254B8E08A5A2826D22C88810`. It remains separate from the installed `dev` executable and has not received an in-game check.
 - **SEPARATE ISSUE:** relogging corrected a previously stale level display. The cause of missed live stat updates has not been established by this shortcut test.
+
+## October 8, 2026 — README screenshot redaction
+
+- **DOCUMENTED:** both README captures now mosaic item-description text and visible item sprites. The original JPEGs were removed from the current branch tree and the README points to the same PNG replacements as fork `dev`, at the original 1920 × 1057 dimensions.
+- **VERIFIED:** decoded-pixel comparison against the original captures found 26,112 changed pixels inside the marked regions of the auction capture and 13,094 inside the client capture, with zero changed pixels outside those regions. This documentation-only edit does not change the integrated client build. Earlier Git commits still contain the original JPEGs.

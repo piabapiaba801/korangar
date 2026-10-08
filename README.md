@@ -42,13 +42,13 @@ See [TECHNICAL_STATUS_DEV.md](TECHNICAL_STATUS_DEV.md) for the current developme
 
 ### 📸 FreokRO client captures
 
-These October 7, 2026 captures show the locally running client. The auction is supplied by the separate private HUD. The client and auction item descriptions are visibly different here, so these images are a reference for the ongoing Classic skin work.
+These October 7, 2026 captures show the locally running client. The auction is supplied by the separate private HUD. The client and auction item windows are visibly different here, so these images are a reference for the ongoing Classic skin work. Item description text and item sprites are mosaicked in both captures.
 
-![FreokRO client with the Black Market auction and item descriptions](docs/screenshots/freokro-auction-and-item-details.jpg)
+![FreokRO client with the Black Market auction and masked item descriptions and sprites](docs/screenshots/freokro-auction-and-item-details-mosaic.png)
 
 *Black Market, inventory, and item descriptions open together.*
 
-![FreokRO client inventory and item description](docs/screenshots/freokro-client-item-details.jpg)
+![FreokRO client inventory with masked item description and sprites](docs/screenshots/freokro-client-item-details-mosaic.png)
 
 *The client item description and inventory with the auction closed.*
 
