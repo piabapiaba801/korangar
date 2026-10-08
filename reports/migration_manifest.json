@@ -1,0 +1,30 @@
+{
+  "status": "pilot_pending_runtime_validation",
+  "branch": "freokro",
+  "source_commit": "461a8c0b",
+  "pilot_map": "prontera",
+  "changes": [
+    "Replace ground texture names in memory with four supplied FreokRO PNGs",
+    "Clear static RSW scenery objects in memory",
+    "Disable the legacy map water plane in the pilot",
+    "Use terrain vertices for finite shadow bounds when no scenery objects remain"
+  ],
+  "new_resources": [
+    "korangar/archive/data/texture/freokro_ground_base.png",
+    "korangar/archive/data/texture/freokro_ground_light.png",
+    "korangar/archive/data/texture/freokro_ground_dark.png",
+    "korangar/archive/data/texture/freokro_ground_transition.png"
+  ],
+  "preserved_resources": [
+    "data/prontera.rsw",
+    "data/prontera.gnd",
+    "data/prontera.gat",
+    "all original archives and extracted assets"
+  ],
+  "deletion_candidates": [],
+  "removed_resources": [],
+  "runtime_dependencies_remaining": [
+    "original Prontera RSW/GND/GAT structural files",
+    "original game archive for non-migrated maps and other game resources"
+  ]
+}

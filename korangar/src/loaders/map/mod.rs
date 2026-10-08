@@ -4,7 +4,7 @@ mod water_plane;
 use std::sync::{Arc, Mutex};
 
 use bytemuck::Pod;
-use cgmath::Vector3;
+use cgmath::{Point3, Vector3};
 use hashbrown::HashMap;
 use korangar_audio::AudioEngine;
 use korangar_collision::{AABB, KDTree, Sphere};
@@ -88,10 +88,12 @@ impl MapLoader {
         let _map_sky_data = library.get::<MapSkyData>(&resource_file);
 
         let ground_file = format!("data\\{}", map_data.ground_file);
-        let ground_data: GroundData = parse_generic_data(&ground_file, &self.game_file_loader)?;
+        let mut ground_data: GroundData = parse_generic_data(&ground_file, &self.game_file_loader)?;
 
         let gat_file = format!("data\\{}", map_data.gat_file);
         let mut gat_data: GatData = parse_generic_data(&gat_file, &self.game_file_loader)?;
+
+        apply_freokro_map_pilot(&resource_file, &mut map_data, &mut ground_data);
 
         #[cfg(feature = "debug")]
         let map_data_clone = map_data.clone();
@@ -235,6 +237,15 @@ impl MapLoader {
             .collect();
         let object_kdtree = KDTree::from_objects(&object_bounding_boxes);
 
+        // A scenery-free map still needs finite bounds for the shadow camera.
+        let level_bound = if object_bounding_boxes.is_empty() {
+            AABB::from_vertices(model_vertices.iter().map(|vertex| {
+                Point3::new(vertex.position[0], vertex.position[1], vertex.position[2])
+            }))
+        } else {
+            object_kdtree.root_boundary()
+        };
+
         let BufferAndTextures {
             vertex_buffer,
             index_buffer,
@@ -261,7 +272,7 @@ impl MapLoader {
         let map = Map::new(
             gat_data.map_width as u16,
             gat_data.map_height as u16,
-            object_kdtree.root_boundary(),
+            level_bound,
             lighting,
             water_plane,
             gat_data.tiles,
@@ -328,6 +339,40 @@ impl MapLoader {
             videos,
         }
     }
+}
+
+/// Preview the FreokRO map art on Prontera without changing the original map
+/// files or the GAT cells used for movement and height.
+fn apply_freokro_map_pilot(resource_file: &str, map_data: &mut MapData, ground_data: &mut GroundData) {
+    if resource_file != "prontera" {
+        return;
+    }
+
+    const TEXTURES: [&str; 4] = [
+        "freokro_ground_base.png",
+        "freokro_ground_light.png",
+        "freokro_ground_dark.png",
+        "freokro_ground_transition.png",
+    ];
+
+    ground_data.textures = TEXTURES.iter().map(|name| (*name).to_string()).collect();
+    ground_data.texture_count = TEXTURES.len() as i32;
+
+    for (index, surface) in ground_data.surfaces.iter_mut().enumerate() {
+        // Stable variation, weighted toward the base tile.
+        let selection = index.wrapping_mul(1_103_515_245).wrapping_add(12_345) % 100;
+        surface.texture_index = match selection {
+            0..=79 => 0,
+            80..=89 => 1,
+            90..=97 => 2,
+            _ => 3,
+        };
+    }
+
+    // Only static scenery comes from RSW objects. NPCs and players are loaded
+    // separately, while collision and walkability remain in the untouched GAT.
+    map_data.resources.objects.clear();
+    map_data.water_settings = None;
 }
 
 struct BufferAndTextures {
