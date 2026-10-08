@@ -38,6 +38,12 @@ The in-game menu includes **Skin**. **Classic** is the first choice and the defa
 
 Prepare assets in the installation directory, start the database and servers before the client, and run the HUD agent to use the auction. The local **FreokRO Client (iniciar tudo)** shortcut performs that sequence but is not part of this repository. Auction window opening was confirmed. After the October 7, 2026 database schema fix, the user confirmed escrow passed in the client; bidding, buying, cancellation, and item return need separate checks. Compilation alone does not validate every feature.
 
+### ⚡ Startup performance
+
+Normal startup skips the full content hash of the game archives. `sync-cache` still calculates it, and debug builds can opt into verification by setting `KORANGAR_VERIFY_GAME_FILES=1` before launch. This keeps the existing cache sync hash while avoiding a full read of the multi-gigabyte archive on every ordinary launch.
+
+In one controlled local Windows comparison on October 8, 2026, direct Vulkan launches reached a responsive window in **11.1 seconds** with the prior executable and **7.9 seconds** with the optimized build, using the same game directory. The hash phase fell from **2,961 ms** to **0 ms**. The regular DX12 launcher was observed at **15.6 seconds** before this change; the updated executable reached a responsive DX12 window in **12.6 seconds** in a separate test. These are single-run measurements and can vary with launch conditions and disk cache state. Opening `data-freokro.7z` still took about **4–5 seconds**.
+
 See [TECHNICAL_STATUS_DEV.md](TECHNICAL_STATUS_DEV.md) for the current development checkpoint.
 
 ### 📸 FreokRO client captures
