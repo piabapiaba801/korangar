@@ -50,7 +50,13 @@ In one controlled local Windows comparison on October 8, 2026, direct Vulkan lau
 
 See [TECHNICAL_STATUS_FREOKRO.md](TECHNICAL_STATUS_FREOKRO.md) for the current FreokRO state. The earlier client checkpoint remains in [TECHNICAL_STATUS_DEV.md](TECHNICAL_STATUS_DEV.md).
 
-### 📸 FreokRO client captures
+### 🗺️ Current FreokRO map state
+
+![Current FreokRO Prontera pilot with project ground textures, player, and NPCs](docs/screenshots/freokro-prontera-map-pilot.jpg)
+
+*Prontera pilot, October 8, 2026. Four project-supplied ground textures replace the original ground art, and static map scenery is hidden. Navigation issues and a remaining flag/banner are still being investigated. Other maps have not yet been migrated.*
+
+### 📸 Earlier FreokRO client captures
 
 These October 7, 2026 captures show the locally running client. The auction is supplied by the separate private HUD. The client and auction item windows are visibly different here, so these images are a reference for the ongoing Classic skin work. Item description text and item sprites are mosaicked in both captures.
 

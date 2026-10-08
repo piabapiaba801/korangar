@@ -10,7 +10,7 @@
 
 - The current code changes **Prontera only**. At load time, it replaces `.gnd` ground texture references with four project-supplied PNGs, removes static `.rsw` scenery objects from the rendered map, and disables the legacy water plane. The original `.rsw`, `.gnd`, `.gat`, GRF, and 7z files remain unchanged.
 - The `.gat` cell data, flags, and heights are read as before. Removing visual geometry has nevertheless exposed navigation and visual alignment problems in the live pilot; preservation of `.gat` alone does not prove that navigation feels correct.
-- The debug build and `cargo check` passed with `nightly-2026-02-01`, `unicode,debug`, local NASM, and Slang. The user opened the pilot executable in the game installation and supplied a Prontera screenshot in the October 8 chat confirming that the new ground renders with NPCs and the player visible. That capture is not part of this repository.
+- The debug build and `cargo check` passed with `nightly-2026-02-01`, `unicode,debug`, local NASM, and Slang. The user opened the pilot executable in the game installation and supplied a [Prontera screenshot](docs/screenshots/freokro-prontera-map-pilot.jpg) confirming that the new ground renders with NPCs and the player visible. The README presents it as the current map state.
 - The screenshot also shows a remaining flag/banner. Its source has **not** been identified. It may be a server entity or another visual source; removing all NPCs to hide it would risk gameplay.
 
 ## Asset audit and deletion status
