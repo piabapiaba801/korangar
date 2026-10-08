@@ -28,3 +28,8 @@ This file records the **initial FreokRO `dev` snapshot before any integration**.
 - **VALIDATED:** the focused keyboard test passed with `unicode` and with `unicode,debug`; the `unicode,debug` release build passed. The user confirmed in the live local client that Alt+C closed and reopened Character Overview.
 - **LOCAL BUILD:** the installed `korangar.exe` is the new `dev` build, SHA256 `F41853278450443D6C3B4D31BCAB1A859360B7A2E101A029A232669A7589729C`. The previous executable was retained in the local installation's `archive` directory.
 - **SEPARATE ISSUE:** relogging corrected a previously stale level display. The cause of missed live stat updates has not been established by this shortcut test.
+
+## October 8, 2026 — README screenshot redaction
+
+- **DOCUMENTED:** both README captures now mosaic item-description text and visible item sprites. The original JPEGs were removed from the current branch tree and the README points to PNG replacements at the original 1920 × 1057 dimensions.
+- **VERIFIED:** decoded-pixel comparison found 26,112 changed pixels inside the marked regions of the auction capture and 13,094 inside the client capture, with zero changed pixels outside those regions. This documentation-only edit does not change the client build. Earlier Git commits still contain the original JPEGs.
