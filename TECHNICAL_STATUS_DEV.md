@@ -44,3 +44,10 @@ This file records the FreokRO development snapshot and its integration into the 
 
 - **DOCUMENTED:** both README captures now mosaic item-description text and visible item sprites. The original JPEGs were removed from the current branch tree and the README points to the same PNG replacements as fork `dev`, at the original 1920 × 1057 dimensions.
 - **VERIFIED:** decoded-pixel comparison against the original captures found 26,112 changed pixels inside the marked regions of the auction capture and 13,094 inside the client capture, with zero changed pixels outside those regions. This documentation-only edit does not change the integrated client build. Earlier Git commits still contain the original JPEGs.
+
+## October 8, 2026 — Startup archive hash optimization on the integration branch
+
+- **IMPLEMENTED:** the `lib.rs` initialization path now skips the full game archive content hash on ordinary startup. `sync-cache` still calculates it, and debug builds can opt into the previous verification with `KORANGAR_VERIFY_GAME_FILES=1`. The cache archive format is unchanged.
+- **COMPILE CHECK:** `cargo +nightly-2026-02-01 check --locked -p korangar --features unicode,debug` passed after this change. The earlier rebase release build and executable hash above predate this optimization. No new rebase executable was deployed or tested in the live game.
+- **DEVELOPMENT BUILD EVIDENCE:** the matching local `dev` build passed a release compilation and was deployed. In direct Vulkan launches, its responsive-window time fell from 11.129 to 7.856 seconds, and the hash phase fell from 2,961 ms to 0 ms. A separate optimized DX12 launch took 12.640 seconds versus the previously observed 15.6-second shortcut launch. These measurements belong to the `dev` executable, not this integration branch.
+- **REMAINING COST:** opening `data-freokro.7z` took about 4–5 seconds in the local `dev` tests. The integrated build still needs its own startup and gameplay checks.
