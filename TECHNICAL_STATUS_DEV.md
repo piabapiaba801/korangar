@@ -30,3 +30,12 @@ This file records the FreokRO development snapshot and its integration into the 
 - **NOT VALIDATED:** visual inspection of Skin → Classic / Original selection, card icons, all item types, persistence after restart, and the rest of the interface in a real game session after this build. The tool's browser security policy blocked a local HTML preview.
 - **NOT VALIDATED:** Episode 19 and all auction paths after the skin change. The user reported that server-side escrow passed in the client after its SQL migration, but this build has not independently repeated that test.
 - **PENDING:** compare the actual game UI with the Auction HUD, adjust any components outside the shared theme, and test item descriptions and skin switching.
+
+## October 8, 2026 — Character Overview shortcut on the integration branch
+
+- **BASE CHECK:** fetched upstream `main` at `e14d3203ad63f35962f6492d8a6b348eb8f47d47`, unchanged from this branch's merge base. No base rebase or new conflict resolution was required.
+- **DEV SOURCE:** fork `dev` commit `97323d0f89751af30902fc9e6c3cdf00c8b4fcf8`. The shortcut was adapted to the integrated `lib.rs` application layout instead of copying the old `main.rs` handler.
+- **IMPLEMENTED:** Alt+C toggles Character Overview while a player is loaded. Both Alt keys work. Reopening constructs the window from the current player state, and Alt+C is reserved from custom skill bindings.
+- **VALIDATED:** the matching `dev` keyboard test passed with `unicode` and `unicode,debug`; the user confirmed close and reopen in the live `dev` client. This integration branch passed `cargo +nightly-2026-02-01 fmt --check --package korangar` and `cargo +nightly-2026-02-01 build --release --locked -p korangar --features unicode,debug`.
+- **INTEGRATION BUILD:** the `rebase` executable is 51,755,008 bytes with SHA256 `90834E8D7A8764B88827CCD51E6A60C24D372DB6254B8E08A5A2826D22C88810`. It remains separate from the installed `dev` executable and has not received an in-game check.
+- **SEPARATE ISSUE:** relogging corrected a previously stale level display. The cause of missed live stat updates has not been established by this shortcut test.
