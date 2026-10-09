@@ -26,6 +26,7 @@
 - The first pass indexed **1,104 `.rsw` maps** and **3,160 distinct ground texture paths** from the extracted local game data. All 1,104 maps have a resolved `.gat`; `air_evt` is the only map without a resolved `.gnd` in that extraction.
 - [Map inventory](reports/map_inventory.csv), [ground texture dependencies](reports/asset_dependencies.csv), [baseline](reports/baseline.md), and [migration manifest](reports/migration_manifest.json) are committed. Model references, shared UI consumers, archive overrides, and ownership still require auditing.
 - **No original assets have been deleted.** The 12 original ground textures referenced by Prontera are in [blocked removals](reports/blocked_removals.csv); [delete candidates](reports/delete_candidates.csv) is empty. No reduction in distribution size has been verified.
+- [The legacy map removal queue](reports/legacy_map_removal_queue.csv) now records 1,104 map IDs in the old local `data-freokro.7z`: 1,053 active IDs with authored replacements and 51 outside the active server list. It records which original RSW/GND/GAT entries are present; 21 active IDs lack an old GND entry in this particular archive. All entries remain on hold until runtime validation and dependency review.
 - The project-supplied ground PNGs total **14,382,481 bytes**. They still require repeated-tile seam testing and possible optimization.
 
 ## Original map authoring checkpoint
