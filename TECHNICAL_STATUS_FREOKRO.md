@@ -17,9 +17,9 @@
 ## Map migration: implemented scope
 
 - The original Prontera-only runtime texture override has now been removed. The client reads the newly authored map files directly from the local `freokro-maps.7z` package, which takes precedence over the older archives. The `.rsw`, `.gnd`, and `.gat` drafts cover all 1,265 active maps.
-- The [Prontera screenshot](docs/screenshots/freokro-prontera-map-pilot.jpg) shows the older texture pilot. The user visually approved the first authored flat-map batch in-game on October 9, then reported clickable places where the character could not walk. The cause was eight higher-priority legacy maps in the rAthena renewal and pre-renewal override caches. Both override files have been cleared, leaving the new main cache as the map source. Movement after a Map-server restart awaits retesting.
-- A black, one-GND-tile perimeter now marks the real edge of every active map without blocking its GAT cells. The client builds a map overview from the GND's ground palette and shows the player position; it opens when entering a map and can be toggled with **Alt+M** or the menu. The updated release build and local package are installed, but the new border and minimap have not yet been visually checked.
-- The screenshot also shows a remaining flag/banner. Its source has **not** been identified. It may be a server entity or another visual source; removing all NPCs to hide it would risk gameplay.
+- The [current Prontera screenshot](docs/screenshots/freokro-prontera-current-2026-10-09.jpg) shows the authored ground, the FreokRO portal sprite, temporary character/NPC placeholders, and the basic minimap. The user visually approved the first authored flat-map batch in-game on October 9, then reported clickable places where the character could not walk. The cause was eight higher-priority legacy maps in the rAthena renewal and pre-renewal override caches. Both override files have been cleared, leaving the new main cache as the map source. Movement after a Map-server restart awaits retesting.
+- A black, one-GND-tile perimeter now marks the real edge of every active map without blocking its GAT cells. The client builds a map overview from the GND's ground palette and shows the player position; it opens when entering a map and can be toggled with **Alt+M** or the menu. The current screenshot confirms the minimap renders in Prontera; the black perimeter still needs an in-game edge check.
+- An earlier pilot capture showed a flag/banner whose source was not identified. It is not visible in the current screenshot; no NPCs were removed merely to hide it.
 
 ## Asset audit and deletion status
 
@@ -66,4 +66,4 @@ The 51 extracted map IDs outside the active server list were not regenerated in 
 4. Identify remaining Gravity asset consumers before deleting legacy files. Develop distinct FreokRO scenery and gameplay obstacles as the next art and navigation pass.
 5. When requested, add portal markers to the minimap from actual server coordinates and live warp entities. Finish and connect the animated emerald cursor after its artwork is approved.
 
-The first authored flat-map view was approved by the user. The cache fix, black perimeter, and basic minimap are installed locally and await the next visual and gameplay check. Portal minimap markers and the animated cursor are intentionally pending.
+The first authored flat-map view was approved by the user. The current screenshot shows the basic minimap and FreokRO portal sprite; the cache fix, black perimeter, and movement still await focused gameplay checks. Portal minimap markers and the animated cursor are intentionally pending.
