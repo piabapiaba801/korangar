@@ -10,6 +10,14 @@ FreokRO is a custom game project with its own visual identity. Its client adapts
 
 The emblem above is the project's visual direction. The FreokRO branch now contains original flat RSW, GND, and GAT drafts for every active map. See the [map-authoring model](map-authoring/README.md) and [technical status](TECHNICAL_STATUS_FREOKRO.md) for installation and validation details.
 
+## 🌱 Point zero: a Ragnarok-like Plus foundation
+
+FreokRO is the starting point for a **“Ragnarok-like Plus”**: a playable client and emulator foundation from which a new game can grow. The phrase describes its roots, not a fixed design. Creators can build new worlds, art, interfaces, progression, combat, social systems, or take the project in another direction entirely. This branch is the **point zero** of that work, not a finished game or a prescribed final form.
+
+The long-term goal is to release a reusable base that distributes **no Gravity-owned game assets or other Gravity intellectual property**. That goal has **not yet been reached**. The map replacement, original art, and asset audit are still in progress; some technical map names and coordinates remain as migration references. The current repository state is described in the [technical status](TECHNICAL_STATUS_FREOKRO.md), and users must provide any compatible third-party assets they choose to use during development.
+
+When the client and the [FreokRO rAthena emulator](https://github.com/piabapiaba801/freokro-rathena-korangar) are stable enough to serve as that public base, development will move from frequent foundational commits toward a slower maintenance cadence: fixes, compatibility updates, documentation, and deliberate new features.
+
 ## 🧩 FreokRO adaptation
 
 `freokro` is the active FreokRO development branch. The `dev` branch preserves the earlier client line based on [upstream Korangar](https://github.com/vE5li/korangar) tag [`v0.1.1-20260220`](https://github.com/vE5li/korangar/releases/tag/v0.1.1-20260220); `rebase` integrates that line with newer upstream `main`. Neither upstream nor fork `main` is modified by this work. The client requires the [FreokRO rAthena fork](https://github.com/piabapiaba801/freokro-rathena-korangar), configured for protocol `20220406` without packet obfuscation. The original Ragexe line uses `PACKETVER 20250716` and runs separately.
@@ -34,7 +42,7 @@ The reference build on Windows is:
 cargo +nightly-2026-02-01 build --release --locked -p korangar --features unicode,debug
 ```
 
-Upstream Korangar's build requirements also apply. Game assets, `data-freokro.7z`, local server configuration, and the deployed executable stay outside this source repository.
+Upstream Korangar's build requirements also apply. Game assets, local server configuration, and the deployed executable stay outside this source repository. The old local `data-freokro.7z` package was removed from the physical game copy.
 
 ### ▶️ Run and validate
 
@@ -46,7 +54,7 @@ Prepare assets in the installation directory, start the database and servers bef
 
 Normal startup skips the full content hash of the game archives. `sync-cache` still calculates it, and debug builds can opt into verification by setting `KORANGAR_VERIFY_GAME_FILES=1` before launch. This keeps the existing cache sync hash while avoiding a full read of the multi-gigabyte archive on every ordinary launch.
 
-In one controlled local Windows comparison on October 8, 2026, direct Vulkan launches reached a responsive window in **11.1 seconds** with the prior executable and **7.9 seconds** with the optimized build, using the same game directory. The hash phase fell from **2,961 ms** to **0 ms**. The regular DX12 launcher was observed at **15.6 seconds** before this change; the updated executable reached a responsive DX12 window in **12.6 seconds** in a separate test. These are single-run measurements and can vary with launch conditions and disk cache state. Opening `data-freokro.7z` still took about **4–5 seconds**.
+In one controlled local Windows comparison on October 8, 2026, direct Vulkan launches reached a responsive window in **11.1 seconds** with the prior executable and **7.9 seconds** with the optimized build, using the same game directory. The hash phase fell from **2,961 ms** to **0 ms**. The regular DX12 launcher was observed at **15.6 seconds** before this change; the updated executable reached a responsive DX12 window in **12.6 seconds** in a separate test. These are single-run measurements and can vary with launch conditions and disk cache state. At the time, opening the now-removed `data-freokro.7z` took about **4–5 seconds**.
 
 ### 🎞️ FreokRO startup screen
 
