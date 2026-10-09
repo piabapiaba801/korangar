@@ -13,7 +13,7 @@ Run `tools/build_freokro_sprites.py` and `tools/build_freokro_placeholders.py` w
 | All skill icons | `FREOKRO_SKILL_PLACEHOLDER` | Temporary common skill icon; skill IDs and behavior stay intact |
 | Client mouse cursor | `FREOKRO_CURSOR` | Emerald animated idle, click, attack, dialog, and prohibited states |
 
-The client resolves the first three legacy identifiers in `korangar/src/loaders/mod.rs`. Female player routing is in `korangar/src/world/entity/mod.rs`, skill icon routing is in `korangar/src/loaders/async/mod.rs`, and cursor routing is in `korangar/src/interface/cursor/mod.rs`. The generic `npc/missing.spr` and `npc/missing.act` remain the fallback for other unavailable sprites. The earlier portal, banner, and taming assets passed the game's SPR/ACT parser test and the user reported that the sprite test passed in the client. The new placeholders await visual validation.
+The client resolves the first three legacy identifiers in `korangar/src/loaders/mod.rs`. Female player routing is in `korangar/src/world/entity/mod.rs`, skill icon routing is in `korangar/src/loaders/async/mod.rs`, and cursor routing is in `korangar/src/interface/cursor/mod.rs`. The generic `npc/missing.spr` and `npc/missing.act` remain the fallback for other unavailable sprites. All six FreokRO sprite sets passed the game's SPR/ACT parser test. The user confirmed the cursor, female character, and common skill icon in the client on October 9, 2026.
 
 ## Temporary animation scope
 
