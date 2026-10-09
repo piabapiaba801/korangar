@@ -62,6 +62,8 @@ pub enum InputEvent {
     ToggleMenuWindow,
     /// Open or close the character overview window. Only works while playing.
     ToggleCharacterOverviewWindow,
+    /// Open or close the current map overview. Only works while playing.
+    ToggleMiniMapWindow,
     /// Open or close the inventory window. Only works while playing.
     ToggleInventoryWindow,
     /// Open or close the equipment window. Only works while playing.

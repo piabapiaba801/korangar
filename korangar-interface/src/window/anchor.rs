@@ -65,6 +65,10 @@ impl<App> Anchor<App>
 where
     App: Application,
 {
+    pub fn at(anchor_point: AnchorPoint, offset: App::Position) -> Self {
+        Self::initialized(anchor_point, offset)
+    }
+
     fn initialized(anchor_point: AnchorPoint, offset: App::Position) -> Self {
         Self {
             anchor_point,

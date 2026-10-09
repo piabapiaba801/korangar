@@ -14,7 +14,7 @@ use ragnarok_formats::sprite::{PaletteColor, RgbaImageData, SpriteData};
 use ragnarok_formats::version::InternalVersion;
 use rust_state::RustState;
 
-use super::{FALLBACK_SPRITE_FILE, TextureLoader};
+use super::{FALLBACK_SPRITE_FILE, TextureLoader, freokro_sprite_path};
 use crate::graphics::Texture;
 use crate::loaders::GameFileLoader;
 use crate::loaders::color::premultiply_alpha;
@@ -65,7 +65,8 @@ impl SpriteLoader {
         #[cfg(feature = "debug")]
         let timer = Timer::new_dynamic(format!("load sprite from {}", path.magenta()));
 
-        let bytes = match self.game_file_loader.get(&format!("data\\sprite\\{path}")) {
+        let resolved_path = freokro_sprite_path(path);
+        let bytes = match self.game_file_loader.get(&format!("data\\sprite\\{resolved_path}")) {
             Ok(bytes) => bytes,
             Err(_error) => {
                 #[cfg(feature = "debug")]

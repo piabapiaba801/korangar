@@ -2087,6 +2087,17 @@ impl Client {
                         }
                     }
                 }
+                InputEvent::ToggleMiniMapWindow => {
+                    if let Some(map) = self.map.as_ref() {
+                        match self.interface.is_window_with_class_open(WindowClass::MiniMap) {
+                            true => self.interface.close_window_with_class(WindowClass::MiniMap),
+                            false => self.interface.open_window(MiniMapWindow::new(
+                                self.current_map_name.clone().unwrap_or_else(|| "map".to_owned()),
+                                map.mini_map().clone(),
+                            )),
+                        }
+                    }
+                }
                 InputEvent::ToggleInventoryWindow => {
                     if self.client_state.try_follow(this_entity()).is_some() {
                         match self.interface.is_window_with_class_open(WindowClass::Inventory) {
@@ -2765,6 +2776,12 @@ impl Client {
                         false => {
                             // Normal map switch
                             let map = self.map.insert(map);
+
+                            self.interface.close_window_with_class(WindowClass::MiniMap);
+                            self.interface.open_window(MiniMapWindow::new(
+                                self.current_map_name.clone().unwrap_or_else(|| "map".to_owned()),
+                                map.mini_map().clone(),
+                            ));
 
                             map.set_ambient_sound_sources(&self.audio_engine);
                             self.audio_engine.play_background_music_track(map.background_music_track_name());

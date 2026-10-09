@@ -307,6 +307,10 @@ impl InputSystem {
             events.push(InputEvent::ToggleCharacterOverviewWindow);
         }
 
+        if alt_down && !control_down && !shift_down && self.get_key(KeyCode::KeyM).pressed() {
+            events.push(InputEvent::ToggleMiniMapWindow);
+        }
+
         if alt_down && self.get_key(KeyCode::KeyE).pressed() {
             events.push(InputEvent::ToggleInventoryWindow);
         }

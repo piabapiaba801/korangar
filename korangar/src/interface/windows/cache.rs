@@ -2,12 +2,12 @@ use std::collections::HashMap;
 
 #[cfg(feature = "debug")]
 use korangar_debug::logging::{Colorize, print_debug};
-use korangar_interface::window::Anchor;
+use korangar_interface::window::{Anchor, AnchorPoint};
 use ron::ser::PrettyConfig;
 use serde::{Deserialize, Serialize};
 
 use super::WindowClass;
-use crate::graphics::ScreenSize;
+use crate::graphics::{ScreenPosition, ScreenSize};
 use crate::state::ClientState;
 
 #[derive(Serialize, Deserialize)]
@@ -58,7 +58,7 @@ impl WindowCache {
 
 impl korangar_interface::application::WindowCache<ClientState> for WindowCache {
     fn create() -> Self {
-        Self::load().unwrap_or_else(|| {
+        let mut cache = Self::load().unwrap_or_else(|| {
             #[cfg(feature = "debug")]
             print_debug!(
                 "failed to load window cache from {}. creating empty cache",
@@ -66,7 +66,14 @@ impl korangar_interface::application::WindowCache<ClientState> for WindowCache {
             );
 
             Default::default()
-        })
+        });
+        cache.entries.entry(WindowClass::MiniMap).or_insert_with(|| {
+            WindowState::new(
+                Anchor::at(AnchorPoint::TopRight, ScreenPosition { left: -236.0, top: 32.0 }),
+                ScreenSize { width: 224.0, height: 240.0 },
+            )
+        });
+        cache
     }
 
     fn get_window_state(&self, class: WindowClass) -> Option<(Anchor<ClientState>, ScreenSize)> {

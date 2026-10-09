@@ -39,11 +39,15 @@ fn freokro_authored_maps_are_readable() {
         assert_eq!((gat.map_width, gat.map_height), (width, height));
         assert_eq!(ground.texture_name_length, 80);
         assert_eq!(ground.textures.len(), 4);
+        assert_eq!(ground.surfaces.len(), 8);
         assert!(ground.textures.iter().all(|texture| texture.starts_with("freokro_ground_")));
         assert_eq!(ground.light_map_count, 1);
         assert_eq!((ground.light_map_width, ground.light_map_height), (8, 8));
         assert_eq!(ground.light_map_cells_per_grid, 1);
         assert!(ground.surfaces.iter().all(|surface| surface.light_map_index == 0));
+        assert!(ground.surfaces[4..].iter().all(|surface| {
+            surface.color.red == 0 && surface.color.green == 0 && surface.color.blue == 0 && surface.color.alpha == 255
+        }));
         assert_eq!(gat.tiles.len(), (width * height) as usize);
         assert!(gat.tiles.iter().all(|tile| {
             tile.flags == TileFlags::WALKABLE
@@ -58,5 +62,13 @@ fn freokro_authored_maps_are_readable() {
                 && tile.northwest_corner_height == 0.0
                 && tile.northeast_corner_height == 0.0
         }));
+        let ground_width = ground.width as usize;
+        let ground_height = ground.height as usize;
+        for (index, tile) in ground.ground_tiles.iter().enumerate() {
+            let x = index % ground_width;
+            let y = index / ground_width;
+            let border = x == 0 || y == 0 || x == ground_width - 1 || y == ground_height - 1;
+            assert_eq!(tile.top_surface_index >= 4, border, "wrong border in {name} at {x}, {y}");
+        }
     }
 }

@@ -1,4 +1,5 @@
 mod lighting;
+mod minimap;
 
 #[cfg(feature = "debug")]
 use std::collections::HashSet;
@@ -24,6 +25,7 @@ use rust_state::RustState;
 use wgpu::Queue;
 
 pub use self::lighting::Lighting;
+pub use self::minimap::MiniMapData;
 use super::{Camera, Entity, GroundItem, Object, PointLightId, PointLightManager, ResourceSet, ResourceSetBuffer, SubMesh, Video};
 #[cfg(feature = "debug")]
 use super::{LightSourceExt, Model, PointLightSet};
@@ -100,6 +102,7 @@ impl WaterPlane {
 pub struct Map {
     width: u16,
     height: u16,
+    mini_map: MiniMapData,
     level_bound: AABB,
     lighting: Lighting,
     water_plane: Option<WaterPlane>,
@@ -134,6 +137,7 @@ impl Map {
     pub fn new(
         width: u16,
         height: u16,
+        mini_map: MiniMapData,
         level_bound: AABB,
         lighting: Lighting,
         water_plane: Option<WaterPlane>,
@@ -155,6 +159,7 @@ impl Map {
         Self {
             width,
             height,
+            mini_map,
             level_bound,
             lighting,
             water_plane,
@@ -179,6 +184,7 @@ impl Map {
     pub fn new(
         width: u16,
         height: u16,
+        mini_map: MiniMapData,
         level_bound: AABB,
         lighting: Lighting,
         water_plane: Option<WaterPlane>,
@@ -205,6 +211,7 @@ impl Map {
         Self {
             width,
             height,
+            mini_map,
             level_bound,
             lighting,
             water_plane,
@@ -232,6 +239,10 @@ impl Map {
 }
 
 impl Map {
+    pub fn mini_map(&self) -> &MiniMapData {
+        &self.mini_map
+    }
+
     fn average_tile_height(tile: &Tile) -> f32 {
         (tile.southwest_corner_height + tile.southeast_corner_height + tile.northwest_corner_height + tile.northeast_corner_height) / 4.0
     }

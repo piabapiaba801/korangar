@@ -13,7 +13,7 @@ use ragnarok_formats::action::ActionsData;
 use ragnarok_formats::version::InternalVersion;
 
 use super::error::LoadError;
-use crate::loaders::{FALLBACK_ACTIONS_FILE, GameFileLoader};
+use crate::loaders::{FALLBACK_ACTIONS_FILE, GameFileLoader, freokro_sprite_path};
 use crate::world::{ActionEvent, Actions};
 
 const MAX_CACHE_COUNT: u32 = 256;
@@ -47,7 +47,8 @@ impl ActionLoader {
         #[cfg(feature = "debug")]
         let timer = Timer::new_dynamic(format!("load actions from {}", path.magenta()));
 
-        let bytes = match self.game_file_loader.get(&format!("data\\sprite\\{path}")) {
+        let resolved_path = freokro_sprite_path(path);
+        let bytes = match self.game_file_loader.get(&format!("data\\sprite\\{resolved_path}")) {
             Ok(bytes) => bytes,
             Err(_error) => {
                 #[cfg(feature = "debug")]

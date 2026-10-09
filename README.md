@@ -62,9 +62,13 @@ See [TECHNICAL_STATUS_FREOKRO.md](TECHNICAL_STATUS_FREOKRO.md) for the current F
 
 ![Current FreokRO Prontera pilot with project ground textures, player, and NPCs](docs/screenshots/freokro-prontera-map-pilot.jpg)
 
-*Last visually verified Prontera state, October 8, 2026. This capture shows the earlier texture pilot. The new authored map batch has since been installed locally but has not yet been inspected in the running game. The remaining flag/banner may be a server entity rather than a static map object.*
+*Prontera texture pilot, October 8, 2026. This capture predates the authored map batch. The user visually approved the new flat terrain on October 9, but the perimeter and minimap introduced afterward still need an in-game capture. The remaining flag/banner in this older image may be a server entity rather than a static map object.*
 
-The [original map-authoring batch](map-authoring/README.md) provides project-authored RSW, GND, and GAT files for all 1,265 active maps, preserving their original dimensions. Every RSW has no static objects, including trees and vegetation; every GND is flat; every GAT cell is walkable. The local game installation now loads this batch through a separate non-solid 7z archive, with a matching local rAthena map cache. Runtime navigation and warp checks remain pending. Original game assets are still present for dependencies outside the map batch.
+The [original map-authoring batch](map-authoring/README.md) provides project-authored RSW, GND, and GAT files for all **1,265/1,265 active maps (100%)**, preserving their original dimensions. Every RSW has zero static objects, including trees and vegetation; every GND is flat with a black edge; every GAT cell is walkable. The local game loads this batch through a separate non-solid 7z archive, with a matching local rAthena map cache. The client now includes a map overview with the character marker, opened by default and toggled with **Alt+M**. The user approved the first terrain view, then found movement blocked on some clickable areas; eight higher-priority legacy server-cache entries were identified and cleared. Movement after that server fix, the border, minimap, and connected warps await in-game validation.
+
+**Gravity-derived asset removal is not 100%:** the user removed the old local `data-freokro.7z`, its duplicate extraction, and the loose background music folder. Other loose assets still need an ownership and dependency audit. A reliable percentage for all Gravity-derived content is not available. [The technical status](TECHNICAL_STATUS_FREOKRO.md) separates active map replacement, local package removal, and pending work.
+
+FreokRO now has original [portal, banner, and taming sprite artwork](art/freokro/sprites/README.md). The client routes their legacy identifiers to these new assets. Cursor concepts are preserved there as previews; portal markers on the minimap and cursor integration are deferred.
 
 ### 📸 Earlier FreokRO client captures
 

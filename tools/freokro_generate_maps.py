@@ -111,14 +111,20 @@ def write_gnd(path: Path, width: int, height: int, cx: int, cy: int, road: int, 
         # valid before any authored lighting is added in the editor.
         file.write(struct.pack("<4i", 1, 8, 8, 1))
         file.write(bytes([255] * 64 + [0] * 192))
-        file.write(struct.pack("<i", len(TEXTURES)))
-        for index in range(len(TEXTURES)):
-            file.write(struct.pack("<8fhh4B", 0, 1, 0, 1, 1, 1, 0, 0, index, 0, 255, 255, 255, 255))
+        # The second set of surfaces tints the same project textures black.
+        # One GND tile on every edge marks the playable map boundary while
+        # the corresponding GAT cells remain walkable.
+        file.write(struct.pack("<i", len(TEXTURES) * 2))
+        for border in (False, True):
+            for index in range(len(TEXTURES)):
+                shade = 0 if border else 255
+                file.write(struct.pack("<8fhh4B", 0, 1, 0, 1, 1, 1, 0, 0, index, 0, shade, shade, shade, 255))
         for y in range(gh):
             row = bytearray()
             for x in range(gw):
                 texture = texture_for_tile(x, y, cx, cy, road, anchors)
-                row.extend(struct.pack("<4f3i", 0, 0, 0, 0, texture, -1, -1))
+                border = x == 0 or y == 0 or x == gw - 1 or y == gh - 1
+                row.extend(struct.pack("<4f3i", 0, 0, 0, 0, texture + (len(TEXTURES) if border else 0), -1, -1))
             file.write(row)
 
 
