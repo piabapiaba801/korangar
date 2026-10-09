@@ -24,8 +24,13 @@ fn freokro_prontera_files_are_readable() {
     assert!(world.resources.objects.is_empty());
     assert_eq!((ground.width, ground.height), (200, 210));
     assert_eq!((gat.map_width, gat.map_height), (400, 420));
+    assert_eq!(ground.texture_name_length, 80);
     assert_eq!(ground.textures.len(), 4);
     assert!(ground.textures.iter().all(|name| name.starts_with("freokro_ground_")));
+    assert_eq!(ground.light_map_count, 1);
+    assert_eq!((ground.light_map_width, ground.light_map_height), (8, 8));
+    assert_eq!(ground.light_map_cells_per_grid, 1);
+    assert!(ground.surfaces.iter().all(|surface| surface.light_map_index == 0));
     assert_eq!(gat.tiles.len(), 400 * 420);
     assert!(gat.tiles.iter().all(|tile| tile.flags == TileFlags::WALKABLE));
 }

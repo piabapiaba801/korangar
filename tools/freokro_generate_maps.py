@@ -81,12 +81,20 @@ def write_gnd(path: Path, width: int, height: int, cx: int, cy: int, road: int) 
     with path.open("wb") as file:
         file.write(b"GRGN" + bytes((1, 7)))
         file.write(struct.pack("<iifi", gw, gh, 1.0, len(TEXTURES)))
-        file.write(struct.pack("<i", 40))
+        # BrowEdit3 stores both a 40-byte filename and a 40-byte display name
+        # for each texture. Korangar uses this field as one 80-byte string and
+        # stops at the first NUL, so the same file works in both readers.
+        file.write(struct.pack("<i", 80))
         for texture in TEXTURES:
             file.write(fixed(texture, 40))
-        file.write(struct.pack("<5i", 0, 0, 0, 0, len(TEXTURES)))
+            file.write(fixed(texture, 40))
+        # A neutral lightmap keeps BrowEdit3's renderer and tile references
+        # valid before any authored lighting is added in the editor.
+        file.write(struct.pack("<4i", 1, 8, 8, 1))
+        file.write(bytes([255] * 64 + [0] * 192))
+        file.write(struct.pack("<i", len(TEXTURES)))
         for index in range(len(TEXTURES)):
-            file.write(struct.pack("<8fhh4B", 0, 1, 0, 1, 1, 1, 0, 0, index, -1, 255, 255, 255, 255))
+            file.write(struct.pack("<8fhh4B", 0, 1, 0, 1, 1, 1, 0, 0, index, 0, 255, 255, 255, 255))
         for y in range(gh):
             row = bytearray()
             for x in range(gw):

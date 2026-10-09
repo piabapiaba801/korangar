@@ -1,4 +1,4 @@
-# FreokRO technical status — October 8, 2026
+# FreokRO technical status — October 9, 2026
 
 ## Current repository state
 
@@ -34,7 +34,9 @@
 - Blender 5.2 is installed locally. BrowEdit3 is the primary editor for .rsw, .gnd, and .gat; Blender will be used for original 3D props after an import/export path is validated.
 - [The authored Prontera design](map-authoring/prontera.json) now defines an original 400 × 420 GAT and 200 × 210 GND. [The map generator](tools/freokro_generate_maps.py) reads this design only and wrote korangar/archive/data/prontera.rsw, .gnd, and .gat. It does not read the legacy map files, GRFs, or the old map cache. The dimensions were chosen to contain current server script coordinates, whose observed maxima were x=299 and y=379.
 - The generated map is a flat, fully walkable authoring baseline with the four supplied FreokRO ground textures and no static scenery. It is **not yet a finished Prontera**, is **not installed in the live game directory**, and the server still uses its existing map cache. No original map assets have been removed.
-- The Korangar integration test in [authored_map.rs](korangar/tests/authored_map.rs) passed: the client format parser read all three files without trailing bytes and confirmed the dimensions, texture names, empty static scenery, and walkable GAT cells. BrowEdit3 inspection and an in-client/server navigation test still remain before promotion.
+- The first BrowEdit3 inspection hung while opening the draft and reached about 21 GB of memory. Comparing the generated GND with the BrowEdit3 v3.660 reader identified the cause: the draft wrote 40 bytes per texture while BrowEdit3 reads an 80-byte filename/display-name pair. The generator now writes the complete pair and one neutral lightmap. The corrected GND was regenerated; the RSW and GAT are byte-for-byte unchanged. The unresponsive editor process was stopped.
+- The Korangar integration test in [authored_map.rs](korangar/tests/authored_map.rs) passes with checks for the 80-byte texture records, neutral lightmap, dimensions, empty scenery, and walkable GAT cells. A separate byte-layout inspection confirms BrowEdit3's expected GND fields and total file size. The official latest BrowEdit3 release is v3.660; a fresh local installation with only the FreokRO source archive configured and no GRFs was prepared, and the desktop shortcut now targets it. Visual inspection in this clean installation is still pending.
+- An isolated copy of the rAthena mapcache executable built a `prontera`-only cache from the authored GAT/RSW, with 400 x 420 cells. This cache remains in a temporary validation directory; the live server cache was not changed. An initial run used the server's normal map list because the executable changes its working directory, so that result was discarded before the isolated run.
 
 ## Remaining work, in order
 

@@ -10,7 +10,7 @@ FreokRO maps are authored from project-owned design data and textures. The curre
 
 ## Current pilot
 
-The Prontera spec sets a 400 x 420 GAT and a 200 x 210 GND with a new crossroad and plaza pattern. All cells are initially walkable so scripted positions can be checked. This is a draft for BrowEdit3 sculpting and navigation design, not a finished map.
+The Prontera spec sets a 400 x 420 GAT and a 200 x 210 GND with a new crossroad and plaza pattern. All cells are initially walkable so scripted positions can be checked. This is a draft for BrowEdit3 sculpting and navigation design, not a finished map. The GND uses 80-byte texture records (filename plus display name) and a neutral 8 x 8 lightmap so BrowEdit3 can read and render it safely.
 
 The generator reads only the authored JSON:
 
@@ -18,4 +18,6 @@ The generator reads only the authored JSON:
 
 It refuses to overwrite existing generated files. Further visual edits should be saved with BrowEdit3; generate a new draft only in a fresh output directory.
 
-Do not install these files in the live game until the client parses them, the server cache is rebuilt from the new GAT, and NPC/warp navigation has been tested. Keep the existing game assets available during that transition. Technical map IDs and scripted NPC/warp coordinates remain in place for now.
+The Korangar format test parses the files. An isolated rAthena mapcache run also produced a one-map `prontera` cache with the expected 400 x 420 cells. This test cache was not installed on the live server.
+
+Do not install these files in the live game until BrowEdit3 visual inspection, NPC/warp navigation, and an integrated client/server test have passed. Keep the existing game assets available during that transition. Technical map IDs and scripted NPC/warp coordinates remain in place for now.
