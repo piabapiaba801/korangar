@@ -1,0 +1,9 @@
+{
+  "name": "prt_fild06",
+  "gat_width": 380,
+  "gat_height": 340,
+  "plaza_center": [180, 195],
+  "road_half_width": 8,
+  "road_anchors": [[23, 193], [277, 320]],
+  "design_note": "Original FreokRO field east of Prontera. Road anchors retain active server warp coordinates during migration; terrain and navigation are newly authored."
+}

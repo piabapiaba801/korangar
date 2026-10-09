@@ -19,7 +19,7 @@ TEXTURES = (
     "freokro_ground_transition.png",
 )
 NO_WATER_LEVEL = 1_000_000.0  # rAthena's RSW_NO_WATER sentinel
-NAME = re.compile(r"^[a-z0-9_]{1,12}$")
+NAME = re.compile(r"^[a-z0-9_@-]{1,12}$")
 
 
 def fixed(value: str, width: int) -> bytes:
@@ -29,7 +29,7 @@ def fixed(value: str, width: int) -> bytes:
     return encoded.ljust(width, b"\0")
 
 
-def validate(spec: dict) -> tuple[str, int, int, int, int, int]:
+def validate(spec: dict) -> tuple[str, int, int, int, int, int, list[tuple[int, int]]]:
     name = spec["name"]
     width, height = int(spec["gat_width"]), int(spec["gat_height"])
     cx, cy = map(int, spec["plaza_center"])
@@ -40,7 +40,13 @@ def validate(spec: dict) -> tuple[str, int, int, int, int, int]:
         raise ValueError("GAT dimensions must be even and between 32 and 800")
     if not (0 <= cx < width and 0 <= cy < height and 4 <= road <= 40):
         raise ValueError("Plaza or road parameters are outside the map")
-    return name, width, height, cx, cy, road
+    anchors = []
+    for anchor in spec.get("road_anchors", []):
+        ax, ay = map(int, anchor)
+        if not (0 <= ax < width and 0 <= ay < height):
+            raise ValueError(f"Road anchor outside {name}: {anchor}")
+        anchors.append((ax, ay))
+    return name, width, height, cx, cy, road, anchors
 
 
 def write_rsw(path: Path, name: str, width: int, height: int) -> None:
@@ -63,21 +69,33 @@ def write_gat(path: Path, width: int, height: int) -> None:
             file.write(walkable * width)
 
 
-def texture_for_tile(x: int, y: int, cx: int, cy: int, road: int) -> int:
+def texture_for_tile(x: int, y: int, cx: int, cy: int, road: int, anchors: list[tuple[int, int]]) -> int:
     gx, gy = x * 2, y * 2
     dx, dy = abs(gx - cx), abs(gy - cy)
     plaza = (dx / 58.0) ** 2 + (dy / 48.0) ** 2
     if plaza <= 1.0:
         return 1 if (x * 7 + y * 11) % 13 else 3
-    if dx <= road or dy <= road:
-        return 1 if (x * 13 + y * 3) % 9 else 3
-    if dx <= road + 6 or dy <= road + 6:
-        return 2
+    for ax, ay in anchors:
+        on_horizontal = min(ax, cx) <= gx <= max(ax, cx) and abs(gy - ay) <= road
+        on_vertical = abs(gx - cx) <= road and min(ay, cy) <= gy <= max(ay, cy)
+        if on_horizontal or on_vertical:
+            return 1 if (x * 13 + y * 3) % 9 else 3
+    if anchors:
+        for ax, ay in anchors:
+            near_horizontal = min(ax, cx) <= gx <= max(ax, cx) and abs(gy - ay) <= road + 6
+            near_vertical = abs(gx - cx) <= road + 6 and min(ay, cy) <= gy <= max(ay, cy)
+            if near_horizontal or near_vertical:
+                return 2
+    else:
+        if dx <= road or dy <= road:
+            return 1 if (x * 13 + y * 3) % 9 else 3
+        if dx <= road + 6 or dy <= road + 6:
+            return 2
     noise = (x * 73856093 ^ y * 19349663) & 255
     return 0 if noise < 222 else 3 if noise < 247 else 2
 
 
-def write_gnd(path: Path, width: int, height: int, cx: int, cy: int, road: int) -> None:
+def write_gnd(path: Path, width: int, height: int, cx: int, cy: int, road: int, anchors: list[tuple[int, int]]) -> None:
     gw, gh = width // 2, height // 2
     with path.open("wb") as file:
         file.write(b"GRGN" + bytes((1, 7)))
@@ -99,7 +117,7 @@ def write_gnd(path: Path, width: int, height: int, cx: int, cy: int, road: int) 
         for y in range(gh):
             row = bytearray()
             for x in range(gw):
-                texture = texture_for_tile(x, y, cx, cy, road)
+                texture = texture_for_tile(x, y, cx, cy, road, anchors)
                 row.extend(struct.pack("<4f3i", 0, 0, 0, 0, texture, -1, -1))
             file.write(row)
 
@@ -110,14 +128,14 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True, help="Output data directory")
     args = parser.parse_args()
     spec = json.loads(args.spec.read_text(encoding="utf-8"))
-    name, width, height, cx, cy, road = validate(spec)
+    name, width, height, cx, cy, road, anchors = validate(spec)
     args.output.mkdir(parents=True, exist_ok=True)
     paths = {suffix: args.output / f"{name}.{suffix}" for suffix in ("rsw", "gnd", "gat")}
     existing = [str(path) for path in paths.values() if path.exists()]
     if existing:
         raise SystemExit(f"Refusing to overwrite existing maps: {existing}")
     write_rsw(paths["rsw"], name, width, height)
-    write_gnd(paths["gnd"], width, height, cx, cy, road)
+    write_gnd(paths["gnd"], width, height, cx, cy, road, anchors)
     write_gat(paths["gat"], width, height)
     print(json.dumps({"name": name, "gat": [width, height], "source": "FreokRO authored design", "files": {key: str(path) for key, path in paths.items()}}))
 

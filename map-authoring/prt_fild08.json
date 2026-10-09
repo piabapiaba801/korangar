@@ -1,0 +1,9 @@
+{
+  "name": "prt_fild08",
+  "gat_width": 400,
+  "gat_height": 400,
+  "plaza_center": [185, 215],
+  "road_half_width": 8,
+  "road_anchors": [[16, 187], [16, 239], [170, 378], [233, 16], [55, 21], [371, 212]],
+  "design_note": "Original FreokRO field south of Prontera. Road anchors include the Izlude connection and retain active server warp coordinates during migration."
+}

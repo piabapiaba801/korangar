@@ -62,9 +62,9 @@ See [TECHNICAL_STATUS_FREOKRO.md](TECHNICAL_STATUS_FREOKRO.md) for the current F
 
 ![Current FreokRO Prontera pilot with project ground textures, player, and NPCs](docs/screenshots/freokro-prontera-map-pilot.jpg)
 
-*Prontera pilot, October 8, 2026. Four project-supplied ground textures replace the original ground art, and static map scenery is hidden. Navigation issues and a remaining flag/banner are still being investigated. Other maps have not yet been migrated.*
+*Live Prontera pilot, October 8, 2026. Four project-supplied ground textures replace the original ground art, and static map scenery is hidden. Navigation issues and a remaining flag/banner are still being investigated. The other active maps now have authored flat drafts in the source checkout; they have not replaced the live game maps.*
 
-An [original structural Prontera draft](map-authoring/README.md) now provides project-authored RSW, GND, and GAT files for BrowEdit3 refinement. It is staged in the source checkout and has not replaced the live game or server map cache.
+The [original map-authoring batch](map-authoring/README.md) provides project-authored RSW, GND, and GAT files for all 1,265 active maps, preserving their original dimensions. It is staged in the source checkout and has not replaced the live game or server map cache.
 
 ### 📸 Earlier FreokRO client captures
 

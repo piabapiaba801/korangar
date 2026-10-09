@@ -1,23 +1,31 @@
 # FreokRO map authoring
 
-FreokRO maps are authored from project-owned design data and textures. The current pilot is Prontera; its source specification is [prontera.json](prontera.json). The generated structural files are in [the client archive](../korangar/archive/data).
+FreokRO has a reproducible flat-map baseline for the **1,265 maps enabled by the current rAthena configuration**. The [dimension catalog](dimensions.csv) preserves each map's GAT and GND size. Of these sizes, 1,053 came from extracted map headers and 212 from server map-cache headers. Where both sources existed, their dimensions matched. Only dimensions and technical map names were retained; legacy terrain, objects, heights, and navigation cells were not imported.
 
-## Tools
+## Fixed replacement model
 
-- [BrowEdit3](https://github.com/Borf/BrowEdit3) edits RSW world settings and objects, GND ground, and GAT walkability. Use a separate portable installation. Set its RO directory to the checkout's korangar/archive folder and leave its GRF list empty. Do not point this authoring workspace at the legacy game archive.
-- Blender 5.2 can create original 3D props. The conversion path from Blender output to the client's map model format still needs validation; do not treat a Blender file as a drop-in map.
-- The four FreokRO ground PNGs live in korangar/archive/data/texture.
+Every generated map has:
 
-## Current pilot
+- An original RSW with no static objects, including trees, vegetation, buildings, lights, sounds, or effects, and no water plane.
+- A flat GND using the four project-supplied FreokRO ground PNGs in [the texture directory](../korangar/archive/data/texture). The GND includes BrowEdit3-compatible 80-byte texture records and a neutral lightmap.
+- A same-size GAT with zero height and every cell marked as walkable land. Visual roads do not restrict movement.
 
-The Prontera spec sets a 400 x 420 GAT and a 200 x 210 GND with a new crossroad and plaza pattern. All cells are initially walkable so scripted positions can be checked. This is a draft for BrowEdit3 sculpting and navigation design, not a finished map. The GND uses 80-byte texture records (filename plus display name) and a neutral 8 x 8 lightmap so BrowEdit3 can read and render it safely.
+The three fields adjoining Prontera have explicit road anchors at current warp coordinates: [prt_fild05](prt_fild05.json), [prt_fild06](prt_fild06.json), and [prt_fild08](prt_fild08.json). [Prontera](prontera.json) keeps its 312 × 392 GAT and 156 × 196 GND. These authored designs keep the existing technical map IDs and server NPC/warp coordinates for now. All other active maps use the same deterministic flat template with a centered visual crossroad.
 
-The generator reads only the authored JSON:
+## Rebuild
 
-    python tools/freokro_generate_maps.py --spec map-authoring/prontera.json --output korangar/archive/data
+The committed catalog and generator can recreate the files without the old map art or server cache:
 
-It refuses to overwrite existing generated files. Further visual edits should be saved with BrowEdit3; generate a new draft only in a fresh output directory.
+```text
+python tools/freokro_generate_active_maps.py --dimensions map-authoring/dimensions.csv --spec-dir map-authoring --output korangar/archive/data
+```
 
-The Korangar format test parses the files. An isolated rAthena mapcache run also produced a one-map `prontera` cache with the expected 400 x 420 cells, all marked as walkable land. The RSW uses the server's no-water sentinel so those cells are not classified as water. This test cache was not installed on the live server.
+The generator verifies and skips complete maps with matching dimensions and flat-cell format. It rejects partial or mismatched outputs. The dimension catalog was originally assembled with [the dimension audit tool](../tools/freokro_build_map_dimensions.py), which reads only map headers and the active map list.
 
-Do not install these files in the live game until BrowEdit3 visual inspection, NPC/warp navigation, and an integrated client/server test have passed. Keep the existing game assets available during that transition. Technical map IDs and scripted NPC/warp coordinates remain in place for now.
+## Validation and current use
+
+The Korangar format test parses representative RSW/GND/GAT files, including a map name containing `@`, and checks dimensions, flat heights, walkable flags, empty static scenery, textures, and lightmaps. A full isolated rAthena mapcache run accepted all 1,265 maps; inspection of the resulting cache confirmed **104,823,864 walkable land cells** and every catalog dimension. The test cache is outside the live server.
+
+[BrowEdit3](https://github.com/Borf/BrowEdit3/releases) can refine the maps. Point its RO directory at this checkout's `korangar/archive` folder and keep its GRF list empty. A clean v3.660 installation was prepared locally after the first draft exposed an incorrect GND texture record length. Visual inspection in the clean editor remains pending.
+
+These files are a structural baseline, not finished environments. The live client still runs the earlier Prontera visual pilot, and the live rAthena cache has not been replaced. Test map appearance, NPC positions, warps, and movement before installing this batch or removing legacy assets. The 51 extracted maps absent from the active server list are outside this batch.
