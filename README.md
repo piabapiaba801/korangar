@@ -8,7 +8,7 @@
 
 FreokRO is a custom game project with its own visual identity. Its client adapts [Korangar](https://github.com/vE5li/korangar), a Rust Ragnarok Online client with real-time lighting and a customizable interface. Upstream Korangar supports Linux, Windows, and macOS; the FreokRO build and local installation documented here were validated on Windows.
 
-The emblem above is the project's visual direction. The first terrain pilot applies four project-supplied ground textures to Prontera and removes its static scenery at load time. See the [map migration baseline](reports/baseline.md) and [validation status](reports/validation.md) for the current scope and remaining checks.
+The emblem above is the project's visual direction. The FreokRO branch now contains original flat RSW, GND, and GAT drafts for every active map. See the [map-authoring model](map-authoring/README.md) and [technical status](TECHNICAL_STATUS_FREOKRO.md) for installation and validation details.
 
 ## 🧩 FreokRO adaptation
 
@@ -62,9 +62,9 @@ See [TECHNICAL_STATUS_FREOKRO.md](TECHNICAL_STATUS_FREOKRO.md) for the current F
 
 ![Current FreokRO Prontera pilot with project ground textures, player, and NPCs](docs/screenshots/freokro-prontera-map-pilot.jpg)
 
-*Live Prontera pilot, October 8, 2026. Four project-supplied ground textures replace the original ground art, and static map scenery is hidden. Navigation issues and a remaining flag/banner are still being investigated. The other active maps now have authored flat drafts in the source checkout; they have not replaced the live game maps.*
+*Last visually verified Prontera state, October 8, 2026. This capture shows the earlier texture pilot. The new authored map batch has since been installed locally but has not yet been inspected in the running game. The remaining flag/banner may be a server entity rather than a static map object.*
 
-The [original map-authoring batch](map-authoring/README.md) provides project-authored RSW, GND, and GAT files for all 1,265 active maps, preserving their original dimensions. It is staged in the source checkout and has not replaced the live game or server map cache.
+The [original map-authoring batch](map-authoring/README.md) provides project-authored RSW, GND, and GAT files for all 1,265 active maps, preserving their original dimensions. Every RSW has no static objects, including trees and vegetation; every GND is flat; every GAT cell is walkable. The local game installation now loads this batch through a separate non-solid 7z archive, with a matching local rAthena map cache. Runtime navigation and warp checks remain pending. Original game assets are still present for dependencies outside the map batch.
 
 ### 📸 Earlier FreokRO client captures
 

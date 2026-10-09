@@ -88,12 +88,10 @@ impl MapLoader {
         let _map_sky_data = library.get::<MapSkyData>(&resource_file);
 
         let ground_file = format!("data\\{}", map_data.ground_file);
-        let mut ground_data: GroundData = parse_generic_data(&ground_file, &self.game_file_loader)?;
+        let ground_data: GroundData = parse_generic_data(&ground_file, &self.game_file_loader)?;
 
         let gat_file = format!("data\\{}", map_data.gat_file);
         let mut gat_data: GatData = parse_generic_data(&gat_file, &self.game_file_loader)?;
-
-        apply_freokro_map_pilot(&resource_file, &mut map_data, &mut ground_data);
 
         #[cfg(feature = "debug")]
         let map_data_clone = map_data.clone();
@@ -339,40 +337,6 @@ impl MapLoader {
             videos,
         }
     }
-}
-
-/// Preview the FreokRO map art on Prontera without changing the original map
-/// files or the GAT cells used for movement and height.
-fn apply_freokro_map_pilot(resource_file: &str, map_data: &mut MapData, ground_data: &mut GroundData) {
-    if resource_file != "prontera" {
-        return;
-    }
-
-    const TEXTURES: [&str; 4] = [
-        "freokro_ground_base.png",
-        "freokro_ground_light.png",
-        "freokro_ground_dark.png",
-        "freokro_ground_transition.png",
-    ];
-
-    ground_data.textures = TEXTURES.iter().map(|name| (*name).to_string()).collect();
-    ground_data.texture_count = TEXTURES.len() as i32;
-
-    for (index, surface) in ground_data.surfaces.iter_mut().enumerate() {
-        // Stable variation, weighted toward the base tile.
-        let selection = index.wrapping_mul(1_103_515_245).wrapping_add(12_345) % 100;
-        surface.texture_index = match selection {
-            0..=79 => 0,
-            80..=89 => 1,
-            90..=97 => 2,
-            _ => 3,
-        };
-    }
-
-    // Only static scenery comes from RSW objects. NPCs and players are loaded
-    // separately, while collision and walkability remain in the untouched GAT.
-    map_data.resources.objects.clear();
-    map_data.water_settings = None;
 }
 
 struct BufferAndTextures {

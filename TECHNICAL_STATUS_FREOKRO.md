@@ -16,9 +16,9 @@
 
 ## Map migration: implemented scope
 
-- The current code changes **Prontera only**. At load time, it replaces `.gnd` ground texture references with four project-supplied PNGs, removes static `.rsw` scenery objects from the rendered map, and disables the legacy water plane. The original `.rsw`, `.gnd`, `.gat`, GRF, and 7z files remain unchanged.
-- The `.gat` cell data, flags, and heights are read as before. Removing visual geometry has nevertheless exposed navigation and visual alignment problems in the live pilot; preservation of `.gat` alone does not prove that navigation feels correct.
-- The debug build and `cargo check` passed with `nightly-2026-02-01`, `unicode,debug`, local NASM, and Slang. The user opened the pilot executable in the game installation and supplied a [Prontera screenshot](docs/screenshots/freokro-prontera-map-pilot.jpg) confirming that the new ground renders with NPCs and the player visible. The README presents it as the current map state.
+- The original Prontera-only runtime texture override has now been removed. The client reads the newly authored map files directly from the local `freokro-maps.7z` package, which takes precedence over the older archives. The `.rsw`, `.gnd`, and `.gat` drafts cover all 1,265 active maps.
+- The [Prontera screenshot](docs/screenshots/freokro-prontera-map-pilot.jpg) confirmed that the earlier visual pilot rendered with the player and NPCs. It is the **last visually verified state**, not a screenshot of the new batch. Navigation and visual alignment had problems in that earlier pilot; the new flat, fully walkable batch has not yet been checked in-game.
+- A release build with `unicode,debug` completed after removing the override, and its executable was installed in the local game directory. No runtime result has yet been recorded for this build.
 - The screenshot also shows a remaining flag/banner. Its source has **not** been identified. It may be a server entity or another visual source; removing all NPCs to hide it would risk gameplay.
 
 ## Asset audit and deletion status
@@ -35,13 +35,14 @@
 - The user then requested a fixed replacement model that preserves each map's original size while removing terrain relief, static scenery (including trees and vegetation), and non-walkable areas. [The dimension catalog](map-authoring/dimensions.csv) records all **1,265 active maps**: 1,053 dimensions from extracted GND/GAT headers and 212 from the server cache header. Where both sources existed, they agreed. No old terrain, model, height, or cell data was copied. The 51 extracted maps absent from the active server list are outside this batch.
 - [The generators](map-authoring/README.md) created RSW/GND/GAT files for all 1,265 active maps in `korangar/archive/data`, totaling **2,831,562,458 bytes** before Git compression. Each RSW has zero static resources; each GND is flat and uses the four FreokRO textures; each GAT preserves its catalog dimensions, has zero height, and is entirely walkable. The four named designs for Prontera and adjoining fields retain active warp coordinates and original dimensions. Prontera is now 312 × 392 GAT and 156 × 196 GND.
 - The Korangar format test passes on representative maps, including an `@` name, and checks dimensions, empty static resources, textures, lightmaps, flat heights, and walkable flags. The batch verifier accepted all 1,265 generated maps. An isolated rAthena mapcache run cached all 1,265; inspection of its decompressed data found **104,823,864 walkable land cells**, all matching the catalog dimensions. This test cache remains outside the live server.
-- These files are a structural baseline, not finished art or gameplay navigation. They have **not** been installed in the live client or server. The earlier visual Prontera pilot still runs from the old structural map files at runtime. No legacy map asset has been deleted, and no distribution-size reduction has been verified.
+- These files are a structural baseline, not finished art or gameplay navigation. They were installed in the **local** game directory as a verified **non-solid** 7z archive (3,799 entries, 17,977,781 bytes). The local `client/game_archives.ron` now lists that package last for highest priority. The matching validated cache was installed as the local rAthena `db/map_cache.dat` (155,503 bytes). The server checkout uses a new local `freokro` branch; neither repository was pushed remotely for this step.
+- The previous client executable, archive settings, and server map cache are retained under `C:\Users\Administrator\Desktop\freokro\rollback\map-switch-20261009` for a targeted rollback. The invalid first solid 7z draft was removed. No legacy map asset has been deleted, and no distribution-size reduction has been verified.
 
 ## Remaining work, in order
 
-1. Open the corrected Prontera and representative field maps in the clean BrowEdit3 installation and check appearance, editor stability, and texture seams.
-2. Install a controlled pilot on the client and rebuild a matching **test** server map cache; check NPC locations, every connected warp, and movement with the unchanged map dimensions.
-3. Promote the validated map batch to the live client/server, then replace any remaining Gravity map dependencies. Check archive precedence and every asset consumer before removing legacy files.
-4. Develop distinct FreokRO scenery, road layout, obstacles, and height variation where desired. The current all-walkable template intentionally removes those gameplay constraints.
+1. Open corrected Prontera and representative field maps in the clean BrowEdit3 installation and check appearance, editor stability, and texture seams.
+2. Launch the locally switched client and server; check Prontera, adjacent fields, NPC locations, connected warps, and movement. Inspect at least one representative dungeon or interior before treating the 1,265-map batch as playable.
+3. Identify any remaining Gravity map dependencies and every asset consumer before removing legacy files. The older multi-gigabyte game archive still supplies non-map resources.
+4. Develop distinct FreokRO scenery, roads, obstacles, and height variation where desired. The current all-walkable template intentionally removes those gameplay constraints.
 
-The current live milestone remains the **working Prontera visual pilot**. The 1,265 original flat maps are staged in source control for validation.
+The latest verified visual milestone remains the **working Prontera texture pilot**. The new 1,265-map baseline is installed locally and awaiting visual and gameplay validation.

@@ -22,10 +22,18 @@ python tools/freokro_generate_active_maps.py --dimensions map-authoring/dimensio
 
 The generator verifies and skips complete maps with matching dimensions and flat-cell format. It rejects partial or mismatched outputs. The dimension catalog was originally assembled with [the dimension audit tool](../tools/freokro_build_map_dimensions.py), which reads only map headers and the active map list.
 
+Korangar requires a **non-solid** 7z archive for random file access. After generating the maps, package the exact 1,265 RSW/GND/GAT triplets and four PNG textures with:
+
+```text
+python tools/freokro_package_maps.py --dimensions map-authoring/dimensions.csv --archive-root korangar/archive --output /path/to/game/freokro-maps.7z
+```
+
+The packaging tool requires 7z or 7zz, checks every expected source file, verifies that the package is non-solid with the exact entry set, and runs the 7z integrity check. Place the package last in `client/game_archives.ron` so it overrides earlier game archives. Build a matching rAthena map cache from the same authored files before testing movement.
+
 ## Validation and current use
 
 The Korangar format test parses representative RSW/GND/GAT files, including a map name containing `@`, and checks dimensions, flat heights, walkable flags, empty static scenery, textures, and lightmaps. A full isolated rAthena mapcache run accepted all 1,265 maps; inspection of the resulting cache confirmed **104,823,864 walkable land cells** and every catalog dimension. The test cache is outside the live server.
 
 [BrowEdit3](https://github.com/Borf/BrowEdit3/releases) can refine the maps. Point its RO directory at this checkout's `korangar/archive` folder and keep its GRF list empty. A clean v3.660 installation was prepared locally after the first draft exposed an incorrect GND texture record length. Visual inspection in the clean editor remains pending.
 
-These files are a structural baseline, not finished environments. The live client still runs the earlier Prontera visual pilot, and the live rAthena cache has not been replaced. Test map appearance, NPC positions, warps, and movement before installing this batch or removing legacy assets. The 51 extracted maps absent from the active server list are outside this batch.
+These files are a structural baseline, not finished environments. On October 9, 2026, the package and matching server cache were installed in the local FreokRO game and server directories; the client executable was rebuilt without the older Prontera-only texture override. The game has not been visually tested since this local switch. Verify appearance, NPC positions, connected warps, and movement before removing legacy assets or distributing the package. The 51 extracted maps absent from the active server list are outside this batch.
