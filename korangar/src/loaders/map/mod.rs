@@ -266,7 +266,12 @@ impl MapLoader {
             .collect();
         let light_sources_kdtree = KDTree::from_objects(&light_source_spheres);
         let background_music_track_name = self.audio_engine.get_track_for_map(&map_file_name);
-        let mini_map = MiniMapData::from_ground(&ground_data, gat_data.map_width as u16, gat_data.map_height as u16);
+        let mini_map = MiniMapData::from_ground(
+            &ground_data,
+            &resource_file,
+            gat_data.map_width as u16,
+            gat_data.map_height as u16,
+        );
 
         let map = Map::new(
             gat_data.map_width as u16,

@@ -10,8 +10,8 @@ use crate::graphics::{Color, CornerDiameter, ShadowPadding};
 use crate::interface::windows::WindowClass;
 use crate::loaders::{FontSize, OverflowBehavior};
 use crate::state::theme::InterfaceThemeType;
-use crate::state::{ClientState, this_player};
-use crate::world::MiniMapData;
+use crate::state::{ClientState, ClientStatePathExt, client_state, this_player};
+use crate::world::{EntityType, MiniMapData};
 
 pub struct MiniMapWindow {
     map_name: String,
@@ -134,6 +134,52 @@ impl Element<ClientState> for MiniMapBody {
                 },
                 CornerDiameter::uniform(0.0),
                 Self::palette(run.palette),
+                Color::TRANSPARENT,
+                ShadowPadding::uniform(0.0),
+            );
+        }
+
+        // Static script warps cover the full map. Visible server warp entities
+        // also cover portals created or moved while the map is running.
+        let mut portals = self.data.portals.clone();
+        for entity in state
+            .get(&client_state().entities())
+            .iter()
+            .filter(|entity| entity.get_entity_type() == EntityType::Warp)
+        {
+            let position = entity.get_tile_position();
+            if !portals.contains(&position) {
+                portals.push(position);
+            }
+        }
+        for position in portals {
+            let x = (position.x as f32 + 0.5) / self.data.map_width.max(1) as f32;
+            let y = 1.0 - (position.y as f32 + 0.5) / self.data.map_height.max(1) as f32;
+            if !(0.0..=1.0).contains(&x) || !(0.0..=1.0).contains(&y) {
+                continue;
+            }
+            let marker = Area {
+                left: (map_area.left + x * map_area.width - 3.0).clamp(map_area.left, map_area.left + map_area.width - 6.0),
+                top: (map_area.top + y * map_area.height - 3.0).clamp(map_area.top, map_area.top + map_area.height - 6.0),
+                width: 6.0,
+                height: 6.0,
+            };
+            layout.add_rectangle(
+                marker,
+                CornerDiameter::uniform(1.0),
+                Color::BLACK,
+                Color::TRANSPARENT,
+                ShadowPadding::uniform(0.0),
+            );
+            layout.add_rectangle(
+                Area {
+                    left: marker.left + 1.0,
+                    top: marker.top + 1.0,
+                    width: 4.0,
+                    height: 4.0,
+                },
+                CornerDiameter::uniform(1.0),
+                Color::rgb_u8(55, 222, 155),
                 Color::TRANSPARENT,
                 ShadowPadding::uniform(0.0),
             );
