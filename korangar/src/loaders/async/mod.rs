@@ -269,9 +269,11 @@ impl AsyncLoader {
         let skill_information = self.library.get::<SkillListInformation>(skill_id);
         let skill_requirements = self.library.get::<SkillListRequirements>(SkillListKey::with_job(job_id, skill_id));
 
-        let path = format!("아이템\\{}", skill_information.file_name);
-        let sprite = self.request_skill_sprite_load(skill_id, &path);
-        let actions = self.request_skill_actions_load(skill_id, &path);
+        // All skill slots use FreokRO-owned temporary artwork until individual
+        // icons are authored. Skill identifiers and behavior remain unchanged.
+        let path = "아이템\\FREOKRO_SKILL_PLACEHOLDER";
+        let sprite = self.request_skill_sprite_load(skill_id, path);
+        let actions = self.request_skill_actions_load(skill_id, path);
 
         LearnableSkill {
             skill_id,

@@ -1,17 +1,22 @@
 # FreokRO sprite artwork
 
-These source PNGs were generated for FreokRO without using Gravity sprite files as visual inputs. `portal.png`, `guild-flag.png`, and `taming-sigil.png` are the reduced game-size previews.
+The artwork in this directory was supplied or generated for FreokRO without using Gravity sprite files as visual inputs. `portal.png`, `guild-flag.png`, `taming-sigil.png`, `skill-placeholder.png`, and `female-placeholder.png` are game-size previews.
 
-Run `tools/build_freokro_sprites.py` with Pillow to create the matching static `.spr` and `.act` files under `korangar/archive/data/sprite`. The generated files are also checked into the project, so players do not need Python or Pillow.
+Run `tools/build_freokro_sprites.py` and `tools/build_freokro_placeholders.py` with Pillow to create the matching `.spr` and `.act` files under `korangar/archive/data/sprite`. The generated files are also checked into the project, so players do not need Python or Pillow.
 
 | Legacy identifier | FreokRO asset | Purpose |
 | --- | --- | --- |
 | `WARPNPC`, `HIDDEN_WARP_NPC` | `FREOKRO_PORTAL` | Visible portal NPC |
 | `GUILD_FLAG` | `FREOKRO_FLAG` | Guild banner |
 | `SA_TAMINGMONSTER` | `FREOKRO_TAMING` | Taming effect |
+| All female player jobs and hair styles | `FREOKRO_FEMALE` | Temporary frontal character animation |
+| All skill icons | `FREOKRO_SKILL_PLACEHOLDER` | Temporary common skill icon; skill IDs and behavior stay intact |
+| Client mouse cursor | `FREOKRO_CURSOR` | Emerald animated idle, click, attack, dialog, and prohibited states |
 
-The client resolves these identifiers in `korangar/src/loaders/mod.rs`. The generic `npc/missing.spr` and `npc/missing.act` remain the fallback for all other unavailable sprites. The FreokRO assets passed the game's SPR/ACT parser test, and the user reported that the sprite test passed in the client. Specific portal coverage across maps still needs a broader gameplay check.
+The client resolves the first three legacy identifiers in `korangar/src/loaders/mod.rs`. Female player routing is in `korangar/src/world/entity/mod.rs`, skill icon routing is in `korangar/src/loaders/async/mod.rs`, and cursor routing is in `korangar/src/interface/cursor/mod.rs`. The generic `npc/missing.spr` and `npc/missing.act` remain the fallback for other unavailable sprites. The earlier portal, banner, and taming assets passed the game's SPR/ACT parser test and the user reported that the sprite test passed in the client. The new placeholders await visual validation.
 
-## Cursor concepts (paused)
+## Temporary animation scope
 
-`cursor-source.png`, `cursor-click-concept.png`, `cursor-attack-concept.png`, and `cursor-dialog-concept.png` are artwork previews only. They have **not** been converted into a cursor sprite or connected to the client. Idle glow/motion and the prohibited state remain unimplemented. Cursor development was paused at the user's request.
+The cursor uses the project emerald artwork. The idle state pulses through ACT opacity and scale frames; click, attack, dialog, and prohibited states use separate sprites. The female sprite uses the 30 front-facing frames from the supplied GIF when idle. Every camera direction repeats that frontal artwork, and all non-idle actions repeat its first frontal frame. No side, rear, or walk cycle has been authored yet. The source GIF had an opaque, near-black background; the builder removes only border-connected dark pixels before resizing the frames.
+
+The common skill icon is a temporary visual placeholder. It does not replace skill names, levels, descriptions, requirements, or casting behavior. Each skill can receive its own original icon later.

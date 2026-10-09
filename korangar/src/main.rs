@@ -3459,13 +3459,19 @@ impl Client {
                     if let Some(mouse_button) = input_report.mouse_click {
                         if is_interface_hovered {
                             interface_frame.click(&self.client_state, mouse_button);
+                            if mouse_button == MouseButton::Left {
+                                self.mouse_cursor.set_state(MouseCursorState::Click, client_tick);
+                            }
                         } else {
                             interface_frame.unfocus();
 
                             if mouse_button == MouseButton::Left {
                                 match input_report.mouse_target {
-                                    PickerTarget::Nothing => {}
+                                    PickerTarget::Nothing => {
+                                        self.mouse_cursor.set_state(MouseCursorState::NoAction, client_tick);
+                                    }
                                     PickerTarget::Entity(entity_id) => {
+                                        self.mouse_cursor.set_state(MouseCursorState::Click, client_tick);
                                         let is_ground_item = self
                                             .client_state
                                             .follow(client_state().ground_items())
@@ -3479,6 +3485,7 @@ impl Client {
                                         }
                                     }
                                     PickerTarget::Tile { x, y } => {
+                                        self.mouse_cursor.set_state(MouseCursorState::Click, client_tick);
                                         let destination = TilePosition { x, y };
 
                                         interface_frame.set_mouse_mode(MouseInputMode::Walk { destination });

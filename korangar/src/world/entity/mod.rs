@@ -360,6 +360,7 @@ fn get_entity_part_files(library: &Library, entity_type: EntityType, job_id: Job
     };
 
     match entity_type {
+        EntityType::Player if sex == Sex::Female => vec!["npc\\FREOKRO_FEMALE".to_owned()],
         EntityType::Player => vec![
             player_body_path(sex_sprite_path, job_id),
             player_head_path(sex_sprite_path, head_id),

@@ -309,6 +309,7 @@ impl AnimationLoader {
             animation_pair: animation_pairs,
             animations,
             entity_type,
+            animate_player_idle: entity_part_files.first().is_some_and(|path| path == "npc\\FREOKRO_FEMALE"),
         });
 
         let _result = self

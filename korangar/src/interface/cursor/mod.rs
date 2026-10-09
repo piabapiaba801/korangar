@@ -9,7 +9,7 @@ use crate::loaders::{ActionLoader, Sprite, SpriteLoader};
 use crate::renderer::{GameInterfaceRenderer, SpriteRenderer};
 use crate::world::{Actions, SpriteAnimationState};
 
-const PICKUP_DURATION_MS: u32 = 150;
+const CURSOR_FEEDBACK_DURATION_MS: u32 = 150;
 
 #[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -53,8 +53,8 @@ pub struct MouseCursor {
 
 impl MouseCursor {
     pub fn new(sprite_loader: &SpriteLoader, action_loader: &ActionLoader) -> Self {
-        let sprite = sprite_loader.get_or_load("cursors.spr").unwrap();
-        let actions = action_loader.get_or_load("cursors.act").unwrap();
+        let sprite = sprite_loader.get_or_load("FREOKRO_CURSOR.spr").unwrap();
+        let actions = action_loader.get_or_load("FREOKRO_CURSOR.act").unwrap();
         let animation_state = SpriteAnimationState::new(ClientTick(0));
         let locked_until = ClientTick(0);
         let shown = true;
@@ -90,9 +90,13 @@ impl MouseCursor {
                 let base_offset = match state {
                     MouseCursorState::PickUpItem => {
                         // Lock the cursor.
-                        self.locked_until = ClientTick(client_tick.0 + PICKUP_DURATION_MS);
+                        self.locked_until = ClientTick(client_tick.0 + CURSOR_FEEDBACK_DURATION_MS);
 
                         usize::from(MouseCursorState::Grab)
+                    }
+                    MouseCursorState::Click | MouseCursorState::NoAction => {
+                        self.locked_until = ClientTick(client_tick.0 + CURSOR_FEEDBACK_DURATION_MS);
+                        usize::from(state)
                     }
                     MouseCursorState::GrabResource => usize::from(MouseCursorState::Grab),
                     MouseCursorState::HoverItem => usize::from(MouseCursorState::Grab),
@@ -104,7 +108,7 @@ impl MouseCursor {
             }
         } else if self.cursor_state == state {
             // Cursor is locked, but we can still extend the duration of the state.
-            self.locked_until = ClientTick(client_tick.0 + PICKUP_DURATION_MS);
+            self.locked_until = ClientTick(client_tick.0 + CURSOR_FEEDBACK_DURATION_MS);
         }
     }
 

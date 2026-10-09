@@ -172,6 +172,8 @@ pub struct AnimationData {
     pub delays: Vec<f32>,
     #[hidden_element]
     pub entity_type: EntityType,
+    #[hidden_element]
+    pub animate_player_idle: bool,
 }
 
 impl Cacheable for AnimationData {
@@ -277,7 +279,10 @@ impl AnimationData {
         };
 
         // Remove Doridori animation from Player
-        if self.entity_type == EntityType::Player && animation_state.action_type == AnimationActionType::Idle {
+        if self.entity_type == EntityType::Player
+            && animation_state.action_type == AnimationActionType::Idle
+            && !self.animate_player_idle
+        {
             &animation.frames[0]
         } else {
             &animation.frames[frame_index]
