@@ -76,7 +76,7 @@ The [original map-authoring batch](map-authoring/README.md) provides project-aut
 
 **Gravity-derived asset removal is not 100%:** the user removed the old local `data-freokro.7z`, its duplicate extraction, and the loose background music folder. Other loose assets still need an ownership and dependency audit. A reliable percentage for all Gravity-derived content is not available. [The technical status](TECHNICAL_STATUS_FREOKRO.md) separates active map replacement, local package removal, and pending work.
 
-FreokRO now has original [portal, banner, and taming sprite artwork](art/freokro/sprites/README.md). The client routes their legacy identifiers to these new assets. The minimap implementation places emerald markers at static warp coordinates exported from the configured FreokRO rAthena scripts and at live warp entities sent by the server. The screenshot above predates those markers; their in-game appearance still needs player validation. Cursor concepts are preserved as previews, and cursor integration remains paused.
+FreokRO now has original [portal, banner, and taming sprite artwork](art/freokro/sprites/README.md). The client routes their legacy identifiers to these new assets. The minimap places emerald markers at static warp coordinates exported from the configured FreokRO rAthena scripts and at live warp entities sent by the server. The user confirmed the markers in-game on October 9, 2026; the screenshot above predates them. Cursor concepts are preserved as previews, and cursor integration remains paused.
 
 ### 📸 Earlier FreokRO client captures
 
