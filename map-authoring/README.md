@@ -18,6 +18,6 @@ The generator reads only the authored JSON:
 
 It refuses to overwrite existing generated files. Further visual edits should be saved with BrowEdit3; generate a new draft only in a fresh output directory.
 
-The Korangar format test parses the files. An isolated rAthena mapcache run also produced a one-map `prontera` cache with the expected 400 x 420 cells. This test cache was not installed on the live server.
+The Korangar format test parses the files. An isolated rAthena mapcache run also produced a one-map `prontera` cache with the expected 400 x 420 cells, all marked as walkable land. The RSW uses the server's no-water sentinel so those cells are not classified as water. This test cache was not installed on the live server.
 
 Do not install these files in the live game until BrowEdit3 visual inspection, NPC/warp navigation, and an integrated client/server test have passed. Keep the existing game assets available during that transition. Technical map IDs and scripted NPC/warp coordinates remain in place for now.

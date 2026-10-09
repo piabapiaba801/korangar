@@ -21,6 +21,7 @@ fn freokro_prontera_files_are_readable() {
     let gat: GatData = parse("prontera.gat");
     assert_eq!(world.ground_file, "prontera.gnd");
     assert_eq!(world.gat_file, "prontera.gat");
+    assert_eq!(world.water_settings.unwrap().water_level, Some(1_000_000.0));
     assert!(world.resources.objects.is_empty());
     assert_eq!((ground.width, ground.height), (200, 210));
     assert_eq!((gat.map_width, gat.map_height), (400, 420));

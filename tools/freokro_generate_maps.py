@@ -18,6 +18,7 @@ TEXTURES = (
     "freokro_ground_dark.png",
     "freokro_ground_transition.png",
 )
+NO_WATER_LEVEL = 1_000_000.0  # rAthena's RSW_NO_WATER sentinel
 NAME = re.compile(r"^[a-z0-9_]{1,12}$")
 
 
@@ -47,7 +48,7 @@ def write_rsw(path: Path, name: str, width: int, height: int) -> None:
         file.write(b"GRSW" + bytes((1, 9)))
         for value in ("", f"{name}.gnd", f"{name}.gat", ""):
             file.write(fixed(value, 40))
-        file.write(struct.pack("<fifffI", -1000.0, 0, 0.0, 0.0, 0.0, 100))
+        file.write(struct.pack("<fifffI", NO_WATER_LEVEL, 0, 0.0, 0.0, 0.0, 100))
         file.write(struct.pack("<ii7f", 45, 45, 1.0, 1.0, 1.0, 0.8, 0.8, 0.8, 0.5))
         file.write(struct.pack("<4iI", height, 0, 0, width, 0))
 
