@@ -105,6 +105,9 @@ pub enum InputEvent {
         slot: usize,
         /// Name of the new character.
         name: String,
+        sex: ragnarok_packets::Sex,
+        hair_style: u16,
+        hair_color: u16,
     },
     /// Delete a character.
     DeleteCharacter {

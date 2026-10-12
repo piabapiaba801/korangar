@@ -26,7 +26,7 @@ use korangar_networking::{MessageColor, SellItem, ShopItem};
 use localization::Localization;
 #[cfg(feature = "debug")]
 use ragnarok_formats::map::{EffectSource, LightSource, MapData, SoundSource};
-use ragnarok_packets::{CharacterId, CharacterServerInformation, EntityId, Friend};
+use ragnarok_packets::{CharacterId, CharacterServerInformation, EntityId, Friend, Sex};
 #[cfg(feature = "debug")]
 use rust_state::{ManuallyAssertExt, VecIndexExt};
 use rust_state::{Path, PathExt, RustState, Selector};
@@ -191,6 +191,9 @@ pub struct ClientState {
     switch_request: Option<usize>,
     /// Name of the character being created currently.
     create_character_name: String,
+    create_character_sex: Sex,
+    create_character_hair_style: u16,
+    create_character_hair_color: u16,
 
     /// Size of the Korangar window.
     window_size: ScreenSize,
@@ -313,6 +316,9 @@ impl ClientState {
             // TODO: This could be in a single struct.
             let switch_request = None;
             let create_character_name = String::new();
+            let create_character_sex = Sex::Female;
+            let create_character_hair_style = 0;
+            let create_character_hair_color = 0;
         });
 
         time_phase!("create friend list state", {
@@ -405,6 +411,9 @@ impl ClientState {
             currently_deleting,
             switch_request,
             create_character_name,
+            create_character_sex,
+            create_character_hair_style,
+            create_character_hair_color,
             window_size,
             buffered_action,
             #[cfg(feature = "debug")]

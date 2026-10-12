@@ -1031,6 +1031,8 @@ impl Client {
                         self.interface.open_window(CharacterSelectionWindow::new(
                             client_state().character_slots(),
                             client_state().switch_request(),
+                            self.texture_loader.get_or_load("freokro/female-preview.png", loaders::ImageType::Color).unwrap(),
+                            self.texture_loader.get_or_load("freokro/male-preview.png", loaders::ImageType::Color).unwrap(),
                         ));
                     }
                 }
@@ -2192,10 +2194,15 @@ impl Client {
                     self.client_state.follow_mut(client_state().create_character_name()).clear();
 
                     self.interface
-                        .open_window(CharacterCreationWindow::new(client_state().create_character_name(), slot))
+                        .open_window(CharacterCreationWindow::new(
+                            client_state().create_character_name(),
+                            slot,
+                            self.texture_loader.get_or_load("freokro/female-preview.png", loaders::ImageType::Color).unwrap(),
+                            self.texture_loader.get_or_load("freokro/male-preview.png", loaders::ImageType::Color).unwrap(),
+                        ))
                 }
-                InputEvent::CreateCharacter { slot, name } => {
-                    let _ = self.networking_system.create_character(slot, name);
+                InputEvent::CreateCharacter { slot, name, sex, hair_style, hair_color } => {
+                    let _ = self.networking_system.create_character(slot, name, sex, hair_style, hair_color);
                 }
                 InputEvent::DeleteCharacter { character_id } => {
                     if self.client_state.follow(client_state().currently_deleting()).is_none() {
@@ -2768,6 +2775,8 @@ impl Client {
                             self.interface.open_window(CharacterSelectionWindow::new(
                                 client_state().character_slots(),
                                 client_state().switch_request(),
+                                self.texture_loader.get_or_load("freokro/female-preview.png", loaders::ImageType::Color).unwrap(),
+                                self.texture_loader.get_or_load("freokro/male-preview.png", loaders::ImageType::Color).unwrap(),
                             ));
 
                             self.start_camera.set_focus_point(START_CAMERA_FOCUS_POINT);
@@ -3747,7 +3756,9 @@ impl Client {
             self.mouse_cursor.update(client_tick);
 
             let screen_size: ScreenSize = self.graphics_engine.get_window_size().into();
-            self.startup_scene.render(&self.bottom_interface_renderer, screen_size);
+            let character_menu_open = self.interface.is_window_with_class_open(WindowClass::CharacterSelection)
+                || self.interface.is_window_with_class_open(WindowClass::CharacterCreation);
+            self.startup_scene.render(&self.bottom_interface_renderer, screen_size, character_menu_open);
 
             let mut interface_frame = self
                 .interface

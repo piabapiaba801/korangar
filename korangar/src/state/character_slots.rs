@@ -18,6 +18,14 @@ impl CharacterSlots {
         self.slots.len()
     }
 
+    pub fn get_slot(&self, slot: usize) -> Option<&CharacterInformation> {
+        self.slots.get(slot).and_then(Option::as_ref)
+    }
+
+    pub fn first_empty_slot(&self) -> Option<usize> {
+        self.slots.iter().position(Option::is_none)
+    }
+
     pub fn add_character(&mut self, character_information: CharacterInformation) {
         let Some(slot) = self.slots.get_mut(character_information.character_number as usize) else {
             panic!("attempted to add character to a slot that doesn't exist");

@@ -1,10 +1,11 @@
 use std::iter;
+use std::sync::Arc;
 
 use korangar_video::ivf::Ivf;
 use wgpu::{Queue, TextureFormat};
 
-use crate::graphics::{Color, ScreenClip, ScreenPosition, ScreenSize};
-use crate::loaders::TextureLoader;
+use crate::graphics::{Color, ScreenClip, ScreenPosition, ScreenSize, Texture};
+use crate::loaders::{ImageType, TextureLoader};
 use crate::renderer::{GameInterfaceRenderer, SpriteRenderer};
 use crate::world::{Video, VideoFrame};
 
@@ -14,6 +15,7 @@ const INTRO_VIDEO_PATH: &str = "client/branding/intro.ivf";
 pub struct StartupScene {
     video: Option<Video>,
     video_size: Option<ScreenSize>,
+    character_scene: Option<Arc<Texture>>,
 }
 
 impl StartupScene {
@@ -24,7 +26,8 @@ impl StartupScene {
             .and_then(|data| Self::load_video(texture_loader, data))
             .map_or((None, None), |(video, size)| (Some(video), Some(size)));
 
-        Self { video, video_size }
+        let character_scene = texture_loader.get_or_load("freokro/character-scene.png", ImageType::Color).ok();
+        Self { video, video_size, character_scene }
     }
 
     fn load_video(texture_loader: &TextureLoader, data: &[u8]) -> Option<(Video, ScreenSize)> {
@@ -72,8 +75,15 @@ impl StartupScene {
         }
     }
 
-    pub fn render(&self, renderer: &GameInterfaceRenderer, screen: ScreenSize) {
+    pub fn render(&self, renderer: &GameInterfaceRenderer, screen: ScreenSize, show_character_scene: bool) {
         renderer.render_rectangle(ScreenPosition::default(), screen, Color::rgb_u8(8, 16, 13));
+
+        if show_character_scene {
+            if let Some(scene) = &self.character_scene {
+                renderer.render_sprite(scene.clone(), ScreenPosition::default(), screen, ScreenClip::default(), Color::WHITE, true);
+            }
+            return;
+        }
 
         if let (Some(video), Some(video_size)) = (&self.video, self.video_size) {
             let scale = (screen.width / video_size.width).min(screen.height / video_size.height);

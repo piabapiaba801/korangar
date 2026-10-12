@@ -638,11 +638,8 @@ where
         }
     }
 
-    pub fn create_character(&mut self, slot: usize, name: String) -> Result<(), NotConnectedError> {
-        let hair_color = 0;
-        let hair_style = 0;
+    pub fn create_character(&mut self, slot: usize, name: String, sex: Sex, hair_style: u16, hair_color: u16) -> Result<(), NotConnectedError> {
         let start_job_id = JobId(0);
-        let sex = Sex::Male;
 
         match self.character_server_packet_version()? {
             SupportedPacketVersion::_20220406 => self.send_character_server_packet(CreateCharacterPacket::new(
