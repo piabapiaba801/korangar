@@ -26,7 +26,7 @@ impl StartupScene {
             .and_then(|data| Self::load_video(texture_loader, data))
             .map_or((None, None), |(video, size)| (Some(video), Some(size)));
 
-        let character_scene = texture_loader.get_or_load("freokro/character-scene.png", ImageType::Color).ok();
+        let character_scene = texture_loader.get_or_load("freokro\\character-scene.png", ImageType::Color).ok();
         Self { video, video_size, character_scene }
     }
 

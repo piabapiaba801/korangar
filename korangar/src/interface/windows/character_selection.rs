@@ -154,7 +154,7 @@ where
             )
         });
         with_single_resolver(resolvers, |resolver| BaseLayoutInfo {
-            area: resolver.with_height(490.0),
+            area: resolver.with_height(390.0),
         })
     }
 
@@ -203,10 +203,10 @@ where
             &self.female
         };
         let portrait_area = Area {
-            left: hero.left + (hero.width - 256.0) / 2.0,
-            top: hero.top + 32.0,
-            width: 256.0,
-            height: 384.0,
+            left: hero.left + (hero.width - 220.0) / 2.0,
+            top: hero.top + 28.0,
+            width: 220.0,
+            height: 330.0,
         };
         layout.add_texture(portrait_area, portrait.clone(), Color::WHITE, false);
         let title = character.map_or("A NEW ADVENTURE", |character| character.name.as_str());
@@ -254,9 +254,9 @@ where
         for (index, label) in self.slot_labels.iter().enumerate() {
             let row = Area {
                 left: roster.left + 12.0,
-                top: roster.top + 46.0 + index as f32 * 27.7,
+                top: roster.top + 46.0 + index as f32 * 21.0,
                 width: roster.width - 24.0,
-                height: 25.0,
+                height: 20.0,
             };
             let hovered = row.check().run(layout);
             let active = index == selected;
@@ -354,6 +354,10 @@ where
             class: Self::window_class(),
             theme: InterfaceThemeType::Menu,
             background_color: Color::rgba_u8(5, 18, 16, 100),
+            title_height: 32.0,
+            title_gap: 4.0,
+            gaps: 4.0,
+            border: 4.0,
             minimum_width: 1040.0,
             maximum_width: 1040.0,
             elements: (

@@ -1031,8 +1031,8 @@ impl Client {
                         self.interface.open_window(CharacterSelectionWindow::new(
                             client_state().character_slots(),
                             client_state().switch_request(),
-                            self.texture_loader.get_or_load("freokro/female-preview.png", loaders::ImageType::Color).unwrap(),
-                            self.texture_loader.get_or_load("freokro/male-preview.png", loaders::ImageType::Color).unwrap(),
+                            self.texture_loader.get_or_load("freokro\\female-preview.png", loaders::ImageType::Color).unwrap(),
+                            self.texture_loader.get_or_load("freokro\\male-preview.png", loaders::ImageType::Color).unwrap(),
                         ));
                     }
                 }
@@ -2197,8 +2197,8 @@ impl Client {
                         .open_window(CharacterCreationWindow::new(
                             client_state().create_character_name(),
                             slot,
-                            self.texture_loader.get_or_load("freokro/female-preview.png", loaders::ImageType::Color).unwrap(),
-                            self.texture_loader.get_or_load("freokro/male-preview.png", loaders::ImageType::Color).unwrap(),
+                            self.texture_loader.get_or_load("freokro\\female-preview.png", loaders::ImageType::Color).unwrap(),
+                            self.texture_loader.get_or_load("freokro\\male-preview.png", loaders::ImageType::Color).unwrap(),
                         ))
                 }
                 InputEvent::CreateCharacter { slot, name, sex, hair_style, hair_color } => {
@@ -2775,8 +2775,8 @@ impl Client {
                             self.interface.open_window(CharacterSelectionWindow::new(
                                 client_state().character_slots(),
                                 client_state().switch_request(),
-                                self.texture_loader.get_or_load("freokro/female-preview.png", loaders::ImageType::Color).unwrap(),
-                                self.texture_loader.get_or_load("freokro/male-preview.png", loaders::ImageType::Color).unwrap(),
+                                self.texture_loader.get_or_load("freokro\\female-preview.png", loaders::ImageType::Color).unwrap(),
+                                self.texture_loader.get_or_load("freokro\\male-preview.png", loaders::ImageType::Color).unwrap(),
                             ));
 
                             self.start_camera.set_focus_point(START_CAMERA_FOCUS_POINT);

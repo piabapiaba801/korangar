@@ -6,6 +6,7 @@
 - Character creation now offers sex, hair style (0–42), and hair color (0–8). Those values are sent in the character-creation packet; the displayed portrait remains illustrative until matching appearance sprites exist. The server's starting class remains Novice.
 - The forest scene, user-supplied female sprite-sheet crop, and original male preview are packaged under `korangar/archive/data/texture/freokro`. Their source art and builder are under `art/freokro/character-menu` and `tools/build_freokro_character_menu.py`.
 - The `unicode,debug` release build passed and the executable and three runtime PNGs were installed in the physical game folder. The client and server were not launched by Codex. User visual validation is pending. This version has **not** been pushed to the remote fork.
+- The first user screenshot exposed red-and-black fallback textures: the client loader expects backslashes inside archive asset keys, but the new menu requested paths with forward slashes. The corrected paths match the three installed PNGs. The selection panel was also shortened so its action buttons fit inside the game window. A second user visual check is pending; no remote publication is planned yet.
 
 ## Current repository state
 
