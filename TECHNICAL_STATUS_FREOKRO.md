@@ -1,12 +1,12 @@
 # FreokRO technical status — October 12, 2026
 
-## Local character menu work awaiting validation
+## Local character menu visual validation
 
 - The character selection screen now displays a large gender-matched preview, 15-slot roster, and enter/create/move/delete controls over an original FreokRO forest scene. Deletion needs two clicks on the same character.
 - Character creation now offers sex, hair style (0–42), and hair color (0–8). Those values are sent in the character-creation packet; the displayed portrait remains illustrative until matching appearance sprites exist. The server's starting class remains Novice.
 - The forest scene, user-supplied female sprite-sheet crop, and original male preview are packaged under `korangar/archive/data/texture/freokro`. Their source art and builder are under `art/freokro/character-menu` and `tools/build_freokro_character_menu.py`.
-- The `unicode,debug` release build passed and the executable and three runtime PNGs were installed in the physical game folder. The client and server were not launched by Codex. User visual validation is pending. This version has **not** been pushed to the remote fork.
-- The first user screenshot exposed red-and-black fallback textures: the client loader expects backslashes inside archive asset keys, but the new menu requested paths with forward slashes. The corrected paths match the three installed PNGs. The selection panel was also shortened so its action buttons fit inside the game window. A second user visual check is pending; no remote publication is planned yet.
+- The `unicode,debug` release build passed and the executable and three runtime PNGs were installed in the physical game folder. The client and server were not launched by Codex. The user confirmed the corrected menu visuals on October 12, 2026. This version has **not** been pushed to the remote fork.
+- The first user screenshot exposed red-and-black fallback textures: the client loader expects backslashes inside archive asset keys, but the new menu requested paths with forward slashes. The corrected paths match the three installed PNGs. The selection panel was also shortened so its action buttons fit inside the game window. [The validated screenshot](docs/screenshots/freokro-character-selection-validated-2026-10-12.png) shows the forest background, female preview, full roster, and all action buttons. A second user capture shows a newly created male Novice in slot 2. The user said the updated view is correct; individual enter/move/delete and every appearance choice remain unverified.
 
 ## Current repository state
 
@@ -19,7 +19,7 @@
 
 - The client starts with no map loaded. Login and character selection render their own 2D backgrounds and interactive windows; Geffen is no longer decoded solely for the menu. The server-provided map still loads when the player enters the world. Geffen remains in the authored active-map set.
 - The supplied eight-second H.264 MP4 was converted to a 1280 × 720, 20 fps AV1/IVF file. The runtime reads `client/branding/intro.ivf` and loops it behind login. There is no separate logo layer because the FreokRO artwork is already in the video. Character selection and creation now render an original static forest scene; missing menu art falls back to a dark background.
-- The client compiled successfully with `--release --locked --features unicode,debug`, and the rebuilt executable was installed in the local game directory. The first visual launch exposed a black screen and repeated `wgpu` validation errors: the map-free menu still recorded directional shadow passes without shadow partitions. The renderer now skips those passes when there is no map. A 40-second diagnostic launch logged zero validation errors, and the user confirmed that the startup screen passed visually. Menu interaction, character selection, and transition into the world remain to be checked with this build.
+- The earlier map-free startup checkpoint compiled with `--release --locked --features unicode,debug`. Its first visual launch exposed a black screen and repeated `wgpu` validation errors: the menu still recorded directional shadow passes without shadow partitions. The renderer now skips those passes when there is no map. A 40-second diagnostic launch logged zero validation errors, and the user confirmed that the startup screen passed visually. The later character-menu visual check is recorded above; transition into the world with this menu build still needs a focused check.
 - The desktop shortcut `FreokRO (cliente independente)` points to the rebuilt executable in `client/game`. The six temporary startup diagnostic logs in `reports/` are local, untracked, and excluded from publication.
 
 ## Map migration: implemented scope
