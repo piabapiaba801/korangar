@@ -17,9 +17,11 @@ The emblem above is the project's visual direction. The FreokRO branch now conta
 - **Temporary character art:** turquoise Azuk has front and side frames. Rear/diagonal views, hair and class variants, equipment, NPCs, and monsters still need original art. The male character remains a static original placeholder.
 - **Separate release lines:** this fork's `freokro` branch records the shared client checkpoint. The separate private `freokro-priv` repository is the working line for personalized art and features. A local `freokro-base` Git repository contains a simplified snapshot with all generated maps and its own history. The base has no remote yet; asset provenance and wider gameplay checks remain before its public release.
 
-![FreokRO WIP selection showing the currently selected in-game sprite](docs/screenshots/freokro-character-selection-sprite-2026-10-13.jpg)
+![Edited FreokRO WIP selection showing the currently selected in-game sprite](docs/screenshots/freokro-character-selection-sprite-clean-2026-10-13.png)
 
-![FreokRO WIP empty character slot and creation preview](docs/screenshots/freokro-character-selection-empty-slot-2026-10-13.jpg)
+![Edited FreokRO WIP empty character slot and creation preview](docs/screenshots/freokro-character-selection-empty-slot-clean-2026-10-13.png)
+
+*Presentation edits remove the Windows taskbar and desktop overlays from these two captures.*
 
 ## 🌱 Point zero: a Ragnarok-like Plus foundation
 
