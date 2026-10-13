@@ -7,6 +7,7 @@ sprite sheet is kept intact under art/freokro/character-menu.
 from pathlib import Path
 
 from PIL import Image
+from build_freokro_placeholders import remove_gif_background
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,11 +32,11 @@ def main() -> None:
     forest = Image.open(SOURCE / "forest-scene-source.png").convert("RGB")
     forest.save(DESTINATION / "character-scene.png", optimize=True)
 
-    sheet = Image.open(SOURCE / "female-sheet-source.png")
-    if sheet.size != (512, 768):
-        raise ValueError("Expected a 4 x 4 sheet of 128 x 192 female frames")
-    female_frame = sheet.crop((0, 0, 128, 192)).resize((256, 384), Image.Resampling.NEAREST)
-    save_preview(female_frame, DESTINATION / "female-preview.png", (256, 384))
+    # The menu and the world derive from the same turquoise source animation.
+    female_source = Image.open(ROOT / "art" / "freokro" / "sprites" / "female-placeholder-source.gif")
+    female_source.seek(0)
+    female_frame = remove_gif_background(female_source.copy())
+    save_preview(female_frame.resize((576, 576), Image.Resampling.NEAREST), DESTINATION / "female-preview.png", (256, 384))
 
     male = Image.open(SOURCE / "male-preview-source.png")
     save_preview(male, DESTINATION / "male-preview.png", (256, 384))

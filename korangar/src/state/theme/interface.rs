@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::graphics::{Color, CornerDiameter, ScreenSize, ShadowPadding};
 use crate::loaders::{FontSize, OverflowBehavior};
-use crate::settings::{IN_GAME_THEMES_PATH, MENU_THEMES_PATH};
+use crate::settings::{FREOKRO_MENU_THEME_NAME, IN_GAME_THEMES_PATH, MENU_THEMES_PATH};
 use crate::state::ClientState;
 
 #[derive(Default, Debug, Clone, Copy)]
@@ -110,6 +110,9 @@ pub struct InterfaceTheme {
 
 impl InterfaceTheme {
     pub fn load(theme_type: InterfaceThemeType, name: &str) -> Self {
+        if matches!(theme_type, InterfaceThemeType::Menu) && name == FREOKRO_MENU_THEME_NAME {
+            return Self::freokro_menu();
+        }
         if matches!(theme_type, InterfaceThemeType::InGame) {
             match name {
                 "Classic" => return Self::classic_in_game(),
@@ -258,6 +261,67 @@ impl InterfaceTheme {
         theme.skill_tree.pending_points_color = accent;
         theme.global.drop_area_color = Color::rgba_u8(131, 173, 120, 120);
         theme.global.hovered_drop_area_color = Color::rgba_u8(232, 199, 129, 130);
+        theme
+    }
+
+    /// Shared visual foundation for login, world selection, and character menus.
+    fn freokro_menu() -> Self {
+        let mut theme = Self::default_menu();
+        let emerald = Color::rgb_u8(103, 181, 146);
+        let cream = Color::rgb_u8(237, 236, 216);
+        let gold = Color::rgb_u8(226, 194, 127);
+        let muted = Color::rgb_u8(164, 193, 178);
+
+        theme.window.title_color = cream;
+        theme.window.hovered_title_color = gold;
+        theme.window.background_color = Color::rgb_u8(12, 29, 27);
+        theme.window.highlight_color = emerald;
+        theme.window.corner_diameter = CornerDiameter::uniform(9.0);
+        theme.window.close_button_corner_diameter = CornerDiameter::uniform(4.0);
+        theme.window.gaps = 12.0;
+        theme.window.border = 18.0;
+        theme.window.title_height = 36.0;
+        theme.window.title_gap = 8.0;
+        theme.window.anchor_color = emerald;
+        theme.window.closest_anchor_color = gold;
+
+        theme.text.color = cream;
+        theme.text.highlight_color = gold;
+        theme.button.background_color = Color::rgb_u8(31, 77, 64);
+        theme.button.foreground_color = cream;
+        theme.button.highlight_color = emerald;
+        theme.button.hovered_background_color = Color::rgb_u8(45, 103, 80);
+        theme.button.hovered_foreground_color = Color::WHITE;
+        theme.button.disabled_background_color = Color::rgb_u8(32, 48, 42);
+        theme.button.disabled_foreground_color = muted;
+        theme.button.corner_diameter = CornerDiameter::uniform(5.0);
+        theme.state_button.background_color = Color::rgb_u8(22, 52, 43);
+        theme.state_button.foreground_color = cream;
+        theme.state_button.highlight_color = emerald;
+        theme.state_button.hovered_background_color = Color::rgb_u8(37, 76, 59);
+        theme.state_button.checkbox_color = emerald;
+        theme.state_button.hovered_checkbox_color = gold;
+        theme.state_button.corner_diameter = CornerDiameter::uniform(5.0);
+        theme.text_box.background_color = Color::rgb_u8(11, 32, 29);
+        theme.text_box.foreground_color = cream;
+        theme.text_box.highlight_color = emerald;
+        theme.text_box.hovered_background_color = Color::rgb_u8(26, 52, 44);
+        theme.text_box.focused_background_color = Color::rgb_u8(34, 65, 52);
+        theme.text_box.focused_foreground_color = Color::WHITE;
+        theme.text_box.ghost_foreground_color = muted;
+        theme.text_box.corner_diameter = CornerDiameter::uniform(5.0);
+        theme.drop_down.button_background_color = Color::rgb_u8(31, 77, 64);
+        theme.drop_down.button_foreground_color = cream;
+        theme.drop_down.button_highlight_color = emerald;
+        theme.drop_down.button_hovered_background_color = Color::rgb_u8(45, 103, 80);
+        theme.drop_down.item_background_color = Color::rgb_u8(19, 48, 40);
+        theme.drop_down.item_foreground_color = cream;
+        theme.drop_down.item_highlight_color = emerald;
+        theme.drop_down.item_hovered_background_color = Color::rgb_u8(45, 103, 80);
+        theme.drop_down.list_background_color = Color::rgb_u8(12, 29, 27);
+        theme.tooltip.background_color = Color::rgba_u8(12, 29, 27, 240);
+        theme.tooltip.foreground_color = cream;
+        theme.tooltip.highlight_color = gold;
         theme
     }
 

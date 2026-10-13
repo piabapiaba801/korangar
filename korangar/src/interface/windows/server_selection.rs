@@ -7,11 +7,11 @@ use korangar_interface::window::{CustomWindow, Window};
 use ragnarok_packets::{CharacterServerInformation, CharacterServerInformationPathExt};
 use rust_state::{Context, Path};
 
+use crate::graphics::Color;
 use crate::input::InputEvent;
 use crate::interface::windows::WindowClass;
-use crate::state::localization::LocalizationPathExt;
 use crate::state::theme::InterfaceThemeType;
-use crate::state::{ClientState, ClientStatePathExt, client_state};
+use crate::state::ClientState;
 
 pub struct ServerSelectionWindow<P> {
     path: P,
@@ -120,12 +120,14 @@ where
         }
 
         window! {
-            title: client_state().localization().server_selection_window_title(),
+            title: "FreokRO · Select World",
             class: Self::window_class(),
             theme: InterfaceThemeType::Menu,
-            minimum_width: 450.0,
-            maximum_width: 450.0,
+            background_color: Color::rgba_u8(7, 24, 21, 220),
+            minimum_width: 490.0,
+            maximum_width: 490.0,
             elements: (
+                text! { text: "CHOOSE YOUR WORLD" },
                 ServerWrapper::new(self.path),
             ),
         }

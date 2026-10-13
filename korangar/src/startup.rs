@@ -86,7 +86,8 @@ impl StartupScene {
         }
 
         if let (Some(video), Some(video_size)) = (&self.video, self.video_size) {
-            let scale = (screen.width / video_size.width).min(screen.height / video_size.height);
+            // Fill the startup window at every aspect ratio; menu controls remain above it.
+            let scale = (screen.width / video_size.width).max(screen.height / video_size.height);
             let size = ScreenSize {
                 width: video_size.width * scale,
                 height: video_size.height * scale,

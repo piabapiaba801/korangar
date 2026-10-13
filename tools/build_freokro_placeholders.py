@@ -68,6 +68,22 @@ def female_frames() -> list[Image.Image]:
     return frames
 
 
+def female_side_frames() -> list[Image.Image]:
+    sheet = Image.open(ART / "female-side-walk-source.png")
+    if sheet.size != (1152, 960):
+        raise ValueError("Expected 6 x 5 side-walk frames of 192 x 192 pixels")
+    frames = []
+    for index in range(30):
+        x, y = index % 6, index // 6
+        tile = sheet.crop((x * 192, y * 192, (x + 1) * 192, (y + 1) * 192))
+        tile = remove_gif_background(tile)
+        image = tile.crop((20, 0, 172, 184)).resize((64, 92), Image.Resampling.NEAREST)
+        canvas = Image.new("RGBA", (72, 96))
+        canvas.alpha_composite(image, (4, 2))
+        frames.append(canvas)
+    return frames
+
+
 def make_spr(frames: list[Image.Image]) -> bytes:
     width, height = frames[0].size
     if len(frames) > 65535 or any(frame.size != (width, height) for frame in frames):
@@ -142,11 +158,27 @@ def main() -> None:
     skill.save(ART / "skill-placeholder.png")
     save("아이템", "FREOKRO_SKILL_PLACEHOLDER", [skill], [[(0, 255, 1.0)] for _ in range(8)], 100.0)
 
-    frames = female_frames()
-    # Only the original front-facing animation is used; the other actions and
-    # all camera directions reuse its first frontal frame until authored later.
-    actions = [[(frame, 255, 1.0) for frame in range(len(frames))] if action < 8 else [(0, 255, 1.0)] for action in range(13 * 8)]
+    front = female_frames()
+    right = female_side_frames()
+    left = [image.transpose(Image.Transpose.FLIP_LEFT_RIGHT) for image in right]
+    frames = front + right + left
+    actions = []
+    for action in range(13):
+        for direction in range(8):
+            side_start = 30 if direction == 2 else 60 if direction == 6 else None
+            if action == 0:  # Idle: keep the original breathing loop at the front.
+                indices = range(len(front)) if side_start is None else (side_start,)
+            elif action == 1:  # Walk: use the supplied side cycle for east and west.
+                indices = range(side_start, side_start + len(right)) if side_start is not None else (0,)
+            else:
+                indices = (side_start if side_start is not None else 0,)
+            actions.append([(index, 255, 1.0) for index in indices])
     save("npc", "FREOKRO_FEMALE", frames, actions, 2.0)
+
+    # The simplified public base uses one authored male silhouette for every job
+    # until a dedicated male animation sheet is available.
+    male = fit(ROOT / "art" / "freokro" / "character-menu" / "male-preview-source.png", (72, 96))
+    save("npc", "FREOKRO_MALE", [male], [[(0, 255, 1.0)] for _ in range(13 * 8)], 100.0)
 
 
 if __name__ == "__main__":

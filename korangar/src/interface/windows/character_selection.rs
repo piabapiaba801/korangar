@@ -15,11 +15,12 @@ use rust_state::{Context, Path};
 use crate::graphics::{Color, CornerDiameter, ShadowPadding, Texture};
 use crate::input::InputEvent;
 use crate::interface::windows::WindowClass;
-use crate::loaders::{FontSize, OverflowBehavior};
+use crate::loaders::{ActionLoader, AnimationLoader, FontSize, OverflowBehavior, SpriteLoader};
 use crate::renderer::LayoutExt;
 use crate::state::ClientState;
 use crate::state::character_slots::CharacterSlots;
 use crate::state::theme::InterfaceThemeType;
+use crate::world::{AnimationData, EntityType, Library, get_entity_part_files};
 
 const MAX_VISIBLE_SLOTS: usize = 15;
 
@@ -58,6 +59,12 @@ struct CharacterStage<C, M> {
     pending_delete: Rc<Cell<Option<usize>>>,
     female: Arc<Texture>,
     male: Arc<Texture>,
+    sprite_loader: Arc<SpriteLoader>,
+    action_loader: Arc<ActionLoader>,
+    animation_loader: Arc<AnimationLoader>,
+    library: Arc<Library>,
+    preview_character_id: Option<u32>,
+    preview: Option<Arc<AnimationData>>,
     slot_handlers: Vec<SelectSlot<M>>,
     slot_labels: Vec<String>,
     selected_details: String,
@@ -75,6 +82,10 @@ where
         pending_delete: Rc<Cell<Option<usize>>>,
         female: Arc<Texture>,
         male: Arc<Texture>,
+        sprite_loader: Arc<SpriteLoader>,
+        action_loader: Arc<ActionLoader>,
+        animation_loader: Arc<AnimationLoader>,
+        library: Arc<Library>,
     ) -> Self {
         let slot_handlers = (0..MAX_VISIBLE_SLOTS)
             .map(|index| SelectSlot {
@@ -91,6 +102,12 @@ where
             pending_delete,
             female,
             male,
+            sprite_loader,
+            action_loader,
+            animation_loader,
+            library,
+            preview_character_id: None,
+            preview: None,
             slot_handlers,
             slot_labels: Vec::new(),
             selected_details: String::new(),
@@ -153,6 +170,23 @@ where
                 character.map_name.strip_suffix(".gat").unwrap_or(&character.map_name)
             )
         });
+        let selected_character = slots.get_slot(self.selected.get());
+        let selected_id = selected_character.map(|character| character.character_id.0);
+        if self.preview_character_id != selected_id {
+            self.preview_character_id = selected_id;
+            self.preview = selected_character.and_then(|character| {
+                let parts = get_entity_part_files(
+                    &self.library,
+                    EntityType::Player,
+                    character.job_id,
+                    character.sex,
+                    Some(character.head.max(0) as usize),
+                );
+                self.animation_loader
+                    .load(&self.sprite_loader, &self.action_loader, EntityType::Player, &parts)
+                    .ok()
+            });
+        }
         with_single_resolver(resolvers, |resolver| BaseLayoutInfo {
             area: resolver.with_height(390.0),
         })
@@ -208,7 +242,37 @@ where
             width: 220.0,
             height: 330.0,
         };
-        layout.add_texture(portrait_area, portrait.clone(), Color::WHITE, false);
+        let frame = self.preview.as_ref().and_then(|preview| preview.animations.first().and_then(|action| action.frames.first()));
+        if let (Some(preview), Some(frame)) = (&self.preview, frame)
+            && frame.size.x > 0
+            && frame.size.y > 0
+            && !frame.frame_parts.is_empty()
+        {
+            let scale = (portrait_area.width / frame.size.x as f32)
+                .min(portrait_area.height / frame.size.y as f32)
+                .min(3.0);
+            let center_x = portrait_area.left + portrait_area.width / 2.0;
+            let center_y = portrait_area.top + portrait_area.height / 2.0;
+            for part in &frame.frame_parts {
+                if let Some(texture) = preview.animation_pair[part.animation_index].sprites.textures.get(part.sprite_number) {
+                    let width = part.size.x as f32 * scale;
+                    let height = part.size.y as f32 * scale;
+                    layout.add_texture(
+                        Area {
+                            left: center_x + part.offset.x as f32 * scale - width / 2.0,
+                            top: center_y + part.offset.y as f32 * scale - height / 2.0,
+                            width,
+                            height,
+                        },
+                        texture.clone(),
+                        Color::WHITE,
+                        false,
+                    );
+                }
+            }
+        } else {
+            layout.add_texture(portrait_area, portrait.clone(), Color::WHITE, false);
+        }
         let title = character.map_or("A NEW ADVENTURE", |character| character.name.as_str());
         draw_text(
             layout,
@@ -228,6 +292,15 @@ where
                 Color::rgb_u8(190, 212, 198),
                 HorizontalAlignment::Center { offset: 0.0, border: 12.0 },
                 VerticalAlignment::Bottom { offset: 12.0 },
+            );
+            draw_text(
+                layout,
+                hero,
+                "CURRENT IN-GAME APPEARANCE",
+                12.0,
+                Color::rgb_u8(158, 195, 172),
+                HorizontalAlignment::Center { offset: 0.0, border: 12.0 },
+                VerticalAlignment::Top { offset: 37.0 },
             );
         } else {
             draw_text(
@@ -314,15 +387,32 @@ pub struct CharacterSelectionWindow<C, M> {
     switch_request: M,
     female: Arc<Texture>,
     male: Arc<Texture>,
+    sprite_loader: Arc<SpriteLoader>,
+    action_loader: Arc<ActionLoader>,
+    animation_loader: Arc<AnimationLoader>,
+    library: Arc<Library>,
 }
 
 impl<C, M> CharacterSelectionWindow<C, M> {
-    pub fn new(character_slots: C, switch_request: M, female: Arc<Texture>, male: Arc<Texture>) -> Self {
+    pub fn new(
+        character_slots: C,
+        switch_request: M,
+        female: Arc<Texture>,
+        male: Arc<Texture>,
+        sprite_loader: Arc<SpriteLoader>,
+        action_loader: Arc<ActionLoader>,
+        animation_loader: Arc<AnimationLoader>,
+        library: Arc<Library>,
+    ) -> Self {
         Self {
             character_slots,
             switch_request,
             female,
             male,
+            sprite_loader,
+            action_loader,
+            animation_loader,
+            library,
         }
     }
 }
@@ -361,7 +451,18 @@ where
             minimum_width: 1040.0,
             maximum_width: 1040.0,
             elements: (
-                CharacterStage::new(slots_path, switch_path, selected, pending_delete, self.female, self.male),
+                CharacterStage::new(
+                    slots_path,
+                    switch_path,
+                    selected,
+                    pending_delete,
+                    self.female,
+                    self.male,
+                    self.sprite_loader,
+                    self.action_loader,
+                    self.animation_loader,
+                    self.library,
+                ),
                 split! {
                     gaps: 8.0,
                     children: (

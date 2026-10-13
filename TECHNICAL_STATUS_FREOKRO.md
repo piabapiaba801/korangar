@@ -1,4 +1,12 @@
-# FreokRO technical status — October 12, 2026
+# FreokRO technical status — October 13, 2026
+
+## Simplified public-base candidate (local only)
+
+- Character selection now reads the selected slot's job, sex, and head identifier and loads the same animation resource paths used by the in-world player. It draws the first idle frame instead of the former fixed gender portrait. Hair, class, equipment, and color variants remain visually collapsed into the currently authored placeholder for each sex.
+- The default female is the project-supplied turquoise Azuk. The original 30-frame front GIF drives frontal idle; a matching 30-frame side sheet drives east/west walking, with the left view mirrored. Rear and diagonal views remain frontal placeholders. A project-generated male illustration now produces a static in-world placeholder, replacing the old male Gravity body/head lookup path. Creation uses the turquoise female art but still sends hair/style values without visually previewing those variants.
+- Login, world selection, and character menus now use one built-in FreokRO menu palette derived from the in-game Classic colors. The login and world panels have FreokRO titles; the startup video fills the window at different aspect ratios. The existing project-supplied eight-second video remains the intro asset.
+- The new `.spr`/`.act` outputs and menu PNG were generated locally. The `freokro_sprites` parser test and `unicode,debug` release build passed after the last code cleanup. Visual validation is pending. Do not treat this candidate as a completed public release. No remote push has been made for this version.
+- A separate local `freokro-base` repository holds a curated, history-free public snapshot, including all 1,265 project-generated map triplets. Its first remote publication remains pending asset provenance and local gameplay checks. The advanced personalized client stays in this local `freokro` working branch. See [public base release boundaries](PUBLIC_BASE_RELEASE.md).
 
 ## Local character menu visual validation
 

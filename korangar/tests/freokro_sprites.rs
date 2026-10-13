@@ -16,7 +16,8 @@ fn freokro_sprites_decode_with_the_game_format_parser() {
         ("아이템", "FREOKRO_TAMING", 64, 64, 1, 8),
         ("", "FREOKRO_CURSOR", 48, 48, 5, 112),
         ("아이템", "FREOKRO_SKILL_PLACEHOLDER", 32, 32, 1, 8),
-        ("npc", "FREOKRO_FEMALE", 72, 96, 30, 104),
+        ("npc", "FREOKRO_FEMALE", 72, 96, 90, 104),
+        ("npc", "FREOKRO_MALE", 72, 96, 1, 104),
     ] {
         let sprite = fs::read(root.join(directory).join(format!("{stem}.spr"))).unwrap();
         let mut reader: ByteReader<Option<InternalVersion>> = ByteReader::with_default_metadata(&sprite);
@@ -36,8 +37,12 @@ fn freokro_sprites_decode_with_the_game_format_parser() {
         }));
         assert_eq!(actions.delays.as_ref().unwrap().len(), action_count);
         if stem == "FREOKRO_FEMALE" {
-            assert!(actions.actions[..8].iter().all(|action| action.motions.len() == 30));
-            assert!(actions.actions[8..].iter().all(|action| action.motions.len() == 1));
+            assert_eq!(actions.actions[0].motions.len(), 30);
+            assert_eq!(actions.actions[2].motions.len(), 1);
+            assert_eq!(actions.actions[6].motions.len(), 1);
+            assert_eq!(actions.actions[10].motions.len(), 30);
+            assert_eq!(actions.actions[14].motions.len(), 30);
+            assert!(actions.actions[16..].iter().all(|action| action.motions.len() == 1));
         }
     }
 }

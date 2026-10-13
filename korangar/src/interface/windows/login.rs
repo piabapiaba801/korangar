@@ -109,12 +109,14 @@ where
         };
 
         window! {
-            title: client_state().localization().log_in_window_title(),
+            title: "FreokRO · Sign In",
             class: Self::window_class(),
             theme: InterfaceThemeType::Menu,
-            minimum_width: 450.0,
-            maximum_width: 450.0,
+            background_color: Color::rgba_u8(7, 24, 21, 220),
+            minimum_width: 490.0,
+            maximum_width: 490.0,
             elements: (
+                text! { text: "YOUR ADVENTURE STARTS HERE" },
                 text! { text: client_state().localization().select_service_text() },
                 drop_down! {
                     options: self.client_info_path.services(),

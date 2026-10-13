@@ -1033,6 +1033,10 @@ impl Client {
                             client_state().switch_request(),
                             self.texture_loader.get_or_load("freokro\\female-preview.png", loaders::ImageType::Color).unwrap(),
                             self.texture_loader.get_or_load("freokro\\male-preview.png", loaders::ImageType::Color).unwrap(),
+                            self.sprite_loader.clone(),
+                            self.action_loader.clone(),
+                            self.animation_loader.clone(),
+                            self.library.clone(),
                         ));
                     }
                 }
@@ -2777,6 +2781,10 @@ impl Client {
                                 client_state().switch_request(),
                                 self.texture_loader.get_or_load("freokro\\female-preview.png", loaders::ImageType::Color).unwrap(),
                                 self.texture_loader.get_or_load("freokro\\male-preview.png", loaders::ImageType::Color).unwrap(),
+                                self.sprite_loader.clone(),
+                                self.action_loader.clone(),
+                                self.animation_loader.clone(),
+                                self.library.clone(),
                             ));
 
                             self.start_camera.set_focus_point(START_CAMERA_FOCUS_POINT);
