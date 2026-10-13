@@ -10,12 +10,16 @@ FreokRO is a custom game project with its own visual identity. Its client adapts
 
 The emblem above is the project's visual direction. The FreokRO branch now contains original flat RSW, GND, and GAT drafts for every active map. See the [map-authoring model](map-authoring/README.md) and [technical status](TECHNICAL_STATUS_FREOKRO.md) for installation and validation details.
 
+## 🔒 Private development line
+
+This repository is the separate **FreokRO private client workspace** for personalized art, interfaces, and game features. It starts from the validated October 13 `freokro` checkpoint of the [public Korangar fork](https://github.com/piabapiaba801/korangar/tree/freokro). The simplified `freokro-base` repository remains local while its release checks are completed. Private changes are reviewed before any deliberate transfer to the public base; neither repository updates the other automatically.
+
 ## 🚧 Work in progress — October 13, 2026
 
 - **Playable local visual checkpoint:** the owner confirmed the redesigned login, world selection, character selection/creation, and lateral movement in the independent test client. Occupied slots display the selected character's current in-game sprite; an empty slot displays the creation preview.
 - **Authored map baseline:** all 1,265 active map names have project-generated RSW, GND, and GAT triplets. Names and dimensions remain compatibility references. Navigation, warps, and visual details still need map-by-map work.
 - **Temporary character art:** turquoise Azuk has front and side frames. Rear/diagonal views, hair and class variants, equipment, NPCs, and monsters still need original art. The male character remains a static original placeholder.
-- **Separate release lines:** this `freokro` branch remains the working client. A new local `freokro-base` Git repository contains a simplified snapshot with all generated maps and its own history. It has no remote yet; asset provenance and wider gameplay checks remain before its public release.
+- **Separate release lines:** this private `freokro` branch is the personalized working client. A local `freokro-base` Git repository contains a simplified snapshot with all generated maps and its own history. It has no remote yet; asset provenance and wider gameplay checks remain before its public release.
 
 ![FreokRO WIP selection showing the currently selected in-game sprite](docs/screenshots/freokro-character-selection-sprite-2026-10-13.jpg)
 
