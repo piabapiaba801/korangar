@@ -33,6 +33,6 @@ See [map authoring](map-authoring/README.md) for packaging and a matching server
 
 ## 📦 Repository boundary
 
-This repository contains a curated client snapshot with a fresh Git history. It includes the project-generated map triplets and excludes local game archives, personal screenshots, the private Auction HUD, and the source fork's development history. Advanced personalized work remains in a separate local development line.
+This repository contains a curated client snapshot with a fresh Git history. It includes the project-generated map triplets and excludes local game archives, personal screenshots, the private Auction HUD, and the source fork's development history. Advanced personalized work remains in a separate private development repository.
 
 Korangar code retains its upstream attribution and [MIT license](LICENSE.md). FreokRO additions are documented under `art/freokro`, `map-authoring`, and `tools`. Audit all assets and dependencies before redistributing a playable package.

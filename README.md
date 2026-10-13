@@ -35,7 +35,7 @@ When the client and the [FreokRO rAthena emulator](https://github.com/piabapiaba
 
 ## 🧩 FreokRO adaptation
 
-`freokro` is the active FreokRO development branch. The `dev` branch preserves the earlier client line based on [upstream Korangar](https://github.com/vE5li/korangar) tag [`v0.1.1-20260220`](https://github.com/vE5li/korangar/releases/tag/v0.1.1-20260220); `rebase` integrates that line with newer upstream `main`. Neither upstream nor fork `main` is modified by this work. The client requires the [FreokRO rAthena fork](https://github.com/piabapiaba801/freokro-rathena-korangar), configured for protocol `20220406` without packet obfuscation. The original Ragexe line uses `PACKETVER 20250716` and runs separately.
+`freokro` is the active branch in this private repository. The [public Korangar fork](https://github.com/piabapiaba801/korangar) retains `dev`, `rebase`, and `main` as separate branches; the private repository began from its October 13 `freokro` checkpoint. Neither upstream nor fork `main` is modified by private development. The client requires the [FreokRO rAthena fork](https://github.com/piabapiaba801/freokro-rathena-korangar), configured for protocol `20220406` without packet obfuscation. The original Ragexe line uses `PACKETVER 20250716` and runs separately.
 
 The [FreokRO Auction HUD](https://github.com/piabapiaba801/freokro-auction-hud) is a separate process in a **private** repository. The base game does not require it; the **Black Market** interface does. The server handles **Black Market (7007)** and opens the local HUD bridge when the skill is used in town. This client implements the regular item and equipment windows. Check protocol, skill, and auction changes across all three projects.
 

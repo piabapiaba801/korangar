@@ -8,7 +8,7 @@ The public base is a simplified starting point for a Ragnarok-like Plus game. It
 
 | Public base | Local advanced edition |
 | --- | --- |
-| Independent `freokro-base` repository with a new, curated Git history | Existing local `freokro` branch |
+| Independent local `freokro-base` repository with a new, curated Git history | Separate private `freokro-priv` repository and local checkout |
 | Reproducible baseline, simple character art, common menus and HUD | Future customized art, deeper appearance variants, and experimental systems |
 | All 1,265 project-generated map triplets, plus their generator and catalog | Local testing resources and further map customization |
 | No private Auction HUD source, credentials, game archives, or user screenshots | Local integrations and test installations |
@@ -30,4 +30,4 @@ Changes that belong in both editions should be developed in the base first and i
 - Check the public snapshot for private configuration, passwords, personal data, binaries, bulk archives, and screenshots containing third-party game art.
 - Include upstream Korangar attribution and the applicable license. Document the server dependency and the remaining placeholder limitations.
 
-The source fork's `main`, `dev`, and `rebase` branches are outside this release line. The new public repository will have its own history after the gate passes.
+The source fork's `main`, `dev`, and `rebase` branches are outside this release line. The public base already has its own local root commit; its GitHub repository will be created after the release gate passes.
