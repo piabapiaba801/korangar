@@ -4,6 +4,8 @@ FreokRO Base is a simplified, independent starting point for a **Ragnarok-like P
 
 > **Release status:** local candidate. The FreokRO code and authored resources still need gameplay and asset-provenance validation before a public release. This repository does **not** claim to be free of every Gravity-owned dependency yet.
 
+The owner visually checked the local October 13 test client through login, world selection, character selection/creation, and lateral movement. Broader gameplay and asset review remain on the release checklist.
+
 ## ✨ Current visual foundation
 
 - A FreokRO startup loop leads into login, world selection, character selection, and creation with a common dark green and emerald menu palette.

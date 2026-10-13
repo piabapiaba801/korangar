@@ -10,6 +10,17 @@ FreokRO is a custom game project with its own visual identity. Its client adapts
 
 The emblem above is the project's visual direction. The FreokRO branch now contains original flat RSW, GND, and GAT drafts for every active map. See the [map-authoring model](map-authoring/README.md) and [technical status](TECHNICAL_STATUS_FREOKRO.md) for installation and validation details.
 
+## 🚧 Work in progress — October 13, 2026
+
+- **Playable local visual checkpoint:** the owner confirmed the redesigned login, world selection, character selection/creation, and lateral movement in the independent test client. Occupied slots display the selected character's current in-game sprite; an empty slot displays the creation preview.
+- **Authored map baseline:** all 1,265 active map names have project-generated RSW, GND, and GAT triplets. Names and dimensions remain compatibility references. Navigation, warps, and visual details still need map-by-map work.
+- **Temporary character art:** turquoise Azuk has front and side frames. Rear/diagonal views, hair and class variants, equipment, NPCs, and monsters still need original art. The male character remains a static original placeholder.
+- **Separate release lines:** this `freokro` branch remains the working client. A new local `freokro-base` Git repository contains a simplified snapshot with all generated maps and its own history. It has no remote yet; asset provenance and wider gameplay checks remain before its public release.
+
+![FreokRO WIP selection showing the currently selected in-game sprite](docs/screenshots/freokro-character-selection-sprite-2026-10-13.jpg)
+
+![FreokRO WIP empty character slot and creation preview](docs/screenshots/freokro-character-selection-empty-slot-2026-10-13.jpg)
+
 ## 🌱 Point zero: a Ragnarok-like Plus foundation
 
 FreokRO is the starting point for a **“Ragnarok-like Plus”**: a playable client and emulator foundation from which a new game can grow. The phrase describes its roots, not a fixed design. Creators can build new worlds, art, interfaces, progression, combat, social systems, or take the project in another direction entirely. This branch is the **point zero** of that work, not a finished game or a prescribed final form.
@@ -60,7 +71,7 @@ In one controlled local Windows comparison on October 8, 2026, direct Vulkan lau
 
 The menus no longer load Geffen as a background map. Login plays the project-supplied eight-second video in a loop, with the FreokRO emblem already embedded in the footage. Character selection and creation use an original forest scene and separate FreokRO character art. A dark background keeps the menus usable if an asset is missing; the actual game map loads after a character enters the world.
 
-Character selection has a roster of slots and actions for entering, creating, moving, and deleting a character. Occupied slots now render the same project-owned character sprite resources used in the world: turquoise Azuk for female characters and a temporary male sprite. Deletion requires a second click on the same character. Creation sends the chosen sex, hair style, and hair color to the server; its portrait remains illustrative and does not yet change with hairstyle or color. The initial class is **Novice**, which the current server accepts. The user confirmed the earlier menu layout in-game on October 12, 2026; the new sprite preview and unified startup styling still need a visual check. Enter, move, delete, and every appearance option have not been checked individually. See the [character menu art notes](art/freokro/character-menu/README.md).
+Character selection has a roster of slots and actions for entering, creating, moving, and deleting a character. Occupied slots now render the same project-owned character sprite resources used in the world: turquoise Azuk for female characters and a temporary male sprite. Deletion requires a second click on the same character. Creation sends the chosen sex, hair style, and hair color to the server; its portrait remains illustrative and does not yet change with hairstyle or color. The initial class is **Novice**, which the current server accepts. The owner confirmed the redesigned screens and lateral movement on October 13, 2026. Enter, move, delete, and every appearance option have not been checked individually. See the [character menu art notes](art/freokro/character-menu/README.md).
 
 ![FreokRO character selection with the forest background, female preview, full roster and visible actions](docs/screenshots/freokro-character-selection-validated-2026-10-12.png)
 
@@ -80,7 +91,7 @@ The [original map-authoring batch](map-authoring/README.md) provides project-aut
 
 **Gravity-derived asset removal is not 100%:** the user removed the old local `data-freokro.7z`, its duplicate extraction, and the loose background music folder. Other loose assets still need an ownership and dependency audit. A reliable percentage for all Gravity-derived content is not available. [The technical status](TECHNICAL_STATUS_FREOKRO.md) separates active map replacement, local package removal, and pending work.
 
-FreokRO now has original [portal, banner, taming, cursor, skill placeholder, and character artwork](art/freokro/sprites/README.md). The client routes the legacy portal/banner/taming identifiers to their FreokRO assets. It uses an animated emerald cursor with click, attack, dialog, and prohibited feedback. Skill icons temporarily share one FreokRO sigil while retaining their individual names and behavior. Female characters use the turquoise Azuk frontal animation and a lateral walk cycle; rear and diagonal views remain temporary. Male characters use a single project-owned placeholder frame. Hair, class, equipment, and color variants require further art. The user confirmed the earlier frontal sprite in the client on October 9, 2026; the lateral and male updates still need in-game validation. The minimap places emerald markers at static warp coordinates exported from the configured FreokRO rAthena scripts and at live warp entities sent by the server; the user also confirmed those markers in-game.
+FreokRO now has original [portal, banner, taming, cursor, skill placeholder, and character artwork](art/freokro/sprites/README.md). The client routes the legacy portal/banner/taming identifiers to their FreokRO assets. It uses an animated emerald cursor with click, attack, dialog, and prohibited feedback. Skill icons temporarily share one FreokRO sigil while retaining their individual names and behavior. Female characters use the turquoise Azuk frontal animation and a lateral walk cycle; rear and diagonal views remain temporary. Male characters use a single project-owned placeholder frame. Hair, class, equipment, and color variants require further art. The owner confirmed the lateral movement in the October 13, 2026 test client; broader male animation and appearance behavior remain unverified. The minimap places emerald markers at static warp coordinates exported from the configured FreokRO rAthena scripts and at live warp entities sent by the server; the user also confirmed those markers in-game.
 
 ### 📸 Earlier FreokRO client captures
 

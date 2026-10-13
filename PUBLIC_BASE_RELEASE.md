@@ -1,6 +1,6 @@
 # FreokRO public base: release boundary
 
-**Status:** local candidate. The public GitHub repository and remote publication are pending validation.
+**Status:** local Git candidate. No GitHub repository or remote publication has been created for this version.
 
 The public base is a simplified starting point for a Ragnarok-like Plus game. It provides the FreokRO client source, project-authored map generator and textures, starter character sprites, common interface skin, and documentation for connecting to the separately maintained [FreokRO rAthena server](https://github.com/piabapiaba801/freokro-rathena-korangar). It is not the private advanced edition.
 
@@ -24,8 +24,8 @@ Changes that belong in both editions should be developed in the base first and i
 
 ## Publication gate
 
-- Compile the client from the curated repository, regenerate representative authored maps, and verify its sprite/ACT parser test.
-- Have the project owner verify login, world selection, character selection/creation, entering the world, basic movement, and visible UI at the target resolution. Check both sexes and switching slots.
+- The client compiled from the curated repository on October 13, 2026, and the `freokro_sprites` parser test passed. The project owner checked login, world selection, character selection/creation, and lateral movement in the physical test client and confirmed that the tested views are correct. Representative map regeneration and a wider gameplay pass remain to be recorded.
+- Verify both sexes, switching occupied slots, entering the world, the creation controls, and the other common HUD windows at the target resolution before a remote release.
 - Review every distributed asset and dependency for provenance. The current FreokRO client is **not yet confirmed to be free of all Gravity-owned game assets**. Do not describe the candidate as such until the audit is complete.
 - Check the public snapshot for private configuration, passwords, personal data, binaries, bulk archives, and screenshots containing third-party game art.
 - Include upstream Korangar attribution and the applicable license. Document the server dependency and the remaining placeholder limitations.
