@@ -72,7 +72,7 @@ use networking::{PacketHistory, PacketHistoryCallback};
 #[cfg(not(feature = "debug"))]
 use ragnarok_packets::handler::NoPacketCallback;
 use ragnarok_packets::{
-    AttackRange, BuyShopItemsResult, CharacterServerInformation, Direction, DisappearanceReason, EntityId, HotbarSlot, SellItemsResult,
+    AttackRange, BuyShopItemsResult, CharacterServerInformation, Direction, DisappearanceReason, EntityId, HotbarSlot, Quest, QuestDetails, SellItemsResult,
     SkillId, SkillLevel, SkillType, StatType, TilePosition, UnitId, WorldPosition,
 };
 use renderer::InterfaceRenderer;
@@ -87,7 +87,7 @@ use state::inventory::InventoryPathExt;
 use state::localization::Localization;
 use state::skills::SkillTreePathExt;
 use state::theme::{CursorThemePathExt, IndicatorThemePathExt, InterfaceThemePathExt, WorldThemePathExt};
-use state::{ChatMessage, ClientState, ClientStatePathExt, ClientStateRootExt, client_state, this_entity, this_player};
+use state::{ChatMessage, ClientState, ClientStatePathExt, ClientStateRootExt, PartyMember, client_state, this_entity, this_player};
 #[cfg(feature = "debug")]
 use wgpu::Device;
 use wgpu::util::initialize_adapter_from_env_or_default;
@@ -237,14 +237,11 @@ fn initialize_shutdown_signal() {
 
 struct Client {
     game_file_loader: Arc<GameFileLoader>,
-    #[cfg(feature = "debug")]
     action_loader: Arc<ActionLoader>,
-    #[cfg(feature = "debug")]
     animation_loader: Arc<AnimationLoader>,
     async_loader: Arc<AsyncLoader>,
     effect_loader: Arc<EffectLoader>,
     font_loader: Arc<FontLoader>,
-    #[cfg(feature = "debug")]
     sprite_loader: Arc<SpriteLoader>,
     texture_loader: Arc<TextureLoader>,
     library: Arc<Library>,
@@ -657,14 +654,11 @@ impl Client {
 
         Some(Self {
             game_file_loader,
-            #[cfg(feature = "debug")]
             action_loader,
-            #[cfg(feature = "debug")]
             animation_loader,
             async_loader,
             effect_loader,
             font_loader,
-            #[cfg(feature = "debug")]
             sprite_loader,
             texture_loader,
             library,
@@ -936,6 +930,11 @@ impl Client {
                     }
                 }
                 NetworkEvent::MapServerDisconnected { reason } => {
+                    self.client_state.follow_mut(client_state().party_members()).clear();
+                    *self.client_state.follow_mut(client_state().party_name()) = String::new();
+                    self.interface.close_window_with_class(WindowClass::Party);
+                    self.client_state.follow_mut(client_state().quests()).clear();
+                    self.interface.close_window_with_class(WindowClass::QuestTracker);
                     if reason != DisconnectReason::ClosedByClient {
                         // TODO: Make this an on-screen popup.
                         #[cfg(feature = "debug")]
@@ -958,6 +957,7 @@ impl Client {
                     self.client_state.follow_mut(client_state().dead_entities()).clear();
                     self.client_state.follow_mut(client_state().ground_items()).clear();
                     *self.client_state.follow_mut(client_state().buffered_action()) = None;
+                    *self.client_state.follow_mut(client_state().selected_target()) = None;
 
                     self.audio_engine.play_background_music_track(None);
 
@@ -1181,6 +1181,10 @@ impl Client {
                     }
                 }
                 NetworkEvent::RemoveEntity { entity_id, reason } => {
+                    if *self.client_state.follow(client_state().selected_target()) == Some(entity_id) {
+                        *self.client_state.follow_mut(client_state().selected_target()) = None;
+                        self.interface.close_window_with_class(WindowClass::Target);
+                    }
                     // If the motive is dead, you need to set the player to dead.
                     if reason == DisappearanceReason::Died {
                         if let Some(entity) = self
@@ -1509,6 +1513,114 @@ impl Client {
                             self.interface.close_window_with_class(WindowClass::Respawn);
                         }
                     }
+                }
+                NetworkEvent::PartyList { party_name, members } => {
+                    *self.client_state.follow_mut(client_state().party_name()) = party_name;
+                    *self.client_state.follow_mut(client_state().party_members()) = members.into_iter().map(|member| PartyMember {
+                        account_id: member.account_id,
+                        name: member.name,
+                        job_id: member.job_id,
+                        base_level: member.base_level,
+                        online: member.offline == 0,
+                        leader: member.leader == 0,
+                        health: 0,
+                        maximum_health: 0,
+                    }).collect();
+                    if self.client_state.follow(client_state().party_members()).len() > 1 {
+                        if !self.interface.is_window_with_class_open(WindowClass::Party) { self.interface.open_window(PartyWindow::new(self.library.clone())); }
+                    } else { self.interface.close_window_with_class(WindowClass::Party); }
+                }
+                NetworkEvent::PartyMemberAdded { member } => {
+                    if self.client_state.follow(client_state().party_name()).is_empty() {
+                        *self.client_state.follow_mut(client_state().party_name()) = member.party_name.clone();
+                    }
+                    let members = self.client_state.follow_mut(client_state().party_members());
+                    if !members.iter().any(|entry| entry.account_id == member.account_id) {
+                        members.push(PartyMember {
+                            account_id: member.account_id,
+                            name: member.name,
+                            job_id: member.job_id,
+                            base_level: member.base_level,
+                            online: member.offline == 0,
+                            leader: member.leader == 0,
+                            health: 0,
+                            maximum_health: 0,
+                        });
+                    }
+                    if members.len() > 1 && !self.interface.is_window_with_class_open(WindowClass::Party) {
+                        self.interface.open_window(PartyWindow::new(self.library.clone()));
+                    }
+                }
+                NetworkEvent::PartyMemberHealth { account_id, health, maximum_health } => {
+                    if let Some(member) = self.client_state.follow_mut(client_state().party_members()).iter_mut().find(|member| member.account_id == account_id) {
+                        member.health = health;
+                        member.maximum_health = maximum_health;
+                    }
+                }
+                NetworkEvent::PartyMemberLevel { account_id, job_id, base_level } => {
+                    if let Some(member) = self.client_state.follow_mut(client_state().party_members()).iter_mut().find(|member| member.account_id == account_id) {
+                        member.job_id = job_id;
+                        member.base_level = base_level;
+                    }
+                }
+                NetworkEvent::PartyMemberRemoved { account_id } => {
+                    let self_removed = self.client_state.try_follow(this_player())
+                        .is_some_and(|player| player.get_common().entity_id.0 == account_id.0);
+                    let members = self.client_state.follow_mut(client_state().party_members());
+                    if self_removed { members.clear(); } else { members.retain(|member| member.account_id != account_id); }
+                    if members.len() <= 1 { self.interface.close_window_with_class(WindowClass::Party); }
+                }
+                NetworkEvent::PartyLeaderChanged { old_leader, new_leader } => {
+                    for member in self.client_state.follow_mut(client_state().party_members()) {
+                        if member.account_id == old_leader { member.leader = false; }
+                        if member.account_id == new_leader { member.leader = true; }
+                    }
+                }
+                NetworkEvent::QuestList { quests } => {
+                    *self.client_state.follow_mut(client_state().quests()) = quests;
+                    if self.client_state.follow(client_state().quests()).is_empty() {
+                        self.interface.close_window_with_class(WindowClass::QuestTracker);
+                    } else if !self.interface.is_window_with_class_open(WindowClass::QuestTracker) {
+                        self.interface.open_window(QuestTrackerWindow);
+                    }
+                }
+                NetworkEvent::QuestAdded { quest } => {
+                    let quests = self.client_state.follow_mut(client_state().quests());
+                    let details = quest.objective_details.into_iter().take(quest.objective_count as usize).map(|objective| QuestDetails {
+                        hunt_identification: objective.hunt_identification,
+                        objective_type: objective.objective_type,
+                        mob_id: objective.mob_id,
+                        minimum_level: objective.minimum_level,
+                        maximum_level: objective.maximum_level,
+                        kill_count: objective.mob_count,
+                        total_count: 0,
+                        mob_name: objective.mob_name,
+                    }).collect();
+                    quests.retain(|entry| entry.quest_id != quest.quest_id);
+                    quests.push(Quest {
+                        quest_id: quest.quest_id,
+                        active: quest.active,
+                        remaining_time: quest.start_time,
+                        expire_time: quest.expire_time,
+                        objective_count: quest.objective_count,
+                        objective_details: details,
+                    });
+                    if !self.interface.is_window_with_class_open(WindowClass::QuestTracker) { self.interface.open_window(QuestTrackerWindow); }
+                }
+                NetworkEvent::QuestObjectives { objectives } => {
+                    for objective in objectives {
+                        if let Some(detail) = self.client_state.follow_mut(client_state().quests()).iter_mut()
+                            .flat_map(|quest| &mut quest.objective_details)
+                            .find(|detail| detail.hunt_identification == objective.quest_id) {
+                            detail.kill_count = objective.current_count;
+                            detail.total_count = objective.total_count;
+                        }
+                    }
+                }
+                NetworkEvent::QuestRemoved { quest_id } => {
+                    let quests = self.client_state.follow_mut(client_state().quests());
+                    quests.retain(|quest| quest.quest_id != quest_id);
+                    if quests.is_empty() { self.interface.close_window_with_class(WindowClass::QuestTracker); }
                 }
                 NetworkEvent::UpdateStat { stat_type } => {
                     let revived = matches!(&stat_type, StatType::HealthPoints(value) if *value > 0);
@@ -2104,6 +2216,17 @@ impl Client {
                         }
                     }
                 }
+                InputEvent::ToggleWorldMapWindow => {
+                    if let Some(map) = self.map.as_ref() {
+                        match self.interface.is_window_with_class_open(WindowClass::WorldMap) {
+                            true => self.interface.close_window_with_class(WindowClass::WorldMap),
+                            false => self.interface.open_window(WorldMapWindow::new(
+                                self.current_map_name.clone().unwrap_or_else(|| "map".to_owned()),
+                                map.mini_map().clone(),
+                            )),
+                        }
+                    }
+                }
                 InputEvent::ToggleInventoryWindow => {
                     if self.client_state.try_follow(this_entity()).is_some() {
                         match self.interface.is_window_with_class_open(WindowClass::Inventory) {
@@ -2233,6 +2356,17 @@ impl Client {
                     *self.client_state.follow_mut(client_state().buffered_action()) = None;
                 }
                 InputEvent::PlayerInteract { entity_id } => {
+                    let target_is_monster = self.client_state.follow(client_state().entities()).iter().any(|entity| {
+                        entity.get_entity_id() == entity_id && entity.get_entity_type() == EntityType::Monster
+                    });
+                    *self.client_state.follow_mut(client_state().selected_target()) = target_is_monster.then_some(entity_id);
+                    if target_is_monster {
+                        if !self.interface.is_window_with_class_open(WindowClass::Target) {
+                            self.interface.open_window(TargetWindow);
+                        }
+                    } else {
+                        self.interface.close_window_with_class(WindowClass::Target);
+                    }
                     let entity = self
                         .client_state
                         .follow_mut(client_state().entities())
@@ -2482,6 +2616,12 @@ impl Client {
                 }
                 InputEvent::RemoveFriend { account_id, character_id } => {
                     let _ = self.networking_system.remove_friend(account_id, character_id);
+                }
+                InputEvent::RemovePartyMember { account_id, name } => {
+                    let _ = self.networking_system.remove_party_member(account_id, name);
+                }
+                InputEvent::ChangePartyLeader { account_id } => {
+                    let _ = self.networking_system.change_party_leader(account_id);
                 }
                 InputEvent::RejectFriendRequest { account_id, character_id } => {
                     let _ = self.networking_system.reject_friend_request(account_id, character_id);
@@ -2768,6 +2908,8 @@ impl Client {
                         .update_item_sprite(item_id, texture);
                 }
                 (LoaderId::Map(..), LoadableResource::Map { map, position }) => {
+                    *self.client_state.follow_mut(client_state().selected_target()) = None;
+                    self.interface.close_window_with_class(WindowClass::Target);
                     match self.client_state.try_follow(this_player()).is_none() {
                         true => {
                             // Load of main menu map
@@ -2795,6 +2937,7 @@ impl Client {
                             let map = self.map.insert(map);
 
                             self.interface.close_window_with_class(WindowClass::MiniMap);
+                            self.interface.close_window_with_class(WindowClass::WorldMap);
                             self.interface.open_window(MiniMapWindow::new(
                                 self.current_map_name.clone().unwrap_or_else(|| "map".to_owned()),
                                 map.mini_map().clone(),
@@ -3669,6 +3812,13 @@ impl Client {
 
                 if self.show_interface {
                     if let Some(player) = self.client_state.try_follow(this_player()) {
+                        self.top_interface_renderer.render_vitals(
+                            player.get_common().health_points,
+                            player.get_common().maximum_health_points,
+                            player.spell_points,
+                            player.maximum_spell_points,
+                            player.base_level,
+                        );
                         self.top_interface_renderer.render_experience_bars(
                             player.base_experience,
                             player.next_base_experience,

@@ -4210,6 +4210,143 @@ pub struct PartyInvitePacket {
     pub party_name: String,
 }
 
+/// PACKETVER 20220406 party roster (ZC_GROUP_LIST).
+#[derive(Debug, Clone, ByteConvertable, FixedByteSize)]
+#[cfg_attr(feature = "interface", derive(rust_state::RustState, korangar_interface::element::StateElement))]
+pub struct PartyMemberPacket {
+    pub account_id: AccountId,
+    pub character_id: CharacterId,
+    #[length(24)]
+    pub name: String,
+    #[length(16)]
+    pub map_name: String,
+    pub leader: u8,
+    pub offline: u8,
+    pub job_id: i16,
+    pub base_level: i16,
+}
+
+#[derive(Debug, Clone, Packet, ServerPacket, MapServer)]
+#[cfg_attr(feature = "interface", derive(rust_state::RustState, korangar_interface::element::StateElement))]
+#[header(0x0AE5)]
+#[variable_length]
+pub struct PartyListPacket {
+    #[length(24)]
+    pub party_name: String,
+    #[repeating_remaining]
+    pub members: Vec<PartyMemberPacket>,
+}
+
+#[derive(Debug, Clone, Packet, ServerPacket, MapServer)]
+#[cfg_attr(feature = "interface", derive(rust_state::RustState, korangar_interface::element::StateElement))]
+#[header(0x0AE4)]
+pub struct PartyMemberAddedPacket {
+    pub account_id: AccountId,
+    pub character_id: CharacterId,
+    pub leader: u32,
+    pub job_id: i16,
+    pub base_level: i16,
+    pub x: i16,
+    pub y: i16,
+    pub offline: u8,
+    #[length(24)]
+    pub party_name: String,
+    #[length(24)]
+    pub name: String,
+    #[length(16)]
+    pub map_name: String,
+    pub share_pickup: i8,
+    pub share_loot: i8,
+}
+
+#[derive(Debug, Clone, Packet, ServerPacket, MapServer)]
+#[cfg_attr(feature = "interface", derive(rust_state::RustState, korangar_interface::element::StateElement))]
+#[header(0x080E)]
+pub struct PartyMemberHealthPacket {
+    pub account_id: AccountId,
+    pub health: i32,
+    pub maximum_health: i32,
+}
+
+#[derive(Debug, Clone, Packet, ServerPacket, MapServer)]
+#[cfg_attr(feature = "interface", derive(rust_state::RustState, korangar_interface::element::StateElement))]
+#[header(0x0ABD)]
+pub struct PartyMemberLevelPacket {
+    pub account_id: AccountId,
+    pub job_id: i16,
+    pub base_level: i16,
+}
+
+#[derive(Debug, Clone, Packet, ServerPacket, MapServer)]
+#[cfg_attr(feature = "interface", derive(rust_state::RustState, korangar_interface::element::StateElement))]
+#[header(0x0105)]
+pub struct PartyMemberRemovedPacket {
+    pub account_id: AccountId,
+    #[length(24)]
+    pub name: String,
+    pub result: i8,
+}
+
+#[derive(Debug, Clone, Packet, ServerPacket, MapServer)]
+#[cfg_attr(feature = "interface", derive(rust_state::RustState, korangar_interface::element::StateElement))]
+#[header(0x07FC)]
+pub struct PartyLeaderChangedPacket {
+    pub old_leader: AccountId,
+    pub new_leader: AccountId,
+}
+
+#[derive(Debug, Clone, Packet, ClientPacket, MapServer)]
+#[cfg_attr(feature = "interface", derive(rust_state::RustState, korangar_interface::element::StateElement))]
+#[header(0x0103)]
+pub struct RemovePartyMemberPacket {
+    pub account_id: AccountId,
+    #[length(24)]
+    pub name: String,
+}
+
+#[derive(Debug, Clone, Packet, ClientPacket, MapServer)]
+#[cfg_attr(feature = "interface", derive(rust_state::RustState, korangar_interface::element::StateElement))]
+#[header(0x07DA)]
+pub struct ChangePartyLeaderPacket {
+    pub account_id: AccountId,
+}
+
+#[cfg(test)]
+mod freokro_party_packet_tests {
+    use super::*;
+
+    #[test]
+    fn party_roster_decodes_server_wire_layout() {
+        let packet = PartyListPacket::new("Grupo".to_owned(), vec![PartyMemberPacket {
+            account_id: AccountId(42), character_id: CharacterId(81), name: "Azuk".to_owned(),
+            map_name: "prontera".to_owned(), leader: 0, offline: 0, job_id: 4073, base_level: 200,
+        }]);
+        let mut writer = ByteWriter::new();
+        packet.packet_to_bytes(&mut writer).unwrap();
+        let bytes = writer.into_inner();
+        assert_eq!(&bytes[..2], &0x0ae5u16.to_le_bytes());
+        assert_eq!(bytes.len(), 82);
+        assert_eq!(u16::from_le_bytes([bytes[2], bytes[3]]) as usize, bytes.len());
+        let mut reader = ByteReader::without_metadata(&bytes);
+        let decoded = PartyListPacket::packet_from_bytes(&mut reader).unwrap();
+        assert_eq!(decoded.members.len(), 1);
+        assert_eq!(decoded.members[0].account_id, AccountId(42));
+        assert_eq!(decoded.members[0].name, "Azuk");
+        assert_eq!(decoded.members[0].base_level, 200);
+    }
+
+    #[test]
+    fn leader_and_remove_requests_use_server_opcodes() {
+        let mut writer = ByteWriter::new();
+        ChangePartyLeaderPacket::new(AccountId(42)).packet_to_bytes(&mut writer).unwrap();
+        assert_eq!(writer.as_slice(), &[0xda, 0x07, 42, 0, 0, 0]);
+        let mut writer = ByteWriter::new();
+        RemovePartyMemberPacket::new(AccountId(42), "Azuk".to_owned()).packet_to_bytes(&mut writer).unwrap();
+        assert_eq!(&writer.as_slice()[..6], &[0x03, 0x01, 42, 0, 0, 0]);
+        assert_eq!(writer.as_slice().len(), 30);
+    }
+}
+
 #[derive(Debug, Clone, ByteConvertable, FixedByteSize)]
 #[cfg_attr(feature = "interface", derive(rust_state::RustState, korangar_interface::element::StateElement))]
 pub struct ReputationEntry {

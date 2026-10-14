@@ -105,6 +105,7 @@ pub struct SkillBox<A, B> {
     cast_handler: Option<SkillCastHandler>,
     level_display: LevelDisplay,
     source: SkillSource,
+    hotkey_label: Option<String>,
 }
 
 impl<A, B> SkillBox<A, B>
@@ -126,6 +127,11 @@ where
             },
             level_display: LevelDisplay::default(),
             source,
+            hotkey_label: match source {
+                SkillSource::Hotbar { slot } if slot.0 < 9 => Some(format!("F{}", slot.0 + 1)),
+                SkillSource::Hotbar { slot } if slot.0 < 18 => Some((slot.0 - 8).to_string()),
+                _ => None,
+            },
         }
     }
 }
@@ -182,7 +188,7 @@ where
 
         layout.add_rectangle(
             layout_info.area,
-            CornerDiameter::uniform(20.0),
+            CornerDiameter::uniform(4.0),
             background_color,
             Color::rgba_u8(0, 0, 0, 100),
             ShadowPadding::diagonal(2.0, 5.0),
@@ -249,6 +255,19 @@ where
                 HorizontalAlignment::Right { offset: 3.0, border: 3.0 },
                 // TODO: Put this in the theme
                 VerticalAlignment::Bottom { offset: 3.0 },
+                OverflowBehavior::Shrink,
+            );
+        }
+
+        if let Some(label) = &self.hotkey_label {
+            layout.add_text(
+                layout_info.area,
+                label,
+                FontSize(11.0),
+                Color::rgb_u8(240, 229, 201),
+                Color::rgb_u8(240, 229, 201),
+                HorizontalAlignment::Left { offset: 3.0, border: 0.0 },
+                VerticalAlignment::Top { offset: 1.0 },
                 OverflowBehavior::Shrink,
             );
         }

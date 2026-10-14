@@ -73,6 +73,42 @@ impl korangar_interface::application::WindowCache<ClientState> for WindowCache {
                 ScreenSize { width: 224.0, height: 240.0 },
             )
         });
+        cache.entries.entry(WindowClass::Chat).or_insert_with(|| {
+            WindowState::new(
+                Anchor::at(AnchorPoint::BottomLeft, ScreenPosition { left: 14.0, top: -275.0 }),
+                ScreenSize { width: 440.0, height: 260.0 },
+            )
+        });
+        cache.entries.entry(WindowClass::Hotbar).or_insert_with(|| {
+            WindowState::new(
+                Anchor::at(AnchorPoint::BottomCenter, ScreenPosition { left: -290.0, top: -180.0 }),
+                ScreenSize { width: 580.0, height: 122.0 },
+            )
+        });
+        cache.entries.entry(WindowClass::CharacterOverview).or_insert_with(|| {
+            WindowState::new(
+                Anchor::at(AnchorPoint::TopLeft, ScreenPosition { left: 16.0, top: 16.0 }),
+                ScreenSize { width: 270.0, height: 160.0 },
+            )
+        });
+        cache.entries.entry(WindowClass::Target).or_insert_with(|| {
+            WindowState::new(
+                Anchor::at(AnchorPoint::TopCenter, ScreenPosition { left: -160.0, top: 8.0 }),
+                ScreenSize { width: 320.0, height: 82.0 },
+            )
+        });
+        cache.entries.entry(WindowClass::Party).or_insert_with(|| {
+            WindowState::new(
+                Anchor::at(AnchorPoint::TopLeft, ScreenPosition { left: 16.0, top: 190.0 }),
+                ScreenSize { width: 270.0, height: 550.0 },
+            )
+        });
+        cache.entries.entry(WindowClass::QuestTracker).or_insert_with(|| {
+            WindowState::new(
+                Anchor::at(AnchorPoint::TopRight, ScreenPosition { left: -296.0, top: 296.0 }),
+                ScreenSize { width: 284.0, height: 216.0 },
+            )
+        });
         cache
     }
 

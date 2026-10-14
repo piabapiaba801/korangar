@@ -14,6 +14,7 @@ use crate::state::localization::Language;
 /// cause an error to appear when running Korangar with debug features.
 pub const DEFAULT_THEME_NAME: &str = "^000001default^000000\0";
 pub const CLASSIC_SKIN_NAME: &str = "Classic";
+pub const DEVILIAN_SKIN_NAME: &str = "Devilian";
 pub const FREOKRO_MENU_THEME_NAME: &str = "FreokRO";
 pub const MENU_THEMES_PATH: &str = "client/menu_themes";
 pub const IN_GAME_THEMES_PATH: &str = "client/in_game_themes";
@@ -34,7 +35,7 @@ impl Default for InterfaceSettings {
             language: Language::English,
             scaling: Scaling::new(1.0),
             menu_theme: FREOKRO_MENU_THEME_NAME.to_string(),
-            in_game_theme: CLASSIC_SKIN_NAME.to_string(),
+            in_game_theme: DEVILIAN_SKIN_NAME.to_string(),
             world_theme: DEFAULT_THEME_NAME.to_string(),
         }
     }
@@ -60,7 +61,7 @@ impl InterfaceSettings {
             .ok()
             .and_then(|data| ron::from_str(&data).ok())?;
         if settings.in_game_theme == DEFAULT_THEME_NAME {
-            settings.in_game_theme = CLASSIC_SKIN_NAME.to_string();
+            settings.in_game_theme = DEVILIAN_SKIN_NAME.to_string();
         }
         if settings.menu_theme == DEFAULT_THEME_NAME {
             settings.menu_theme = FREOKRO_MENU_THEME_NAME.to_string();
@@ -122,9 +123,10 @@ impl InterfaceSettingsCapabilities {
 impl Default for InterfaceSettingsCapabilities {
     fn default() -> Self {
         let mut in_game_themes = Self::load_themes(IN_GAME_THEMES_PATH);
-        in_game_themes.retain(|theme| theme != CLASSIC_SKIN_NAME && theme != DEFAULT_THEME_NAME && theme != "Original");
+        in_game_themes.retain(|theme| theme != CLASSIC_SKIN_NAME && theme != DEVILIAN_SKIN_NAME && theme != DEFAULT_THEME_NAME && theme != "Original");
         in_game_themes.insert(0, "Original".to_string());
         in_game_themes.insert(0, CLASSIC_SKIN_NAME.to_string());
+        in_game_themes.insert(0, DEVILIAN_SKIN_NAME.to_string());
         Self {
             // TODO: Don't hardcode this, load it from the disk instead.
             languages: vec![Language::English, Language::German],

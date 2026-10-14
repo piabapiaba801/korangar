@@ -6,6 +6,7 @@ use korangar_interface::layout::{Resolvers, WindowLayout, with_single_resolver};
 use korangar_interface::window::{CustomWindow, Window};
 use rust_state::Context;
 
+use crate::input::InputEvent;
 use crate::graphics::{Color, CornerDiameter, ShadowPadding};
 use crate::interface::windows::WindowClass;
 use crate::loaders::{FontSize, OverflowBehavior};
@@ -39,7 +40,36 @@ impl CustomWindow<ClientState> for MiniMapWindow {
             minimum_width: 224.0,
             maximum_width: 224.0,
             closable: true,
-            elements: MiniMapBody::new(self.map_name, self.data),
+            elements: (
+                MiniMapBody::new(self.map_name, self.data, false),
+                button! { text: "Mapa mundi", event: InputEvent::ToggleWorldMapWindow },
+            ),
+        }
+    }
+}
+
+pub struct WorldMapWindow {
+    map_name: String,
+    data: MiniMapData,
+}
+
+impl WorldMapWindow {
+    pub fn new(map_name: String, data: MiniMapData) -> Self { Self { map_name, data } }
+}
+
+impl CustomWindow<ClientState> for WorldMapWindow {
+    fn window_class() -> Option<WindowClass> { Some(WindowClass::WorldMap) }
+
+    fn to_window<'a>(self) -> impl Window<ClientState> + 'a {
+        use korangar_interface::prelude::*;
+        window! {
+            title: "Mapa mundi",
+            class: Self::window_class(),
+            theme: InterfaceThemeType::InGame,
+            minimum_width: 560.0,
+            maximum_width: 560.0,
+            closable: true,
+            elements: MiniMapBody::new(self.map_name, self.data, true),
         }
     }
 }
@@ -48,14 +78,16 @@ struct MiniMapBody {
     map_name: String,
     data: MiniMapData,
     position_text: String,
+    expanded: bool,
 }
 
 impl MiniMapBody {
-    fn new(map_name: String, data: MiniMapData) -> Self {
+    fn new(map_name: String, data: MiniMapData, expanded: bool) -> Self {
         Self {
             map_name,
             data,
             position_text: String::new(),
+            expanded,
         }
     }
 
@@ -87,7 +119,7 @@ impl Element<ClientState> for MiniMapBody {
             None => self.map_name.clone(),
         };
         with_single_resolver(resolvers, |resolver| Self::LayoutInfo {
-            area: resolver.with_height(216.0),
+            area: resolver.with_height(if self.expanded { 510.0 } else { 216.0 }),
         })
     }
 
@@ -103,7 +135,7 @@ impl Element<ClientState> for MiniMapBody {
             left: area.left + 8.0,
             top: area.top + 8.0,
             width: area.width - 16.0,
-            height: 188.0,
+            height: if self.expanded { 482.0 } else { 188.0 },
         };
         layout.add_rectangle(
             frame,
@@ -114,8 +146,9 @@ impl Element<ClientState> for MiniMapBody {
         );
 
         let longest = self.data.map_width.max(self.data.map_height).max(1) as f32;
-        let map_width = 182.0 * self.data.map_width as f32 / longest;
-        let map_height = 182.0 * self.data.map_height as f32 / longest;
+        let map_size = if self.expanded { 476.0 } else { 182.0 };
+        let map_width = map_size * self.data.map_width as f32 / longest;
+        let map_height = map_size * self.data.map_height as f32 / longest;
         let map_area = Area {
             left: frame.left + (frame.width - map_width) / 2.0,
             top: frame.top + (frame.height - map_height) / 2.0,

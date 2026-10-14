@@ -64,6 +64,7 @@ pub enum InputEvent {
     ToggleCharacterOverviewWindow,
     /// Open or close the current map overview. Only works while playing.
     ToggleMiniMapWindow,
+    ToggleWorldMapWindow,
     /// Open or close the inventory window. Only works while playing.
     ToggleInventoryWindow,
     /// Open or close the equipment window. Only works while playing.
@@ -132,6 +133,8 @@ pub enum InputEvent {
         /// Id of the entity to interact with.
         entity_id: EntityId,
     },
+    RemovePartyMember { account_id: ragnarok_packets::AccountId, name: String },
+    ChangePartyLeader { account_id: ragnarok_packets::AccountId },
     /// Pick up an item from the ground.
     PickUpItem {
         /// Id of the item entity to pick up.

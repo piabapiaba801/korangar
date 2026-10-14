@@ -116,6 +116,7 @@ impl InterfaceTheme {
         if matches!(theme_type, InterfaceThemeType::InGame) {
             match name {
                 "Classic" => return Self::classic_in_game(),
+                "Devilian" => return Self::devilian_in_game(),
                 "Original" => return Self::default_in_game(),
                 _ => {}
             }
@@ -261,6 +262,95 @@ impl InterfaceTheme {
         theme.skill_tree.pending_points_color = accent;
         theme.global.drop_area_color = Color::rgba_u8(131, 173, 120, 120);
         theme.global.hovered_drop_area_color = Color::rgba_u8(232, 199, 129, 130);
+        theme
+    }
+
+    fn devilian_in_game() -> Self {
+        let mut theme = Self::default_in_game();
+        let accent = Color::rgb_u8(104, 86, 162);
+        let ink = Color::rgb_u8(235, 232, 221);
+        let muted = Color::rgb_u8(167, 162, 177);
+        let gold = Color::rgb_u8(211, 171, 105);
+
+        theme.window.title_color = Color::rgb_u8(243, 240, 221);
+        theme.window.hovered_title_color = gold;
+        theme.window.background_color = Color::rgb_u8(19, 19, 27);
+        theme.window.highlight_color = accent;
+        theme.window.corner_diameter = CornerDiameter::uniform(3.0);
+        theme.window.close_button_corner_diameter = CornerDiameter::uniform(2.0);
+        theme.window.anchor_color = Color::rgb_u8(104, 91, 102);
+        theme.window.closest_anchor_color = gold;
+
+        theme.text.color = ink;
+        theme.text.highlight_color = gold;
+        theme.button.background_color = Color::rgb_u8(39, 35, 51);
+        theme.button.foreground_color = ink;
+        theme.button.highlight_color = accent;
+        theme.button.hovered_background_color = Color::rgb_u8(69, 54, 88);
+        theme.button.hovered_foreground_color = Color::rgb_u8(245, 248, 238);
+        theme.button.disabled_background_color = Color::rgb_u8(28, 26, 34);
+        theme.button.disabled_foreground_color = muted;
+        theme.button.corner_diameter = CornerDiameter::uniform(3.0);
+
+        theme.state_button.background_color = Color::rgb_u8(35, 32, 44);
+        theme.state_button.foreground_color = ink;
+        theme.state_button.highlight_color = accent;
+        theme.state_button.hovered_background_color = Color::rgb_u8(67, 51, 84);
+        theme.state_button.hovered_foreground_color = Color::rgb_u8(245, 248, 238);
+        theme.state_button.checkbox_color = accent;
+        theme.state_button.hovered_checkbox_color = gold;
+        theme.state_button.corner_diameter = CornerDiameter::uniform(3.0);
+
+        theme.text_box.background_color = Color::rgb_u8(13, 14, 21);
+        theme.text_box.foreground_color = ink;
+        theme.text_box.highlight_color = accent;
+        theme.text_box.hovered_background_color = Color::rgb_u8(38, 32, 49);
+        theme.text_box.hovered_foreground_color = ink;
+        theme.text_box.focused_background_color = Color::rgb_u8(50, 40, 67);
+        theme.text_box.focused_foreground_color = Color::rgb_u8(245, 248, 238);
+        theme.text_box.ghost_foreground_color = muted;
+        theme.text_box.hide_icon_color = muted;
+        theme.text_box.hovered_hide_icon_color = gold;
+        theme.text_box.corner_diameter = CornerDiameter::uniform(3.0);
+
+        theme.collapsible.background_color = Color::rgb_u8(38, 34, 49);
+        theme.collapsible.secondary_background_color = Color::rgb_u8(28, 27, 38);
+        theme.collapsible.foreground_color = ink;
+        theme.collapsible.highlight_color = accent;
+        theme.collapsible.hovered_foreground_color = gold;
+        theme.collapsible.icon_color = muted;
+        theme.collapsible.corner_diameter = CornerDiameter::uniform(3.0);
+
+        theme.drop_down.item_background_color = Color::rgb_u8(38, 34, 49);
+        theme.drop_down.item_foreground_color = ink;
+        theme.drop_down.item_highlight_color = accent;
+        theme.drop_down.item_hovered_background_color = Color::rgb_u8(66, 51, 82);
+        theme.drop_down.item_hovered_foreground_color = Color::rgb_u8(245, 248, 238);
+        theme.drop_down.item_corner_diameter = CornerDiameter::uniform(3.0);
+        theme.drop_down.list_background_color = Color::rgb_u8(19, 19, 27);
+        theme.drop_down.list_corner_diameter = CornerDiameter::uniform(3.0);
+        theme.drop_down.button_background_color = Color::rgb_u8(39, 35, 51);
+        theme.drop_down.button_foreground_color = ink;
+        theme.drop_down.button_highlight_color = accent;
+        theme.drop_down.button_hovered_background_color = Color::rgb_u8(69, 54, 88);
+        theme.drop_down.button_hovered_foreground_color = Color::rgb_u8(245, 248, 238);
+        theme.drop_down.button_corner_diameter = CornerDiameter::uniform(3.0);
+
+        theme.field.background_color = Color::rgb_u8(38, 34, 49);
+        theme.field.foreground_color = ink;
+        theme.field.highlight_color = accent;
+        theme.field.corner_diameter = CornerDiameter::uniform(3.0);
+        theme.tooltip.background_color = Color::rgba_u8(19, 19, 27, 240);
+        theme.tooltip.foreground_color = ink;
+        theme.tooltip.highlight_color = gold;
+        theme.tooltip.corner_diameter = CornerDiameter::uniform(3.0);
+        theme.chat.window_color = Color::rgba_u8(15, 15, 23, 224);
+        theme.chat.text_box_background_color = Color::rgba_u8(12, 12, 19, 230);
+        theme.skill_tree.highlight_color = accent;
+        theme.skill_tree.requirement_color = gold;
+        theme.skill_tree.pending_points_color = accent;
+        theme.global.drop_area_color = Color::rgba_u8(104, 86, 162, 120);
+        theme.global.hovered_drop_area_color = Color::rgba_u8(211, 171, 105, 130);
         theme
     }
 

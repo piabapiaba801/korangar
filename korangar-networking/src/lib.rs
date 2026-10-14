@@ -821,6 +821,18 @@ where
         }
     }
 
+    pub fn remove_party_member(&mut self, account_id: AccountId, name: String) -> Result<(), NotConnectedError> {
+        match self.map_server_packet_version()? {
+            SupportedPacketVersion::_20220406 => self.send_map_server_packet(RemovePartyMemberPacket::new(account_id, name)),
+        }
+    }
+
+    pub fn change_party_leader(&mut self, account_id: AccountId) -> Result<(), NotConnectedError> {
+        match self.map_server_packet_version()? {
+            SupportedPacketVersion::_20220406 => self.send_map_server_packet(ChangePartyLeaderPacket::new(account_id)),
+        }
+    }
+
     pub fn reject_friend_request(&mut self, account_id: AccountId, character_id: CharacterId) -> Result<(), NotConnectedError> {
         match self.map_server_packet_version()? {
             SupportedPacketVersion::_20220406 => self.send_map_server_packet(FriendRequestResponsePacket::new(

@@ -501,11 +501,11 @@ where
     })?;
     packet_handler.register_noop::<DisplayPlayerHealEffect>()?;
     packet_handler.register_noop::<StatusChangePacket>()?;
-    packet_handler.register_noop::<QuestNotificationPacket1>()?;
-    packet_handler.register_noop::<HuntingQuestNotificationPacket>()?;
-    packet_handler.register_noop::<HuntingQuestUpdateObjectivePacket>()?;
-    packet_handler.register_noop::<QuestRemovedPacket>()?;
-    packet_handler.register_noop::<QuestListPacket>()?;
+    packet_handler.register(|packet: QuestNotificationPacket1| NetworkEvent::QuestAdded { quest: packet })?;
+    packet_handler.register(|packet: HuntingQuestNotificationPacket| NetworkEvent::QuestObjectives { objectives: packet.objective_details })?;
+    packet_handler.register(|packet: HuntingQuestUpdateObjectivePacket| NetworkEvent::QuestObjectives { objectives: packet.objective_details })?;
+    packet_handler.register(|packet: QuestRemovedPacket| NetworkEvent::QuestRemoved { quest_id: packet.quest_id })?;
+    packet_handler.register(|packet: QuestListPacket| NetworkEvent::QuestList { quests: packet.quests })?;
     packet_handler.register(|packet: VisualEffectPacket| {
         let VisualEffectPacket { entity_id, effect } = packet;
 
@@ -796,6 +796,18 @@ where
         character_id: packet.character_id,
     })?;
     packet_handler.register_noop::<PartyInvitePacket>()?;
+    packet_handler.register(|packet: PartyListPacket| NetworkEvent::PartyList { party_name: packet.party_name, members: packet.members })?;
+    packet_handler.register(|packet: PartyMemberAddedPacket| NetworkEvent::PartyMemberAdded { member: packet })?;
+    packet_handler.register(|packet: PartyMemberHealthPacket| NetworkEvent::PartyMemberHealth {
+        account_id: packet.account_id, health: packet.health, maximum_health: packet.maximum_health,
+    })?;
+    packet_handler.register(|packet: PartyMemberLevelPacket| NetworkEvent::PartyMemberLevel {
+        account_id: packet.account_id, job_id: packet.job_id, base_level: packet.base_level,
+    })?;
+    packet_handler.register(|packet: PartyMemberRemovedPacket| NetworkEvent::PartyMemberRemoved { account_id: packet.account_id })?;
+    packet_handler.register(|packet: PartyLeaderChangedPacket| NetworkEvent::PartyLeaderChanged {
+        old_leader: packet.old_leader, new_leader: packet.new_leader,
+    })?;
     packet_handler.register_noop::<StatusChangeSequencePacket>()?;
     packet_handler.register_noop::<ReputationPacket>()?;
     packet_handler.register_noop::<ClanInfoPacket>()?;
@@ -847,4 +859,17 @@ where
     packet_handler.register(|packet: RemoveSkillPacket| NetworkEvent::RemoveSkill { skill_id: packet.skill_id })?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod freokro_handler_tests {
+    use ragnarok_packets::handler::{NoPacketCallback, PacketHandler};
+
+    use super::{NetworkEventList, register_map_server_packets};
+
+    #[test]
+    fn all_map_packet_headers_are_unique() {
+        let mut handler = PacketHandler::<NetworkEventList, (), NoPacketCallback>::default();
+        register_map_server_packets(&mut handler).unwrap();
+    }
 }

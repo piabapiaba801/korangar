@@ -876,7 +876,9 @@ impl Player {
 
     pub fn render_status(&self, renderer: &GameInterfaceRenderer, camera: &dyn Camera, theme: &WorldTheme, window_size: ScreenSize) {
         let mut bar_anchor = self.common.world_position;
-        bar_anchor.y += 18.0;
+        // Keep the player's world-space bars just above the sprite instead of
+        // floating far above its head at the default camera distance.
+        bar_anchor.y += 7.0;
         let clip_space_position = camera.view_projection_matrix() * bar_anchor.to_homogeneous();
         if clip_space_position.w <= 0.1 {
             return;
@@ -1069,6 +1071,11 @@ impl Entity {
 
     pub fn get_entity_type(&self) -> EntityType {
         self.get_common().entity_type
+    }
+
+    pub fn health_values(&self) -> (usize, usize) {
+        let common = self.get_common();
+        (common.health_points, common.maximum_health_points)
     }
 
     pub fn is_death_animation_over(&self) -> bool {

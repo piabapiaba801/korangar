@@ -28,6 +28,8 @@ mod login;
 mod maps;
 mod menu;
 mod minimap;
+mod party;
+mod quest_tracker;
 #[cfg(feature = "debug")]
 mod packet_inspector;
 #[cfg(feature = "debug")]
@@ -41,6 +43,7 @@ mod server_selection;
 mod skin;
 mod skill_tree;
 mod stats;
+mod target;
 #[cfg(feature = "debug")]
 mod theme_inspector;
 
@@ -75,7 +78,9 @@ pub use self::login::{LoginWindow, LoginWindowState, LoginWindowStatePathExt};
 #[cfg(feature = "debug")]
 pub use self::maps::MapsWindow;
 pub use self::menu::MenuWindow;
-pub use self::minimap::MiniMapWindow;
+pub use self::minimap::{MiniMapWindow, WorldMapWindow};
+pub use self::party::PartyWindow;
+pub use self::quest_tracker::QuestTrackerWindow;
 #[cfg(feature = "debug")]
 pub use self::packet_inspector::PacketInspectorWindow;
 #[cfg(feature = "debug")]
@@ -89,6 +94,7 @@ pub use self::server_selection::ServerSelectionWindow;
 pub use self::skin::SkinWindow;
 pub use self::skill_tree::{SkillTreeWindow, SkillTreeWindowState, SkillTreeWindowStatePathExt};
 pub use self::stats::StatsWindow;
+pub use self::target::TargetWindow;
 #[cfg(feature = "debug")]
 pub use self::theme_inspector::{ThemeInspectorWindow, ThemeInspectorWindowState};
 
@@ -113,11 +119,15 @@ pub enum WindowClass {
     Equipment,
     SkillTree,
     Stats,
+    Target,
     FriendList,
     FriendRequest,
     Login,
     Menu,
     MiniMap,
+    WorldMap,
+    Party,
+    QuestTracker,
     Respawn,
     SelectServer,
     Sell,

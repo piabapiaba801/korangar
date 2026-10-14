@@ -26,7 +26,7 @@ use korangar_networking::{MessageColor, SellItem, ShopItem};
 use localization::Localization;
 #[cfg(feature = "debug")]
 use ragnarok_formats::map::{EffectSource, LightSource, MapData, SoundSource};
-use ragnarok_packets::{CharacterId, CharacterServerInformation, EntityId, Friend, Sex};
+use ragnarok_packets::{AccountId, CharacterId, CharacterServerInformation, EntityId, Friend, Quest, Sex};
 #[cfg(feature = "debug")]
 use rust_state::{ManuallyAssertExt, VecIndexExt};
 use rust_state::{Path, PathExt, RustState, Selector};
@@ -77,6 +77,18 @@ impl ChatMessage {
     pub fn new(text: String, color: MessageColor) -> Self {
         Self { text, color }
     }
+}
+
+#[derive(Debug, Clone, RustState, StateElement)]
+pub struct PartyMember {
+    pub account_id: AccountId,
+    pub name: String,
+    pub job_id: i16,
+    pub base_level: i16,
+    pub online: bool,
+    pub leader: bool,
+    pub health: i32,
+    pub maximum_health: i32,
 }
 
 #[derive(Debug, Clone, Copy, RustState, StateElement)]
@@ -153,6 +165,9 @@ pub struct ClientState {
     chat_messages: Vec<ChatMessage>,
     /// List of all friends.
     friend_list: Vec<Friend>,
+    party_name: String,
+    party_members: Vec<PartyMember>,
+    quests: Vec<Quest>,
     /// List of items offered in the shop.
     // TODO: Unhide this
     #[hidden_element]
@@ -201,6 +216,8 @@ pub struct ClientState {
     /// Buffered player action. For example, attacking a target that is out of
     /// range.
     buffered_action: Option<BufferedAction>,
+    /// Monster selected by the player for the target health display.
+    selected_target: Option<EntityId>,
 
     /// Map data that is viewed in the inspector. Once added to this vector they
     /// are never removed so we can ensure the user interface remains valid.
@@ -346,6 +363,7 @@ impl ClientState {
         });
 
         let buffered_action = None;
+        let selected_target = None;
 
         #[cfg(feature = "debug")]
         let debug_timer = korangar_debug::logging::Timer::new("creating debug resources");
@@ -398,6 +416,9 @@ impl ClientState {
             ground_items: Vec::new(),
             chat_messages,
             friend_list,
+            party_name: String::new(),
+            party_members: Vec::new(),
+            quests: Vec::new(),
             shop_items,
             buy_cart,
             sell_items,
@@ -416,6 +437,7 @@ impl ClientState {
             create_character_hair_color,
             window_size,
             buffered_action,
+            selected_target,
             #[cfg(feature = "debug")]
             inspecting_maps,
             #[cfg(feature = "debug")]

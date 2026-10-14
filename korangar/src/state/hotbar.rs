@@ -24,7 +24,7 @@ impl Default for Hotbar {
             .ok()
             .and_then(|data| ron::from_str::<[String; 18]>(&data).ok())
             .unwrap_or_else(|| std::array::from_fn(|_| String::new()));
-        Self { skills: std::array::from_fn(|_| None), visible_rows: 1, bindings, capture_slot: None }
+        Self { skills: std::array::from_fn(|_| None), visible_rows: 2, bindings, capture_slot: None }
     }
 }
 

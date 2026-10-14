@@ -14,12 +14,13 @@ The emblem above is the project's visual direction. The FreokRO branch now conta
 
 This repository is the separate **FreokRO private client workspace** for personalized art, interfaces, and game features. It starts from the validated October 13 `freokro` checkpoint of the [public Korangar fork](https://github.com/piabapiaba801/korangar/tree/freokro). The simplified `freokro-base` repository remains local while its release checks are completed. Private changes are reviewed before any deliberate transfer to the public base; neither repository updates the other automatically.
 
-## 🚧 Work in progress — October 13, 2026
+## 🚧 Work in progress — October 14, 2026
 
 - **Playable local visual checkpoint:** the owner confirmed the redesigned login, world selection, character selection/creation, and lateral movement in the independent test client. Occupied slots display the selected character's current in-game sprite; an empty slot displays the creation preview.
 - **Authored map baseline:** all 1,265 active map names have project-generated RSW, GND, and GAT triplets. Names and dimensions remain compatibility references. Navigation, warps, and visual details still need map-by-map work.
 - **Temporary character art:** turquoise Azuk has front and side frames. Rear/diagonal views, hair and class variants, equipment, NPCs, and monsters still need original art. The male character remains a static original placeholder.
-- **Separate release lines:** this private `freokro` branch is the personalized working client. A local `freokro-base` Git repository contains a simplified snapshot with all generated maps and its own history. It has no remote yet; asset provenance and wider gameplay checks remain before its public release.
+- **Separate release lines:** this private `freokro` branch is the personalized working client. The simplified `freokro-base` repository has its own history and includes the generated maps. Private interface changes are kept in this line until explicitly selected for public release.
+- **Private in-game HUD:** a Devilian-inspired skin changes the camera pitch, character status, target HP, party panel, quest tracker, larger current-area map panel, central HP/SP, two skill rows, and base EXP shown in exactly ten segments. Party actions use the 20220406 server protocol. A global atlas remains to be built. The existing map files, character sprites, and login/world/character screens are unchanged. The earlier Classic skin remains selectable.
 
 ![Edited FreokRO WIP selection showing the currently selected in-game sprite](docs/screenshots/freokro-character-selection-sprite-clean-2026-10-13.png)
 
@@ -63,7 +64,7 @@ Upstream Korangar's build requirements also apply. Game assets, local server con
 
 ### ▶️ Run and validate
 
-The in-game menu includes **Skin**. **Classic** is the first choice and the default; **Original** keeps the previous theme. Classic applies the auction's dark green palette to controls and windows using the in-game theme, with a separate adjustment to item descriptions. Item descriptions preserve Ragnarok color codes, render separator lines, and show equipped card icons when their sprites load. The choice is saved in `client/interface_settings.ron` when the client exits.
+The in-game menu includes **Skin**. **Devilian** is the default for a fresh private installation; **Classic** retains the green palette and **Original** retains the previous theme. Existing installations keep the skin saved in `client/interface_settings.ron` until it is changed in the menu. Item descriptions preserve Ragnarok color codes, render separator lines, and show equipped card icons when their sprites load.
 
 Prepare assets in the installation directory, start the database and servers before the client, and run the HUD agent to use the auction. The local **FreokRO Client (iniciar tudo)** shortcut performs that sequence but is not part of this repository. Auction window opening was confirmed. After the October 7, 2026 database schema fix, the user confirmed escrow passed in the client; bidding, buying, cancellation, and item return need separate checks. Compilation alone does not validate every feature.
 

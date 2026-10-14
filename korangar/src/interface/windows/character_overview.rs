@@ -116,8 +116,8 @@ where
         layout.add_rectangle(
             avatar_area,
             CornerDiameter::uniform(7.0),
-            Color::rgba_u8(20, 27, 38, 190),
-            Color::rgb_u8(91, 112, 143),
+            Color::rgba_u8(19, 18, 29, 215),
+            Color::rgb_u8(158, 127, 104),
             ShadowPadding::uniform(0.0),
         );
 
@@ -160,8 +160,8 @@ where
         let bar_width = (area.width - 106.0).max(20.0);
         let common = player.get_common();
         let vitals = [
-            (&self.hp_text, common.health_points, common.maximum_health_points, Color::rgb_u8(218, 70, 91), 5.0),
-            (&self.sp_text, player.spell_points, player.maximum_spell_points, Color::rgb_u8(61, 142, 226), 43.0),
+            (&self.hp_text, common.health_points, common.maximum_health_points, Color::rgb_u8(207, 66, 70), 5.0),
+            (&self.sp_text, player.spell_points, player.maximum_spell_points, Color::rgb_u8(109, 71, 197), 43.0),
         ];
 
         for (text, current, maximum, color, top_offset) in vitals {
@@ -246,8 +246,9 @@ where
             closable: true,
             elements: (
                 CharacterStatus::new(self.player_path),
-                fragment! {
-                    gaps: 4.0,
+                collapsible! {
+                    text: "Visão geral",
+                    initially_expanded: false,
                     children: (
                         split! {
                             children: (
@@ -294,7 +295,10 @@ where
                     ),
                 },
                 collapsible! {
-                    text: "Menu ▾",
+                    // Collapsible draws its own arrow icon. A literal Unicode
+                    // arrow is missing from the bundled font atlas and shows
+                    // up as an empty square beside the label.
+                    text: "Menu",
                     initially_expanded: false,
                     children: (
                         split! {

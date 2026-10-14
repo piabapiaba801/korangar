@@ -331,48 +331,78 @@ impl GameInterfaceRenderer {
         self.render_rectangle(position - bar_offset, bar_size, color);
     }
 
-    /// Translucent progression bars fixed to the top and bottom edges.
-    pub fn render_experience_bars(&self, base: u64, next_base: u64, job: u64, next_job: u64) {
+    /// Character vitals sit above the two skill rows, using live server values.
+    pub fn render_vitals(&self, health: usize, maximum_health: usize, spell: usize, maximum_spell: usize, level: usize) {
         let width = self.window_size.width;
         let height = self.window_size.height;
-        if width <= 0.0 || height < 16.0 {
-            return;
-        }
-
-        let bar_height = 14.0;
-        let background = Color::rgba_u8(17, 24, 20, 210);
-        let fill = Color::rgba_u8(93, 177, 71, 220);
-        for (top, current, next, label) in [
-            (0.0, base, next_base, "XP Base"),
-            (height - bar_height, job, next_job, "XP Job"),
-        ] {
-            let position = ScreenPosition { left: 0.0, top };
-            self.render_rectangle(position, ScreenSize { width, height: bar_height }, background);
-            self.render_rectangle(
-                ScreenPosition { left: 0.0, top: top + bar_height - 2.0 },
-                ScreenSize { width, height: 2.0 },
-                fill,
-            );
-            if next > 0 {
-                let progress = (current as f64 / next as f64).clamp(0.0, 1.0) as f32;
-                if progress > 0.0 {
-                    self.render_rectangle(position, ScreenSize { width: width * progress, height: bar_height - 2.0 }, fill);
-                }
-            }
-            for segment in 1..10 {
+        if width < 560.0 || height < 240.0 { return; }
+        let half = (width * 0.17).min(235.0);
+        let center = width / 2.0;
+        let top = height - 225.0;
+        let bar_height = 21.0;
+        let gap = 36.0;
+        let bars = [
+            (ScreenPosition { left: center - half - gap / 2.0, top }, health, maximum_health, Color::rgb_u8(191, 56, 62)),
+            (ScreenPosition { left: center + gap / 2.0, top }, spell, maximum_spell, Color::rgb_u8(103, 71, 190)),
+        ];
+        for (position, current, maximum, color) in bars {
+            let size = ScreenSize { width: half, height: bar_height };
+            self.render_rectangle(position, size, Color::rgb_u8(22, 21, 29));
+            let ratio = if maximum == 0 { 0.0 } else { (current as f32 / maximum as f32).clamp(0.0, 1.0) };
+            if ratio > 0.0 {
                 self.render_rectangle(
-                    ScreenPosition { left: width * segment as f32 / 10.0, top: top + 1.0 },
-                    ScreenSize { width: 2.0, height: bar_height - 3.0 },
-                    Color::rgba_u8(8, 16, 11, 215),
+                    ScreenPosition { left: position.left + 2.0, top: position.top + 2.0 },
+                    ScreenSize { width: (size.width - 4.0) * ratio, height: size.height - 4.0 }, color,
                 );
             }
-            self.render_text(
-                label,
-                ScreenPosition { left: 6.0, top: top + 1.0 },
-                Color::rgba_u8(245, 248, 252, 235),
-                FontSize(11.0),
-                AlignHorizontal::Left,
+            self.render_text(&format!("{current} / {maximum}"),
+                ScreenPosition { left: position.left + half / 2.0, top: position.top + 2.0 },
+                Color::WHITE, FontSize(12.0), AlignHorizontal::Center);
+        }
+        self.render_rectangle(ScreenPosition { left: center - 16.0, top: top - 6.0 }, ScreenSize { width: 32.0, height: 32.0 }, Color::rgb_u8(91, 81, 93));
+        self.render_rectangle(ScreenPosition { left: center - 14.0, top: top - 4.0 }, ScreenSize { width: 28.0, height: 28.0 }, Color::rgb_u8(29, 27, 37));
+        self.render_text(&level.to_string(), ScreenPosition { left: center, top: top + 3.0 }, Color::rgb_u8(244, 215, 151), FontSize(15.0), AlignHorizontal::Center);
+    }
+
+    /// Base experience, split into exactly ten blocks below the skill bar.
+    pub fn render_experience_bars(&self, base: u64, next_base: u64, _job: u64, _next_job: u64) {
+        let width = self.window_size.width;
+        let height = self.window_size.height;
+        if width < 360.0 || height < 64.0 {
+            return;
+        }
+        let progress = if next_base == 0 { 0.0 } else { (base as f64 / next_base as f64).clamp(0.0, 1.0) as f32 };
+        let bar_width = (width * 0.48).min(640.0);
+        let gap = 3.0;
+        let segment_width = (bar_width - gap * 9.0) / 10.0;
+        let left = (width - bar_width) / 2.0;
+        let top = height - 20.0;
+        let label = format!("Base EXP {:.0}%", progress * 100.0);
+        self.render_text(
+            &label,
+            ScreenPosition { left: width / 2.0, top: top - 19.0 },
+            Color::rgb_u8(241, 232, 210),
+            FontSize(12.0),
+            AlignHorizontal::Center,
+        );
+        for index in 0..10 {
+            let x = left + index as f32 * (segment_width + gap);
+            let segment = ScreenPosition { left: x, top };
+            let segment_size = ScreenSize { width: segment_width, height: 13.0 };
+            self.render_rectangle(segment, segment_size, Color::rgb_u8(86, 78, 71));
+            self.render_rectangle(
+                ScreenPosition { left: x + 1.0, top: top + 1.0 },
+                ScreenSize { width: segment_width - 2.0, height: 11.0 },
+                Color::rgba_u8(13, 13, 18, 240),
             );
+            let filled = (progress * 10.0 - index as f32).clamp(0.0, 1.0);
+            if filled > 0.0 {
+                self.render_rectangle(
+                    ScreenPosition { left: x + 2.0, top: top + 2.0 },
+                    ScreenSize { width: (segment_width - 4.0) * filled, height: 9.0 },
+                    Color::rgb_u8(33, 188, 86),
+                );
+            }
         }
     }
 
