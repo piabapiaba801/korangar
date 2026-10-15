@@ -12,6 +12,7 @@
 - Three transparent panel assets were generated with the existing chat and action HUD art as style references: `korangar/assets/ui/minimap-frame-v1.png`, `quests-frame-v1.png`, and `character-frame-v1.png`. Their prompts are stored beside the images.
 - The compact minimap now draws its live map, portal/player markers, coordinates, and world-map action over the new frame. The quest tracker draws live quest rows over its matching frame. Character Overview and the separate Stats window share the character frame while retaining portrait/vitals, collapsible controls, and stat actions.
 - The panels use a shared frame wrapper with themed title, close control, and drag handling. The `unicode,debug` release build passed locally. Visual alignment, expanded Character Overview, long quest lists, map changes, and stat interactions still need the owner's in-game validation. The validated screenshot above predates these new panels.
+- After the owner's first in-game review of the new panels, the local client now hides drag anchor markers for the minimap, quest tracker, Character Overview, and Stats window. Panel titles sit lower in their metal headers; the compact minimap reserves separate space for the map, coordinates, and world-map action. The action HUD expander and chat send control use steel-colored bezels and arrows. A new `unicode,debug` release build was copied to the private test client with a backup of the previous executable; these visual changes await the owner's next in-game check.
 
 ## Simplified public-base candidate (local only)
 

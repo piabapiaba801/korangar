@@ -614,15 +614,18 @@ impl<P: Path<ClientState, usize>> Element<ClientState> for ChatBody<P> {
                 layout.add_tooltip("Enviar mensagem (Enter)", SendTooltip.tooltip_id());
             }
             layout.add_rectangle(
+                relative(area, 395.0, 224.0, 17.0, 17.0),
+                CornerDiameter::uniform(17.0),
+                Color::rgb_u8(182, 190, 192),
+                Color::TRANSPARENT,
+                ShadowPadding::uniform(0.0),
+            );
+            layout.add_rectangle(
                 relative(area, 397.0, 226.0, 13.0, 13.0),
                 CornerDiameter::uniform(13.0),
-                if info.tab == 1 {
-                    Color::rgba_u8(48, 37, 41, 215)
-                } else if hovered {
-                    Color::rgba_u8(173, 32, 48, 235)
-                } else {
-                    Color::rgba_u8(112, 19, 35, 225)
-                },
+                if info.tab == 1 { Color::rgb_u8(37, 39, 43) }
+                else if hovered { Color::rgb_u8(79, 88, 91) }
+                else { Color::rgb_u8(24, 27, 32) },
                 Color::TRANSPARENT,
                 ShadowPadding::uniform(0.0),
             );
@@ -630,11 +633,11 @@ impl<P: Path<ClientState, usize>> Element<ClientState> for ChatBody<P> {
                 relative(area, 399.0, 228.0, 9.0, 9.0),
                 Icon::ArrowRight,
                 if info.tab == 1 {
-                    Color::rgb_u8(119, 112, 111)
+                    Color::rgb_u8(121, 130, 132)
                 } else if hovered {
-                    Color::rgb_u8(255, 239, 218)
+                    Color::rgb_u8(251, 251, 247)
                 } else {
-                    Color::rgb_u8(231, 216, 198)
+                    Color::rgb_u8(216, 224, 225)
                 },
             );
         });

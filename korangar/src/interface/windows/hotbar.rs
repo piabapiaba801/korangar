@@ -356,24 +356,31 @@ impl Element<ClientState> for ActionHudBody {
             }
             layout.add_rectangle(
                 button,
-                CornerDiameter::uniform(9.0),
-                Color::rgb_u8(126, 70, 72),
+                CornerDiameter::uniform(5.0),
+                Color::rgb_u8(179, 184, 187),
                 Color::TRANSPARENT,
                 ShadowPadding::uniform(0.0),
             );
             layout.add_rectangle(
                 Area {
-                    left: button.left + 1.0,
-                    top: button.top + 1.0,
-                    width: button.width - 2.0,
-                    height: button.height - 2.0,
+                    left: button.left + 2.0,
+                    top: button.top + 2.0,
+                    width: button.width - 4.0,
+                    height: button.height - 4.0,
                 },
-                CornerDiameter::uniform(8.0),
+                CornerDiameter::uniform(4.0),
                 if hovered {
-                    Color::rgba_u8(83, 37, 43, 240)
+                    Color::rgb_u8(67, 74, 78)
                 } else {
-                    Color::rgba_u8(16, 17, 22, 235)
+                    Color::rgb_u8(23, 26, 31)
                 },
+                Color::TRANSPARENT,
+                ShadowPadding::uniform(0.0),
+            );
+            layout.add_rectangle(
+                Area { left: button.left + 4.0, top: button.top + 3.0, width: button.width - 8.0, height: 2.0 },
+                CornerDiameter::uniform(1.0),
+                Color::rgb_u8(105, 114, 119),
                 Color::TRANSPARENT,
                 ShadowPadding::uniform(0.0),
             );
@@ -386,9 +393,9 @@ impl Element<ClientState> for ActionHudBody {
                 },
                 Icon::ExpandArrow { expanded: info.expanded },
                 if hovered {
-                    Color::rgb_u8(255, 218, 220)
+                    Color::rgb_u8(248, 249, 247)
                 } else {
-                    Color::rgb_u8(209, 202, 196)
+                    Color::rgb_u8(207, 216, 218)
                 },
             );
         });

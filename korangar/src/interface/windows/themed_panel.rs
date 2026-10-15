@@ -142,7 +142,7 @@ impl Element<ClientState> for ThemedPanel {
             layout.add_text(
                 Area {
                     left: area.left + self.style.title_left,
-                    top: area.top + self.style.close_top - 2.0,
+                    top: area.top + self.style.close_top + 4.0,
                     width: self.style.title_width,
                     height: 22.0,
                 },

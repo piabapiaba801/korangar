@@ -174,7 +174,7 @@ impl Element<ClientState> for MiniMapBody {
             None => self.map_name.clone(),
         };
         with_single_resolver(resolvers, |resolver| Self::LayoutInfo {
-            area: resolver.with_height(if self.expanded { 510.0 } else { 216.0 }),
+            area: resolver.with_height(if self.expanded { 510.0 } else { 197.0 }),
         })
     }
 
@@ -190,7 +190,7 @@ impl Element<ClientState> for MiniMapBody {
             left: area.left + 8.0,
             top: area.top + 8.0,
             width: area.width - 16.0,
-            height: if self.expanded { 482.0 } else { 188.0 },
+            height: if self.expanded { 482.0 } else { 170.0 },
         };
         layout.add_rectangle(
             frame,
@@ -201,7 +201,7 @@ impl Element<ClientState> for MiniMapBody {
         );
 
         let longest = self.data.map_width.max(self.data.map_height).max(1) as f32;
-        let map_size = if self.expanded { 476.0 } else { (frame.width - 6.0).min(182.0) };
+        let map_size = if self.expanded { 476.0 } else { (frame.width - 6.0).min(166.0) };
         let map_width = map_size * self.data.map_width as f32 / longest;
         let map_height = map_size * self.data.map_height as f32 / longest;
         let map_area = Area {
@@ -309,9 +309,9 @@ impl Element<ClientState> for MiniMapBody {
         layout.add_text(
             Area {
                 left: area.left + 8.0,
-                top: frame.top + frame.height + 2.0,
+                top: frame.top + frame.height + 4.0,
                 width: area.width - 16.0,
-                height: 18.0,
+                height: 16.0,
             },
             &self.position_text,
             FontSize(12.0),
