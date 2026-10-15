@@ -154,23 +154,15 @@ impl Element<ClientState> for ThemedPanel {
                 VerticalAlignment::Center { offset: 0.0 },
                 OverflowBehavior::Shrink,
             );
-            layout.add_rectangle(
-                close_area,
-                CornerDiameter::uniform(12.0),
-                if close_hovered { Color::rgba_u8(155, 32, 47, 240) } else { Color::rgba_u8(61, 19, 30, 225) },
-                Color::TRANSPARENT,
-                ShadowPadding::uniform(0.0),
-            );
-            layout.add_text(
-                close_area,
-                "X",
-                FontSize(12.0),
-                Color::rgb_u8(241, 222, 205),
-                Color::WHITE,
-                HorizontalAlignment::Center { offset: 0.0, border: 0.0 },
-                VerticalAlignment::Center { offset: 0.0 },
-                OverflowBehavior::Shrink,
-            );
+            if close_hovered {
+                layout.add_rectangle(
+                    close_area,
+                    CornerDiameter::uniform(12.0),
+                    Color::rgba_u8(155, 32, 47, 105),
+                    Color::TRANSPARENT,
+                    ShadowPadding::uniform(0.0),
+                );
+            }
         });
     }
 }

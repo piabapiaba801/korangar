@@ -575,7 +575,8 @@ impl Application for ClientState {
     }
 
     fn show_window_anchors(class: Option<WindowClass>) -> bool {
-        !matches!(class, Some(WindowClass::Hotbar | WindowClass::Experience | WindowClass::Chat | WindowClass::MiniMap | WindowClass::QuestTracker | WindowClass::CharacterOverview | WindowClass::Stats))
+        let _ = class;
+        false
     }
 }
 

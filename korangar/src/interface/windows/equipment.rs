@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use korangar_interface::element::Element;
 use korangar_interface::window::{CustomWindow, Window};
 use korangar_networking::{InventoryItem, InventoryItemDetails};
@@ -5,7 +7,9 @@ use ragnarok_packets::EquipPosition;
 use rust_state::{Path, PathExt, Selector};
 
 use crate::ItemSource;
+use crate::graphics::{Color, Texture};
 use crate::interface::windows::WindowClass;
+use super::themed_panel::{PanelStyle, ThemedPanel};
 use crate::loaders::OverflowBehavior;
 use crate::state::ClientState;
 use crate::state::theme::InterfaceThemeType;
@@ -60,11 +64,12 @@ where
 
 pub struct EquipmentWindow<A> {
     items_path: A,
+    frame: Arc<Texture>,
 }
 
 impl<A> EquipmentWindow<A> {
-    pub fn new(items_path: A) -> Self {
-        Self { items_path }
+    pub fn new(items_path: A, frame: Arc<Texture>) -> Self {
+        Self { items_path, frame }
     }
 }
 
@@ -137,11 +142,27 @@ where
         }
 
         window! {
-            title: "Equipment",
+            title: "",
             class: Self::window_class(),
             theme: InterfaceThemeType::InGame,
-            closable: true,
-            elements: [
+            minimum_width: 340.0,
+            maximum_width: 340.0,
+            minimum_height: 510.0,
+            maximum_height: 510.0,
+            title_height: 0.0,
+            title_gap: 0.0,
+            border: 0.0,
+            gaps: 0.0,
+            closable: false,
+            resizable: false,
+            background_color: Color::TRANSPARENT,
+            shadow_color: Color::TRANSPARENT,
+            elements: ThemedPanel::new(
+                self.frame,
+                PanelStyle { header: 36.0, inset: 28.0, footer: 18.0, minimum_height: 510.0,
+                    title_left: 45.0, title_width: 250.0, close_right: 9.0, close_top: 11.0 },
+                |_| "Equipamento".to_owned(),
+                ErasedElement::new([
                 equip_box(self.items_path, EquipPosition::HEAD_TOP),
                 equip_box(self.items_path, EquipPosition::HEAD_MIDDLE),
                 equip_box(self.items_path, EquipPosition::HEAD_LOWER),
@@ -151,7 +172,8 @@ where
                 equip_box(self.items_path, EquipPosition::LEFT_HAND),
                 equip_box(self.items_path, EquipPosition::RIGHT_HAND),
                 equip_box(self.items_path, EquipPosition::AMMO),
-            ],
+                ]),
+            ),
         }
     }
 }

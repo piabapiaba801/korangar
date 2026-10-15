@@ -1641,7 +1641,7 @@ impl Client {
                     } else if !self.interface.is_window_with_class_open(WindowClass::QuestTracker) {
                         self.interface.open_window(QuestTrackerWindow::new(self.texture_loader.create_color(
                             "freokro private quest frame",
-                            image::load_from_memory(include_bytes!("../assets/ui/quests-frame-v1.png"))
+                            image::load_from_memory(include_bytes!("../assets/ui/quests-frame-v2.png"))
                                 .expect("embedded quest frame image is valid").to_rgba8(),
                             true,
                         )));
@@ -1671,7 +1671,7 @@ impl Client {
                     if !self.interface.is_window_with_class_open(WindowClass::QuestTracker) {
                         self.interface.open_window(QuestTrackerWindow::new(self.texture_loader.create_color(
                             "freokro private quest frame",
-                            image::load_from_memory(include_bytes!("../assets/ui/quests-frame-v1.png"))
+                            image::load_from_memory(include_bytes!("../assets/ui/quests-frame-v2.png"))
                                 .expect("embedded quest frame image is valid").to_rgba8(),
                             true,
                         )));
@@ -2290,7 +2290,7 @@ impl Client {
                                 map.mini_map().clone(),
                                 self.texture_loader.create_color(
                                     "freokro private minimap frame",
-                                    image::load_from_memory(include_bytes!("../assets/ui/minimap-frame-v1.png"))
+                                    image::load_from_memory(include_bytes!("../assets/ui/minimap-frame-v2.png"))
                                         .expect("embedded minimap frame image is valid").to_rgba8(),
                                     true,
                                 ),
@@ -2313,7 +2313,15 @@ impl Client {
                     if self.client_state.try_follow(this_entity()).is_some() {
                         match self.interface.is_window_with_class_open(WindowClass::Inventory) {
                             true => self.interface.close_window_with_class(WindowClass::Inventory),
-                            false => self.interface.open_window(InventoryWindow::new(client_state().inventory().items())),
+                            false => self.interface.open_window(InventoryWindow::new(
+                                client_state().inventory().items(),
+                                self.texture_loader.create_color(
+                                    "freokro private inventory frame",
+                                    image::load_from_memory(include_bytes!("../assets/ui/inventory-frame-v1.png"))
+                                        .expect("embedded inventory frame image is valid").to_rgba8(),
+                                    true,
+                                ),
+                            )),
                         }
                     }
                 }
@@ -2321,7 +2329,15 @@ impl Client {
                     if self.client_state.try_follow(this_entity()).is_some() {
                         match self.interface.is_window_with_class_open(WindowClass::Equipment) {
                             true => self.interface.close_window_with_class(WindowClass::Equipment),
-                            false => self.interface.open_window(EquipmentWindow::new(client_state().inventory().items())),
+                            false => self.interface.open_window(EquipmentWindow::new(
+                                client_state().inventory().items(),
+                                self.texture_loader.create_color(
+                                    "freokro private equipment frame",
+                                    image::load_from_memory(include_bytes!("../assets/ui/equipment-frame-v1.png"))
+                                        .expect("embedded equipment frame image is valid").to_rgba8(),
+                                    true,
+                                ),
+                            )),
                         }
                     }
                 }
@@ -2334,6 +2350,12 @@ impl Client {
                                 client_state().skill_tree().layout(),
                                 client_state().skill_tree().skills(),
                                 this_player().manually_asserted().skill_points(),
+                                self.texture_loader.create_color(
+                                    "freokro private skill tree frame",
+                                    image::load_from_memory(include_bytes!("../assets/ui/skill-tree-frame-v1.png"))
+                                        .expect("embedded skill tree frame image is valid").to_rgba8(),
+                                    true,
+                                ),
                             )),
                         }
                     }
@@ -3051,7 +3073,7 @@ impl Client {
                                 map.mini_map().clone(),
                                 self.texture_loader.create_color(
                                     "freokro private minimap frame",
-                                    image::load_from_memory(include_bytes!("../assets/ui/minimap-frame-v1.png"))
+                                    image::load_from_memory(include_bytes!("../assets/ui/minimap-frame-v2.png"))
                                         .expect("embedded minimap frame image is valid").to_rgba8(),
                                     true,
                                 ),

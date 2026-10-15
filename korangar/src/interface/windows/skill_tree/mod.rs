@@ -2,6 +2,8 @@ mod slot;
 mod state;
 mod tabs;
 
+use std::sync::Arc;
+
 use hashbrown::HashMap;
 use korangar_interface::element::StateElement;
 use korangar_interface::window::{CustomWindow, Window};
@@ -9,7 +11,9 @@ use ragnarok_packets::{SkillId, SkillLevel};
 use rust_state::{Context, ManuallyAssertExt, Path, PathExt, RustState, VecIndexExt};
 
 use crate::input::InputEvent;
+use crate::graphics::{Color, Texture};
 use crate::interface::windows::WindowClass;
+use crate::interface::windows::themed_panel::{PanelStyle, ThemedPanel};
 use crate::interface::windows::skill_tree::state::AvailablePointsDisplay;
 use crate::interface::windows::skill_tree::tabs::{DropSkillWrapper, DynamicTabs, SkillTreeTab, TabSelector};
 use crate::state::localization::LocalizationPathExt;
@@ -39,15 +43,17 @@ pub struct SkillTreeWindow<A, B, C, D> {
     layout_path: B,
     skills_path: C,
     available_skill_points_path: D,
+    frame: Arc<Texture>,
 }
 
 impl<A, B, C, D> SkillTreeWindow<A, B, C, D> {
-    pub fn new(window_state_path: A, layout_path: B, skills_path: C, available_skill_points_path: D) -> Self {
+    pub fn new(window_state_path: A, layout_path: B, skills_path: C, available_skill_points_path: D, frame: Arc<Texture>) -> Self {
         Self {
             window_state_path,
             layout_path,
             skills_path,
             available_skill_points_path,
+            frame,
         }
     }
 }
@@ -67,13 +73,27 @@ where
         use korangar_interface::prelude::*;
 
         window! {
-            title: client_state().localization().skill_tree_window_title(),
+            title: "",
             class: Self::window_class(),
             theme: InterfaceThemeType::InGame,
-            minimum_width: 550.0,
-            maximum_width: 800.0,
-            closable: true,
-            elements: (
+            minimum_width: 620.0,
+            maximum_width: 620.0,
+            minimum_height: 630.0,
+            maximum_height: 680.0,
+            title_height: 0.0,
+            title_gap: 0.0,
+            border: 0.0,
+            gaps: 0.0,
+            closable: false,
+            resizable: false,
+            background_color: Color::TRANSPARENT,
+            shadow_color: Color::TRANSPARENT,
+            elements: ThemedPanel::new(
+                self.frame,
+                PanelStyle { header: 39.0, inset: 36.0, footer: 18.0, minimum_height: 630.0,
+                    title_left: 85.0, title_width: 450.0, close_right: 7.0, close_top: 13.0 },
+                |_| "Árvore de habilidades".to_owned(),
+                ErasedElement::new((
                 split! {
                     gaps: theme().window().gaps(),
                     children: TabSelector::new(self.window_state_path.selected_tab(), self.layout_path),
@@ -146,6 +166,7 @@ where
                         },
                     )
                 }
+                )),
             ),
         }
     }

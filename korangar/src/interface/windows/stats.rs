@@ -1,15 +1,20 @@
 use std::cell::{Cell, UnsafeCell};
 use std::sync::Arc;
 
+use korangar_interface::element::store::{ElementStore, ElementStoreMut};
+use korangar_interface::element::{BaseLayoutInfo, Element};
+use korangar_interface::layout::alignment::{HorizontalAlignment, VerticalAlignment};
+use korangar_interface::layout::area::Area;
+use korangar_interface::layout::{Resolvers, WindowLayout, with_single_resolver};
 use korangar_interface::window::{CustomWindow, Window};
 use ragnarok_packets::StatUpType;
-use rust_state::{Path, PathExt, Selector};
+use rust_state::{Context, Path, PathExt, Selector};
 
 use crate::input::InputEvent;
 use crate::graphics::{Color, Texture};
 use crate::interface::windows::WindowClass;
 use super::themed_panel::{PanelStyle, ThemedPanel};
-use crate::loaders::OverflowBehavior;
+use crate::loaders::{FontSize, OverflowBehavior};
 use crate::state::localization::LocalizationPathExt;
 use crate::state::theme::InterfaceThemeType;
 use crate::state::{ClientState, ClientStatePathExt, client_state};
@@ -96,6 +101,25 @@ pub struct StatsWindow<A> {
     frame: Arc<Texture>,
 }
 
+struct StatPointsHeader<P> { points_path: P, text: String }
+
+impl<P: Path<ClientState, u32>> Element<ClientState> for StatPointsHeader<P> {
+    type LayoutInfo = BaseLayoutInfo;
+
+    fn create_layout_info(&mut self, state: &Context<ClientState>, _: ElementStoreMut, resolvers: &mut dyn Resolvers<ClientState>) -> Self::LayoutInfo {
+        self.text = format!("Pontos disponíveis: {}", state.get(&self.points_path));
+        with_single_resolver(resolvers, |resolver| BaseLayoutInfo { area: resolver.with_height(28.0) })
+    }
+
+    fn lay_out<'a>(&'a self, _: &'a Context<ClientState>, _: ElementStore<'a>, info: &'a Self::LayoutInfo, layout: &mut WindowLayout<'a, ClientState>) {
+        layout.add_text(
+            Area { left: info.area.left + 8.0, top: info.area.top + 4.0, width: info.area.width - 16.0, height: 20.0 },
+            &self.text, FontSize(12.0), Color::rgb_u8(239, 218, 190), Color::WHITE,
+            HorizontalAlignment::Left { offset: 0.0, border: 0.0 }, VerticalAlignment::Center { offset: 0.0 }, OverflowBehavior::Shrink,
+        );
+    }
+}
+
 impl<A> StatsWindow<A> {
     pub fn new(player_path: A, frame: Arc<Texture>) -> Self {
         Self { player_path, frame }
@@ -177,23 +201,11 @@ where
             shadow_color: Color::TRANSPARENT,
             elements: ThemedPanel::new(
                 self.frame,
-                PanelStyle { header: 42.0, inset: 18.0, footer: 12.0, minimum_height: 255.0,
+                PanelStyle { header: 50.0, inset: 18.0, footer: 12.0, minimum_height: 255.0,
                     title_left: 27.0, title_width: 175.0, close_right: 30.0, close_top: 15.0 },
                 |_| "Atributos".to_owned(),
                 ErasedElement::new((
-                split! {
-                    children: (
-                        text! {
-                            text: client_state().localization().available_stat_points_text(),
-                            overflow_behavior: OverflowBehavior::Shrink,
-                        },
-                        text! {
-                            text: PartialEqDisplaySelector::new(self.player_path.stat_points()),
-                            horizontal_alignment: HorizontalAlignment::Right { offset: 5.0, border: 5.0 },
-                            overflow_behavior: OverflowBehavior::Shrink,
-                        },
-                    ),
-                },
+                StatPointsHeader { points_path: self.player_path.stat_points(), text: String::new() },
                 stat_row!(strength_text, strength, bonus_strength, strength_stat_points_cost, Strength),
                 stat_row!(agility_text, agility, bonus_agility, agility_stat_points_cost, Agility),
                 stat_row!(vitality_text, vitality, bonus_vitality, vitality_stat_points_cost, Vitality),

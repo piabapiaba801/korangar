@@ -622,7 +622,7 @@ where
             );
         }
 
-        if let Some((close_button_area, close_button_color, _)) = close_button {
+        if let Some((close_button_area, close_button_color, true)) = close_button {
             layout.add_rectangle(
                 close_button_area,
                 *state.get(&self.close_button_corner_diameter),
@@ -630,19 +630,6 @@ where
                 // TODO: Properly theme
                 close_button_color,
                 App::ShadowPadding::none(),
-            );
-
-            // TODO: Use own values
-            layout.add_text(
-                close_button_area,
-                "X",
-                *state.get(&self.font_size),
-                *state.get(&self.background_color),
-                *state.get(&self.highlight_color),
-                HorizontalAlignment::Center { offset: 0.0, border: 0.0 },
-                VerticalAlignment::Center { offset: 0.0 },
-                // TODO: This shouldn't matter at all.
-                *state.get(&theme().window().overflow_behavior()),
             );
         }
     }

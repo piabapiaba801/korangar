@@ -47,7 +47,7 @@ impl CustomWindow<ClientState> for QuestTrackerWindow {
             elements: ThemedPanel::new(
                 self.frame,
                 PanelStyle { header: 41.0, inset: 18.0, footer: 13.0, minimum_height: 114.0,
-                    title_left: 28.0, title_width: 100.0, close_right: 31.0, close_top: 13.0 },
+                    title_left: 44.0, title_width: 196.0, close_right: 6.0, close_top: 13.0 },
                 |_| "Missões".to_owned(),
                 ErasedElement::new(QuestBody::default()),
             ),
