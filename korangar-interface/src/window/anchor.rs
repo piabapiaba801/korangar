@@ -69,6 +69,19 @@ where
         Self::initialized(anchor_point, offset)
     }
 
+    pub fn translated(mut self, offset: App::Position) -> Self {
+        self.offset = App::Position::new(self.offset.left() + offset.left(), self.offset.top() + offset.top());
+        self
+    }
+
+    pub fn anchor_point(&self) -> AnchorPoint {
+        self.anchor_point
+    }
+
+    pub fn offset(&self) -> App::Position {
+        self.offset
+    }
+
     fn initialized(anchor_point: AnchorPoint, offset: App::Position) -> Self {
         Self {
             anchor_point,

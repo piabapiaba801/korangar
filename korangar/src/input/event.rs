@@ -145,6 +145,8 @@ pub enum InputEvent {
         /// Text of the message.
         text: String,
     },
+    SendPartyMessage { text: String },
+    SendPrivateMessage { recipient: String, text: String },
     /// Action for the "Next"-button in a dialog.
     NextDialog {
         /// Id of the NPC the player is in a dialog with.

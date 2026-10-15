@@ -715,6 +715,9 @@ impl<App: Application> InterfaceFrame<'_, App> {
     #[cfg_attr(feature = "debug", korangar_debug::profile)]
     fn render_window_anchors(&self, state: &Context<App>, renderer: &App::Renderer, window_id: u64) {
         if let Some(wrapper) = self.windows.iter().find(|wrapper| wrapper.data.id == window_id) {
+            if !App::show_window_anchors(wrapper.window.get_class()) {
+                return;
+            }
             App::set_current_theme_type(wrapper.window.get_theme_type());
 
             let anchor_color = *state.get(&theme::theme().window().anchor_color());

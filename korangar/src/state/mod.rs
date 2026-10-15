@@ -65,17 +65,30 @@ use crate::{AudioSettings, GraphicsSettings};
 ///
 /// The message stores the color separately rather than baking it into the
 /// message so the chat window can use the correct colors when switching themes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, RustState, StateElement)]
+pub enum ChatChannel {
+    General,
+    Battle,
+    Party,
+    Private,
+}
+
 #[derive(Debug, Clone, RustState, StateElement)]
 pub struct ChatMessage {
     /// Raw message.
     pub text: String,
     /// Color of the message.
     pub color: MessageColor,
+    pub channel: ChatChannel,
 }
 
 impl ChatMessage {
     pub fn new(text: String, color: MessageColor) -> Self {
-        Self { text, color }
+        Self { text, color, channel: ChatChannel::General }
+    }
+
+    pub fn in_channel(text: String, color: MessageColor, channel: ChatChannel) -> Self {
+        Self { text, color, channel }
     }
 }
 
@@ -559,6 +572,10 @@ impl Application for ClientState {
 
     fn set_current_theme_type(theme: InterfaceThemeType) {
         CURRENT_THEME.set(theme);
+    }
+
+    fn show_window_anchors(class: Option<WindowClass>) -> bool {
+        !matches!(class, Some(WindowClass::Hotbar | WindowClass::Experience | WindowClass::Chat))
     }
 }
 

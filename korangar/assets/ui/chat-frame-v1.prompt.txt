@@ -1,0 +1,15 @@
+Generator: built-in image_gen
+
+Use case: ui-mockup
+Asset type: original production chat-window skin, transparent PNG, for a fantasy MMORPG.
+Input images: Image 1 is the reference for the bottom-left CHAT PANEL design and proportions. Image 2 is the existing original central HUD skin; match its blackened steel, narrow worn silver beveled edges, small ruby-red gems and subtle violet glints.
+Primary request: generate ONLY one empty modular CHAT FRAME closely matching the chat in the reference. Front-facing flat 2D interface, crisp readable at small size, original artwork consistent with Image 2.
+Canvas: 1760x1040, exact aspect 440:260. Use a logical 440 by 260 coordinate system scaled 4 times.
+Composition:
+- Frame inside x2..438, y2..258, compact corner ornaments and small ruby accents, no huge protruding horns.
+- Top row y8..32: exactly FOUR equal neutral empty tab frames, at x14..111, x116..213, x218..315, x320..417. Rounded beveled black steel. No labels, no active red fill (active state drawn by code). Continuous refined metal divider under tabs at y34.
+- Large EMPTY message cavity x14..412 y42..215. Uniform near-black subtly textured backing, about 80 percent opacity, enough visual quiet for small chat text. No text or fake messages.
+- Slim scrollbar groove x419..425 y47..209; leave its handle and arrows absent for runtime rendering.
+- Bottom input rail x12..428 y224..251, a dark empty typing cavity x46..390 with thin silver rims, small empty round inset x18..40 at left, small empty round inset x397..420 at right. No icons; runtime will draw them.
+- Bottom and side outer rails continuous, corner ruby gems small and tasteful.
+Constraints: preserve genuine alpha transparency outside the silhouette. No ground, no background scene, no other UI panels, no portraits, no text, no labels, no numbers, no messages, no icons, no baked scrollbar thumb, no watermark. Black steel and silver with ruby details; no gold or bronze dominance. Four tabs only.

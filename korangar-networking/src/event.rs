@@ -130,6 +130,9 @@ pub enum NetworkEvent {
         text: String,
         color: MessageColor,
     },
+    PartyChatMessage { account_id: AccountId, text: String },
+    WhisperMessage { sender: String, text: String },
+    WhisperResult { result: u8 },
     /// Show a temporary speech balloon above the source entity and add it to chat.
     EntitySpeech {
         entity_id: EntityId,

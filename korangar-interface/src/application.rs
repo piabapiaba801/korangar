@@ -166,6 +166,11 @@ pub trait Application: Sized + 'static {
     type TextLayouter: TextLayouter<Self>;
 
     fn set_current_theme_type(theme: Self::ThemeType);
+
+    /// HUD modules can remain draggable without showing alignment guides.
+    fn show_window_anchors(_class: Option<Self::WindowClass>) -> bool {
+        true
+    }
 }
 
 /// A type for saving and loading window positions and sizes.

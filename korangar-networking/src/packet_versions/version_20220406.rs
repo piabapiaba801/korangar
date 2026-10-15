@@ -192,6 +192,15 @@ where
         color: MessageColor::Server,
     })?;
     packet_handler.register_noop::<MessageTablePacket>()?;
+    packet_handler.register(|packet: PartyChatMessagePacket| NetworkEvent::PartyChatMessage {
+        account_id: packet.account_id,
+        text: packet.message,
+    })?;
+    packet_handler.register(|packet: WhisperMessagePacket| NetworkEvent::WhisperMessage {
+        sender: packet.sender,
+        text: packet.message,
+    })?;
+    packet_handler.register(|packet: WhisperResultPacket| NetworkEvent::WhisperResult { result: packet.result })?;
     packet_handler.register(|packet: EntityMessagePacket| {
         // Drop the alpha channel because it might be 0.
         let color = MessageColor::Rgb {

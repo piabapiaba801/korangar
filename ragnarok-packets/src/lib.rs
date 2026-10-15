@@ -1576,6 +1576,58 @@ pub struct GlobalMessagePacket {
     pub message: String,
 }
 
+#[derive(Debug, Clone, Packet, ClientPacket, MapServer)]
+#[cfg_attr(feature = "interface", derive(rust_state::RustState, korangar_interface::element::StateElement))]
+#[header(0x0108)]
+#[variable_length]
+pub struct PartyChatRequestPacket {
+    #[length_remaining_off_by_one]
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Packet, ServerPacket, MapServer)]
+#[cfg_attr(feature = "interface", derive(rust_state::RustState, korangar_interface::element::StateElement))]
+#[header(0x0109)]
+#[variable_length]
+pub struct PartyChatMessagePacket {
+    pub account_id: AccountId,
+    #[length_remaining]
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Packet, ClientPacket, MapServer)]
+#[cfg_attr(feature = "interface", derive(rust_state::RustState, korangar_interface::element::StateElement))]
+#[header(0x0096)]
+#[variable_length]
+pub struct WhisperRequestPacket {
+    #[length(24)]
+    pub recipient: String,
+    #[length_remaining_off_by_one]
+    pub message: String,
+}
+
+/// ZC_WHISPER layout used by the 20220406 map server.
+#[derive(Debug, Clone, Packet, ServerPacket, MapServer)]
+#[cfg_attr(feature = "interface", derive(rust_state::RustState, korangar_interface::element::StateElement))]
+#[header(0x09DE)]
+#[variable_length]
+pub struct WhisperMessagePacket {
+    pub sender_id: EntityId,
+    #[length(24)]
+    pub sender: String,
+    pub is_admin: u8,
+    #[length_remaining]
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Packet, ServerPacket, MapServer)]
+#[cfg_attr(feature = "interface", derive(rust_state::RustState, korangar_interface::element::StateElement))]
+#[header(0x09DF)]
+pub struct WhisperResultPacket {
+    pub result: u8,
+    pub character_id: CharacterId,
+}
+
 #[derive(Debug, Clone, Packet, ServerPacket, MapServer)]
 #[cfg_attr(feature = "interface", derive(rust_state::RustState, korangar_interface::element::StateElement))]
 #[header(0x0139)]

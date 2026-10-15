@@ -57,7 +57,7 @@ pub use self::cache::WindowCache;
 pub use self::character_creation::CharacterCreationWindow;
 pub use self::character_overview::CharacterOverviewWindow;
 pub use self::character_selection::CharacterSelectionWindow;
-pub use self::chat::{ChatTextBox, ChatWindow, ChatWindowState};
+pub use self::chat::{ChatTextBox, ChatWindow, ChatWindowState, ChatWindowStatePathExt};
 #[cfg(feature = "debug")]
 pub use self::commands::CommandsWindow;
 pub use self::dialog::{DialogWindow, DialogWindowState};
@@ -69,7 +69,7 @@ pub use self::friend_list::{FriendListWindow, FriendListWindowState};
 pub use self::friend_request::FriendRequestWindow;
 pub use self::game_settings::GameSettingsWindow;
 pub use self::graphics_settings::GraphicsSettingsWindow;
-pub use self::hotbar::HotbarWindow;
+pub use self::hotbar::{ExperienceWindow, HotbarWindow};
 pub use self::hotkey_settings::HotkeySettingsWindow;
 pub use self::interface_settings::InterfaceSettingsWindow;
 pub use self::inventory::InventoryWindow;
@@ -113,6 +113,7 @@ pub enum WindowClass {
     InterfaceSettings,
     GraphicsSettings,
     Hotbar,
+    Experience,
     HotkeySettings,
     Inventory,
     ItemDetails,

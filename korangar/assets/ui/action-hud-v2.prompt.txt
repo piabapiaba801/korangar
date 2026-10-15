@@ -1,0 +1,21 @@
+Generator: built-in image_gen
+
+Use case: ui-mockup
+Asset type: production transparent PNG skin for the central action HUD of a fantasy MMORPG.
+Reference image: supplied screenshot. Use ONLY the bottom-center HUD as the design reference. Match its silhouette, dark materials, silver edge highlights, small red ruby accents, subtle violet glints and clean beveled square wells closely.
+Primary request: create only the EMPTY CENTRAL HUD FRAME on real alpha transparency, ready to be overlaid with live game data. It must look like the supplied preview, not a generic gold fantasy inventory panel.
+Composition: wide 3:1 canvas. Consider a 600 by 200 logical coordinate system scaled uniformly to the output. Full frame lies inside the canvas with no clipping.
+Top: slim symmetric HP and SP wing frames. Blank dark HP trough around x76..256 y40..58, blank dark SP trough around x344..524 y40..58. Small circular empty black level medallion centered x300 y49, around 40px diameter, with ruby crest and compact pointed silver-edged iron wings. Avoid a tall oversized crown.
+Middle: exactly TWO rows, exactly NINE equal empty square wells per row (18 total). Wells centered at x104.5,152.5,200.5,248.5,296.5,344.5,392.5,440.5,488.5. Upper row top69 bottom110; lower row top116 bottom157. Fine silver rims, black interiors. Compact pointed side ornaments, small red gems. Keep empty wells sharply aligned.
+Bottom: one slim EMPTY UNDIVIDED experience rail spanning x70..530 y172..184, with tiny pointed red-gem endcaps. No separators or fill; ten runtime segments will be drawn by code.
+Materials: blackened iron/steel, bright narrow worn silver beveled edges, ruby red accents. Near-black interiors. No bronze or gold dominance. High clarity for small game UI, subtle texture.
+Constraints: ONLY frame artwork. No scene, no ground, no avatars, no portraits, no skill icons, no text, no numbers, no labels, no HP/SP/EXP color fill. Outside alpha transparent. No shadows beyond alpha silhouette, no checkerboard background, no watermark. Flat front orthographic 2D interface skin, no perspective.
+
+Refinement prompt:
+Use case: precise-object-edit
+Edit target: the supplied transparent central HUD frame.
+Change ONLY the two-row skill grid: it currently has EIGHT columns. Replace that inner grid with exactly NINE evenly spaced square wells per row, 18 total. Count them carefully: 1 2 3 4 5 6 7 8 9 across each row. Do not draw those numbers.
+Keep the outer side borders at the same coordinates; make each well a little narrower to fit nine, not eight. All nine equal well interiors must be separated by slim vertical silver dividers. Exactly nine visible empty black wells in top row and exactly nine in bottom row.
+Invariants: preserve the outside alpha transparency, full canvas dimensions, all top HP/SP wings, center circular medallion, top red jewel, materials and colors, outer grid frame and side ruby ornaments, bottom empty undivided EXP rail, their exact positions and proportions. Do not change anything outside the interior two-row skill grid.
+No icons, no labels, no text, no numbers, no colored bar fills. Real alpha transparent background.
+

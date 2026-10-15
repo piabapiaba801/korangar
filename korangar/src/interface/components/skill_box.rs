@@ -150,7 +150,11 @@ where
         resolvers: &mut dyn Resolvers<ClientState>,
     ) -> Self::LayoutInfo {
         with_single_resolver(resolvers, |resolver| {
-            let area = resolver.with_height(40.0);
+            let height = match self.source {
+                SkillSource::Hotbar { .. } => 38.0,
+                SkillSource::SkillTree => 40.0,
+            };
+            let area = resolver.with_height(height);
 
             if let Some(learnable_skill) = state.try_get(&self.learnable_skill_path) {
                 self.level_display.update(learnable_skill.maximum_level);
@@ -181,9 +185,11 @@ where
             false => layout_info.area.check().run(layout),
         };
 
-        let background_color = match !is_drop_target && is_hovered {
-            true => Color::rgb_u8(60, 60, 60),
-            false => Color::rgb_u8(40, 40, 40),
+        let background_color = match (self.source, !is_drop_target && is_hovered) {
+            (SkillSource::Hotbar { .. }, true) => Color::rgba_u8(118, 81, 68, 130),
+            (SkillSource::Hotbar { .. }, false) => Color::TRANSPARENT,
+            (_, true) => Color::rgb_u8(60, 60, 60),
+            (_, false) => Color::rgb_u8(40, 40, 40),
         };
 
         layout.add_rectangle(
@@ -191,7 +197,11 @@ where
             CornerDiameter::uniform(4.0),
             background_color,
             Color::rgba_u8(0, 0, 0, 100),
-            ShadowPadding::diagonal(2.0, 5.0),
+            if matches!(self.source, SkillSource::Hotbar { .. }) {
+                ShadowPadding::uniform(0.0)
+            } else {
+                ShadowPadding::diagonal(2.0, 5.0)
+            },
         );
 
         if is_drop_target {

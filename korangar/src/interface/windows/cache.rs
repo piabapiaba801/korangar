@@ -79,12 +79,43 @@ impl korangar_interface::application::WindowCache<ClientState> for WindowCache {
                 ScreenSize { width: 440.0, height: 260.0 },
             )
         });
-        cache.entries.entry(WindowClass::Hotbar).or_insert_with(|| {
+        let default_hud_state = || {
             WindowState::new(
-                Anchor::at(AnchorPoint::BottomCenter, ScreenPosition { left: -290.0, top: -180.0 }),
-                ScreenSize { width: 580.0, height: 122.0 },
+                Anchor::at(AnchorPoint::BottomCenter, ScreenPosition { left: -185.0, top: -235.0 }),
+                ScreenSize { width: 600.0, height: 168.0 },
             )
-        });
+        };
+        match cache.entries.get_mut(&WindowClass::Hotbar) {
+            Some(state) if state.size.width == 580.0 && state.size.height == 122.0 => {
+                *state = default_hud_state();
+            }
+            Some(state) if state.size.width == 600.0 && state.size.height == 220.0 => {
+                state.anchor = state.anchor.translated(ScreenPosition { left: 0.0, top: 20.0 });
+                state.size.height = 168.0;
+            }
+            None => {
+                cache.entries.insert(WindowClass::Hotbar, default_hud_state());
+            }
+            _ => {}
+        }
+        let experience_anchor = cache.entries[&WindowClass::Hotbar].anchor.translated(ScreenPosition { left: 0.0, top: 138.0 });
+        let experience_state = || WindowState::new(experience_anchor, ScreenSize { width: 600.0, height: 43.0 });
+        match cache.entries.get_mut(&WindowClass::Experience) {
+            Some(state)
+                if matches!(
+                    state.anchor.anchor_point(),
+                    AnchorPoint::BottomLeft | AnchorPoint::BottomCenter | AnchorPoint::BottomRight
+                ) && state.anchor.offset().top >= -12.0 =>
+            {
+                // The visible EXP band begins 12 px below this window's top.
+                // Recover a saved position whose entire artwork is below the screen.
+                *state = experience_state();
+            }
+            None => {
+                cache.entries.insert(WindowClass::Experience, experience_state());
+            }
+            _ => {}
+        }
         cache.entries.entry(WindowClass::CharacterOverview).or_insert_with(|| {
             WindowState::new(
                 Anchor::at(AnchorPoint::TopLeft, ScreenPosition { left: 16.0, top: 16.0 }),

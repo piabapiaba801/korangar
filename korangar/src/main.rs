@@ -87,7 +87,7 @@ use state::inventory::InventoryPathExt;
 use state::localization::Localization;
 use state::skills::SkillTreePathExt;
 use state::theme::{CursorThemePathExt, IndicatorThemePathExt, InterfaceThemePathExt, WorldThemePathExt};
-use state::{ChatMessage, ClientState, ClientStatePathExt, ClientStateRootExt, PartyMember, client_state, this_entity, this_player};
+use state::{ChatChannel, ChatMessage, ClientState, ClientStatePathExt, ClientStateRootExt, PartyMember, client_state, this_entity, this_player};
 #[cfg(feature = "debug")]
 use wgpu::Device;
 use wgpu::util::initialize_adapter_from_env_or_default;
@@ -1111,12 +1111,27 @@ impl Client {
                         this_player(),
                         self.library.clone(),
                     ));
-                    self.interface
-                        .open_window(ChatWindow::new(client_state().chat_window(), client_state().chat_messages()));
+                    let chat_frame = self.texture_loader.create_color(
+                        "freokro private chat frame",
+                        image::load_from_memory(include_bytes!("../assets/ui/chat-frame-v1.png"))
+                            .expect("embedded chat frame image is valid")
+                            .to_rgba8(),
+                        true,
+                    );
+                    self.interface.open_window(ChatWindow::new(client_state().chat_window(), client_state().chat_messages(), chat_frame));
+                    let hud_frame = self.texture_loader.create_color(
+                        "freokro private action HUD",
+                        image::load_from_memory(include_bytes!("../assets/ui/action-hud-v2.png"))
+                            .expect("embedded action HUD image is valid")
+                            .to_rgba8(),
+                        true,
+                    );
                     self.interface.open_window(HotbarWindow::new(
                         client_state().hotbar().skills(),
                         client_state().skill_tree().skills(),
+                        hud_frame.clone(),
                     ));
+                    self.interface.open_window(ExperienceWindow::new(hud_frame));
 
                     // Put the dialog system in a well-defined state.
                     self.client_state.follow_mut(client_state().dialog_window()).end();
@@ -1361,6 +1376,31 @@ impl Client {
                         .follow_mut(client_state().chat_messages())
                         .push(ChatMessage::new(text, color));
                 }
+                NetworkEvent::PartyChatMessage { account_id: _, text } => {
+                    self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::in_channel(
+                        format!("[Grupo] {}", text.trim_end_matches('\0')),
+                        MessageColor::Rgb { red: 112, green: 213, blue: 227 }, ChatChannel::Party,
+                    ));
+                }
+                NetworkEvent::WhisperMessage { sender, text } => {
+                    self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::in_channel(
+                        format!("[De {sender}] {}", text.trim_end_matches('\0')),
+                        MessageColor::Rgb { red: 215, green: 169, blue: 237 }, ChatChannel::Private,
+                    ));
+                    *self.client_state.follow_mut(client_state().chat_window().recipient()) = sender;
+                }
+                NetworkEvent::WhisperResult { result } => {
+                    if result != 0 {
+                        let message = match result {
+                            1 => "O jogador está desconectado ou não foi encontrado.",
+                            2 | 3 => "Esse jogador está bloqueando mensagens privadas.",
+                            _ => "Não foi possível entregar a mensagem privada.",
+                        };
+                        self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::in_channel(
+                            message.to_owned(), MessageColor::Error, ChatChannel::Private,
+                        ));
+                    }
+                }
                 NetworkEvent::EntitySpeech { entity_id, text, color } => {
                     self.client_state
                         .follow_mut(client_state().chat_messages())
@@ -1402,6 +1442,18 @@ impl Client {
                     attack_duration,
                     is_critical,
                 } => {
+                    if let Some(player) = self.client_state.try_follow(this_entity()) {
+                        let player_id = player.get_entity_id();
+                        if source_entity_id == player_id || destination_entity_id == player_id {
+                            let direction = if source_entity_id == player_id { "Dano causado" } else { "Dano recebido" };
+                            let amount = damage_amount.map(|value| value.to_string()).unwrap_or_else(|| "Esquiva".to_owned());
+                            let critical = if is_critical { " (crítico)" } else { "" };
+                            self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::in_channel(
+                                format!("{direction}: {amount}{critical}"),
+                                MessageColor::Rgb { red: 239, green: 183, blue: 119 }, ChatChannel::Battle,
+                            ));
+                        }
+                    }
                     let target_position = self
                         .client_state
                         .follow(client_state().entities())
@@ -2465,6 +2517,24 @@ impl Client {
                     let _ = self
                         .networking_system
                         .send_chat_message(self.client_state.follow(client_state().player_name()), &text);
+                }
+                InputEvent::SendPartyMessage { text } => {
+                    if self.client_state.follow(client_state().party_members()).is_empty() {
+                        self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::in_channel(
+                            "Você precisa estar em um grupo para usar este canal.".to_owned(), MessageColor::Error, ChatChannel::Party,
+                        ));
+                    } else if self.networking_system.send_party_message(self.client_state.follow(client_state().player_name()), &text).is_err() {
+                        self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::in_channel(
+                            "Não foi possível enviar a mensagem ao grupo.".to_owned(), MessageColor::Error, ChatChannel::Party,
+                        ));
+                    }
+                }
+                InputEvent::SendPrivateMessage { recipient, text } => {
+                    let sent = self.networking_system.send_whisper(&recipient, &text).is_ok();
+                    self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::in_channel(
+                        if sent { format!("[Para {recipient}] {text}") } else { "Não foi possível enviar a mensagem privada.".to_owned() },
+                        if sent { MessageColor::Rgb { red: 215, green: 169, blue: 237 } } else { MessageColor::Error }, ChatChannel::Private,
+                    ));
                 }
                 InputEvent::NextDialog { npc_id } => {
                     let _ = self.networking_system.next_dialog(npc_id);
@@ -3811,21 +3881,6 @@ impl Client {
                 }
 
                 if self.show_interface {
-                    if let Some(player) = self.client_state.try_follow(this_player()) {
-                        self.top_interface_renderer.render_vitals(
-                            player.get_common().health_points,
-                            player.get_common().maximum_health_points,
-                            player.spell_points,
-                            player.maximum_spell_points,
-                            player.base_level,
-                        );
-                        self.top_interface_renderer.render_experience_bars(
-                            player.base_experience,
-                            player.next_base_experience,
-                            player.job_experience,
-                            player.next_job_experience,
-                        );
-                    }
                     self.mouse_cursor.render(
                         &self.top_interface_renderer,
                         input_report.mouse_position,

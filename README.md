@@ -14,7 +14,13 @@ The emblem above is the project's visual direction. The FreokRO branch now conta
 
 This repository is the separate **FreokRO private client workspace** for personalized art, interfaces, and game features. It starts from the validated October 13 `freokro` checkpoint of the [public Korangar fork](https://github.com/piabapiaba801/korangar/tree/freokro). The simplified `freokro-base` repository remains local while its release checks are completed. Private changes are reviewed before any deliberate transfer to the public base; neither repository updates the other automatically.
 
-## 🚧 Work in progress — October 14, 2026
+## 🚧 Work in progress — October 15, 2026
+
+### Private HUD in-game checkpoint — October 15, 2026
+
+The owner confirmed the action HUD, restored ten-segment base EXP bar, and four-tab chat together in the local private client. The screenshot records the current state before matching frames are added to the minimap, mission tracker, and character overview. Those three windows still have the earlier plain appearance in this capture.
+
+![Current private FreokRO HUD with action bars, base EXP, chat, minimap, missions, and character overview](docs/screenshots/freokro-private-hud-xp-chat-validated-2026-10-15.png)
 
 - **Playable local visual checkpoint:** the owner confirmed the redesigned login, world selection, character selection/creation, and lateral movement in the independent test client. Occupied slots display the selected character's current in-game sprite; an empty slot displays the creation preview.
 - **Authored map baseline:** all 1,265 active map names have project-generated RSW, GND, and GAT triplets. Names and dimensions remain compatibility references. Navigation, warps, and visual details still need map-by-map work.

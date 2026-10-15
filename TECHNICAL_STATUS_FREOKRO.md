@@ -1,4 +1,11 @@
-# FreokRO technical status — October 13, 2026
+# FreokRO technical status — October 15, 2026
+
+## Private HUD checkpoint — October 15, 2026
+
+- The private action HUD, its ten-segment base EXP bar, and the four-tab chat use the locally generated black-metal and red-gem visual language. The owner's [current in-game capture](docs/screenshots/freokro-private-hud-xp-chat-validated-2026-10-15.png) shows these modules together. The EXP bar had disappeared because its saved bottom-center anchor was below the screen; the client now recovers that saved position relative to the action HUD. The owner confirmed the EXP bar is visible again in this capture.
+- The chat frame uses inset history text, a contained active-tab tint, matching lower red-gem controls, and a padded message field. The current capture is the visual checkpoint for this layout.
+- The minimap, quest tracker, and character overview in the capture still use the older plain window style. Their matching private theme is the next implementation step; their gameplay data and controls must remain functional.
+- This is a local private-client checkpoint. The image and this note do not validate every map, mission, stat interaction, chat channel, or gameplay route, and no remote publication is implied.
 
 ## Simplified public-base candidate (local only)
 
