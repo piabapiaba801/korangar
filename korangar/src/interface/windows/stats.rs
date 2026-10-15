@@ -11,7 +11,7 @@ use ragnarok_packets::StatUpType;
 use rust_state::{Context, Path, PathExt, Selector};
 
 use crate::input::InputEvent;
-use crate::graphics::{Color, Texture};
+use crate::graphics::{Color, ShadowPadding, Texture};
 use crate::interface::windows::WindowClass;
 use super::themed_panel::{PanelStyle, ThemedPanel};
 use crate::loaders::{FontSize, OverflowBehavior};
@@ -175,6 +175,11 @@ where
                         },
                         button! {
                             text: CostTextSelector::new(self.player_path.$cost_name()),
+                            background_color: Color::TRANSPARENT,
+                            disabled_background_color: Color::TRANSPARENT,
+                            hovered_background_color: Color::rgba_u8(104, 27, 38, 100),
+                            shadow_color: Color::TRANSPARENT,
+                            shadow_padding: ShadowPadding::uniform(0.0),
                             disabled: disabled_cutoff(self.player_path.stat_points(), self.player_path.$cost_name()),
                             event: InputEvent::StatUp { stat_type: StatUpType::$variant_name { amount: 1 } },
                         },

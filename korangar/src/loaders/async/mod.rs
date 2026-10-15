@@ -317,7 +317,9 @@ impl AsyncLoader {
                 let skills = HashMap::from_iter(
                     tab.skills
                         .iter()
-                        .map(|(slot, skill_id)| (*slot, self.request_learnable_skill_load(job_id, *skill_id, client_tick))),
+                        // Source tables use seven columns. Preserve their row/column
+                        // positions while adding an eighth destination column.
+                        .map(|(slot, skill_id)| (slot / 7 * 8 + slot % 7, self.request_learnable_skill_load(job_id, *skill_id, client_tick))),
                 );
 
                 SkillTabLayout { name, skills }

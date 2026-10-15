@@ -11,7 +11,7 @@ use ragnarok_packets::{SkillId, SkillLevel};
 use rust_state::{Context, ManuallyAssertExt, Path, PathExt, RustState, VecIndexExt};
 
 use crate::input::InputEvent;
-use crate::graphics::{Color, Texture};
+use crate::graphics::{Color, ShadowPadding, Texture};
 use crate::interface::windows::WindowClass;
 use crate::interface::windows::themed_panel::{PanelStyle, ThemedPanel};
 use crate::interface::windows::skill_tree::state::AvailablePointsDisplay;
@@ -76,10 +76,10 @@ where
             title: "",
             class: Self::window_class(),
             theme: InterfaceThemeType::InGame,
-            minimum_width: 620.0,
-            maximum_width: 620.0,
-            minimum_height: 630.0,
-            maximum_height: 680.0,
+            minimum_width: 710.0,
+            maximum_width: 710.0,
+            minimum_height: 800.0,
+            maximum_height: 1100.0,
             title_height: 0.0,
             title_gap: 0.0,
             border: 0.0,
@@ -90,14 +90,15 @@ where
             shadow_color: Color::TRANSPARENT,
             elements: ThemedPanel::new(
                 self.frame,
-                PanelStyle { header: 39.0, inset: 36.0, footer: 18.0, minimum_height: 630.0,
-                    title_left: 85.0, title_width: 450.0, close_right: 7.0, close_top: 13.0 },
+                PanelStyle { header: 100.0, inset: 42.0, footer: 55.0, minimum_height: 800.0,
+                    title_left: 95.0, title_width: 520.0, close_right: 7.0, close_top: 45.0 },
                 |_| "Árvore de habilidades".to_owned(),
                 ErasedElement::new((
                 split! {
                     gaps: theme().window().gaps(),
                     children: TabSelector::new(self.window_state_path.selected_tab(), self.layout_path),
                 },
+                text! { text: "", height: 8.0 },
                 DropSkillWrapper::new(
                     tabs! {
                         selected_tab: self.window_state_path.selected_tab(),
@@ -110,6 +111,7 @@ where
                         )
                     }
                 ),
+                text! { text: "", height: 12.0 },
                 split! {
                     children: (
                         text! {
@@ -127,12 +129,22 @@ where
                                 children: (
                                     button! {
                                         text: client_state().localization().reset_skill_points_button_text(),
+                                        background_color: Color::TRANSPARENT,
+                                        disabled_background_color: Color::TRANSPARENT,
+                                        hovered_background_color: Color::rgba_u8(104, 27, 38, 100),
+                                        shadow_color: Color::TRANSPARENT,
+                                        shadow_padding: ShadowPadding::uniform(0.0),
                                         event: move |state: &Context<ClientState>, _: &mut EventQueue<ClientState>| {
                                             state.update_value_with(self.window_state_path.pending_skill_points(), Vec::clear);
                                         },
                                     },
                                     button! {
                                         text: client_state().localization().cancel_skill_points_button_text(),
+                                        background_color: Color::TRANSPARENT,
+                                        disabled_background_color: Color::TRANSPARENT,
+                                        hovered_background_color: Color::rgba_u8(104, 27, 38, 100),
+                                        shadow_color: Color::TRANSPARENT,
+                                        shadow_padding: ShadowPadding::uniform(0.0),
                                         event: move |state: &Context<ClientState>, _: &mut EventQueue<ClientState>| {
                                             state.update_value_with(self.window_state_path.pending_skill_points(), Vec::clear);
                                             state.update_value(self.window_state_path.currently_skilling(), false);
@@ -140,6 +152,11 @@ where
                                     },
                                     button! {
                                         text: client_state().localization().apply_skill_points_button_text(),
+                                        background_color: Color::TRANSPARENT,
+                                        disabled_background_color: Color::TRANSPARENT,
+                                        hovered_background_color: Color::rgba_u8(104, 27, 38, 100),
+                                        shadow_color: Color::TRANSPARENT,
+                                        shadow_padding: ShadowPadding::uniform(0.0),
                                         disabled: ComputedSelector::new_default(move |state: &ClientState| {
                                             self.window_state_path.pending_skill_points().follow_safe(state).is_empty()
                                         }),
@@ -158,6 +175,11 @@ where
                             },
                             on_false: button! {
                                 text: client_state().localization().distribute_skill_points_button_text(),
+                                background_color: Color::TRANSPARENT,
+                                disabled_background_color: Color::TRANSPARENT,
+                                hovered_background_color: Color::rgba_u8(104, 27, 38, 100),
+                                shadow_color: Color::TRANSPARENT,
+                                shadow_padding: ShadowPadding::uniform(0.0),
                                 disabled: ComputedSelector::new_default(move |state: &ClientState| {
                                     *self.available_skill_points_path.follow_safe(state) == 0
                                 }),

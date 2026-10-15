@@ -11,6 +11,7 @@ use korangar_interface::layout::{Resolvers, WindowLayout, with_nth_resolver, wit
 use rust_state::{Context, ManuallyAssertExt, Path, PathExt, VecIndexExt};
 
 use crate::input::{InputEvent, MouseInputMode};
+use crate::graphics::{Color, ShadowPadding};
 use crate::interface::resource::SkillSource;
 use crate::interface::windows::SkillTreeWindowState;
 use crate::interface::windows::skill_tree::slot::SkillSlot;
@@ -21,7 +22,7 @@ use crate::state::skills::{
 use crate::state::theme::{GlobalThemePathExt, InterfaceThemePathExt};
 use crate::state::{ClientState, client_theme};
 
-const SKILL_TREE_COLUMNS: usize = 7;
+const SKILL_TREE_COLUMNS: usize = 8;
 
 pub(super) struct TabSelector<A, B> {
     selected_tab_path: A,
@@ -68,6 +69,11 @@ where
                 for tab_index in self.buttons.len()..tab_count {
                     self.buttons.push(ErasedElement::new(button! {
                     text: self.layout_path.tabs().index(tab_index).name().manually_asserted(),
+                    background_color: Color::TRANSPARENT,
+                    disabled_background_color: Color::TRANSPARENT,
+                    hovered_background_color: Color::rgba_u8(104, 27, 38, 100),
+                    shadow_color: Color::TRANSPARENT,
+                    shadow_padding: ShadowPadding::uniform(0.0),
                     event: move |state: &rust_state::Context<ClientState>, _: &mut korangar_interface::event::EventQueue<ClientState>| {
                         state.update_value(selected_tab_path, tab_index);
                     },
@@ -137,7 +143,7 @@ where
 
             let layout = state.get(&self.layout_path);
 
-            let row_count = 1 + layout.keys().max().copied().unwrap_or_default() / SKILL_TREE_COLUMNS;
+            let row_count = (2 + layout.keys().max().copied().unwrap_or_default() / SKILL_TREE_COLUMNS).max(8);
 
             match self.row_elements.len().cmp(&row_count) {
                 Ordering::Less => {

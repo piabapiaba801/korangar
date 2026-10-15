@@ -56,7 +56,7 @@ impl CustomWindow<ClientState> for MiniMapWindow {
             shadow_color: Color::TRANSPARENT,
             elements: ThemedPanel::new(
                 self.frame,
-                PanelStyle { header: 48.0, inset: 16.0, footer: 6.0, minimum_height: 300.0,
+                PanelStyle { header: 48.0, inset: 16.0, footer: 15.0, minimum_height: 300.0,
                     title_left: 45.0, title_width: 134.0, close_right: 6.0, close_top: 17.0 },
                 |_| "Minimap".to_owned(),
                 ErasedElement::new((MiniMapBody::new(self.map_name, self.data, false), WorldMapButton)),
@@ -174,7 +174,7 @@ impl Element<ClientState> for MiniMapBody {
             None => self.map_name.clone(),
         };
         with_single_resolver(resolvers, |resolver| Self::LayoutInfo {
-            area: resolver.with_height(if self.expanded { 510.0 } else { 220.0 }),
+            area: resolver.with_height(if self.expanded { 510.0 } else { 211.0 }),
         })
     }
 
