@@ -7,6 +7,7 @@
 - The Windows product name, deployed executable, and local shortcut are **FreokRO**, **FreokRO.exe**, and **FreokRO.lnk**. The source workspace and internal Cargo package retain their technical names. The physical deployment is `client/game-private/FreokRO.exe`; its technical status document is copied alongside the client.
 - At the owner's explicit request, this checkpoint and the earlier local HUD commits are published to `piabapiaba801/korangar`, branch `freokro`, and mirrored to `piabapiaba801/freokro-priv`, branch `freokro`. This is a deliberate publication of the personalized line; it does not complete the separate public-base candidate's release checks.
 - Reproduce the Windows build with `cargo +nightly-2026-02-01 build --release --locked -p korangar --features unicode,debug`. Compilation and matching deployed-file hashes verify the delivered binary; they do not validate every gameplay interaction.
+- The English HUD build passed on October 15, 2026 with the same three pre-existing dead-code warnings. The deployed `FreokRO.exe` matches the compiled binary: SHA-256 `29BF022B980EB14DAD61C8A8AE42427E3FA90B6B283DF6B5A8C8F838B4996F18`. The local `FreokRO.lnk` points to this executable with the private game folder as its working directory; the previous executable is backed up under `client/game-private/backups/`.
 
 ## Earlier HUD iteration history — October 15, 2026
 
