@@ -28,7 +28,7 @@ use crate::state::{ChatChannel, ChatMessage, ClientState, ClientStatePathExt, cl
 const MAXIMUM_CHAT_MESSAGE_LENGTH: usize = 80;
 const CHAT_WIDTH: f32 = 440.0;
 const CHAT_HEIGHT: f32 = 260.0;
-const TAB_LABELS: [&str; 4] = ["Geral", "Batalha", "Grupo", "Privado"];
+const TAB_LABELS: [&str; 4] = ["General", "Combat", "Party", "Whisper"];
 
 /// Used to focus the message field when the player presses Enter.
 pub struct ChatTextBox;
@@ -363,7 +363,7 @@ where
                     if state.get(&client_state().party_members()).is_empty() {
                         state.update_value_with(client_state().chat_messages(), |messages| {
                             messages.push(ChatMessage::in_channel(
-                                "Você precisa estar em um grupo para usar este canal.".to_owned(),
+                                "Join a party to use this channel.".to_owned(),
                                 MessageColor::Error,
                                 ChatChannel::Party,
                             ))
@@ -391,7 +391,7 @@ where
             queue.queue(Event::Unfocus);
         };
         let input = ErasedElement::new(text_box! {
-            ghost_text: "Mensagem... (Enter para enviar)",
+            ghost_text: "Message... (Enter to send)",
             state: current_text,
             input_handler: DefaultHandler::<_, _, MAXIMUM_CHAT_MESSAGE_LENGTH>::new(current_text, send_action),
             background_color: Color::TRANSPARENT,
@@ -410,7 +410,7 @@ where
             focus_id: ChatTextBox,
         });
         let recipient_input = ErasedElement::new(text_box! {
-            ghost_text: "Jogador",
+            ghost_text: "Player name",
             state: recipient,
             input_handler: DefaultHandler::<_, _, 23>::new(recipient, |_: &Context<ClientState>, queue: &mut EventQueue<ClientState>| {
                 queue.queue(Event::FocusElement { focus_id: ChatTextBox.focus_id() });
@@ -536,7 +536,7 @@ impl<P: Path<ClientState, usize>> Element<ClientState> for ChatBody<P> {
         ];
         if drag_areas.iter().any(|area| area.check().run(layout)) {
             layout.register_click_handler(MouseButton::Left, &self.drag);
-            layout.add_tooltip("Arraste a moldura para mover o chat", DragTooltip.tooltip_id());
+            layout.add_tooltip("Drag the frame to move chat", DragTooltip.tooltip_id());
         }
         layout.with_layer(|layout| {
             for (index, label) in TAB_LABELS.iter().enumerate() {
@@ -587,7 +587,7 @@ impl<P: Path<ClientState, usize>> Element<ClientState> for ChatBody<P> {
                 text(
                     layout,
                     relative(area, 54.0, 220.0, 332.0, 25.0),
-                    "Registro de combate",
+                    "Combat Log",
                     12.0,
                     Color::rgb_u8(155, 150, 143),
                 );
@@ -611,7 +611,7 @@ impl<P: Path<ClientState, usize>> Element<ClientState> for ChatBody<P> {
             let hovered = send_area.check().run(layout);
             if hovered && info.tab != 1 {
                 layout.register_click_handler(MouseButton::Left, self.send.as_ref());
-                layout.add_tooltip("Enviar mensagem (Enter)", SendTooltip.tooltip_id());
+                layout.add_tooltip("Send message (Enter)", SendTooltip.tooltip_id());
             }
             layout.add_rectangle(
                 relative(area, 395.0, 224.0, 17.0, 17.0),

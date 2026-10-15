@@ -92,7 +92,7 @@ where
                 self.frame,
                 PanelStyle { header: 100.0, inset: 42.0, footer: 27.0, minimum_height: 800.0,
                     title_left: 95.0, title_width: 520.0, close_right: 7.0, close_top: 45.0 },
-                |_| "Árvore de habilidades".to_owned(),
+                |_| "Skill Tree".to_owned(),
                 ErasedElement::new((
                 split! {
                     gaps: theme().window().gaps(),

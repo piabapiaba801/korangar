@@ -37,17 +37,17 @@ pub struct ItemDetailsData {
 
 fn type_name(item_type: u8) -> &'static str {
     match item_type {
-        0 => "Consumível",
-        2 => "Utilizável",
-        3 => "Diversos",
-        4 => "Arma",
-        5 => "Armadura",
-        6 => "Carta",
-        7 => "Ovo de mascote",
-        8 => "Equipamento de mascote",
-        10 => "Munição",
-        11 => "Consumível",
-        18 => "Item de loja",
+        0 => "Consumable",
+        2 => "Usable Item",
+        3 => "Miscellaneous",
+        4 => "Weapon",
+        5 => "Armor",
+        6 => "Card",
+        7 => "Pet Egg",
+        8 => "Pet Gear",
+        10 => "Ammo",
+        11 => "Consumable",
+        18 => "Shop Item",
         _ => "Item",
     }
 }
@@ -59,15 +59,15 @@ fn option_text(option: &ItemOptions) -> Option<String> {
     let value = option.value.to_string();
     Some(match OPTION_TEMPLATES.get(&option.index) {
         Some(template) => template.replace("%%", "\u{0}").replace("%d", &value).replace('\0', "%"),
-        None => format!("Opção #{} · valor {}", option.index, value),
+        None => format!("Option #{} · value {}", option.index, value),
     })
 }
 
 impl ItemDetailsData {
     fn from_metadata(metadata: &ResourceMetadata, identified: bool) -> Self {
-        let mut facts = vec![("Tipo".to_owned(), type_name(metadata.item_type).to_owned())];
+        let mut facts = vec![("Type".to_owned(), type_name(metadata.item_type).to_owned())];
         if let Some(weight) = metadata.weight {
-            facts.push(("Peso".to_owned(), format!("{}.{:01}", weight / 10, weight % 10)));
+            facts.push(("Weight".to_owned(), format!("{}.{:01}", weight / 10, weight % 10)));
         }
         Self {
             name: metadata.name.clone(),
@@ -85,15 +85,15 @@ impl ItemDetailsData {
         let mut details = Self::from_metadata(&item.metadata, item.is_identified());
         match &item.details {
             InventoryItemDetails::Regular { amount, .. } => {
-                details.facts.push(("Quantidade".to_owned(), amount.to_string()));
+                details.facts.push(("Quantity".to_owned(), amount.to_string()));
             }
             InventoryItemDetails::Equippable { refinement_level, enchantment_level, option_data, .. } => {
                 if *refinement_level > 0 {
                     details.name = format!("+{} {}", refinement_level, details.name);
-                    details.facts.push(("Aprimoramento".to_owned(), format!("+{}", refinement_level)));
+                    details.facts.push(("Refinement".to_owned(), format!("+{}", refinement_level)));
                 }
                 if *enchantment_level > 0 {
-                    details.facts.push(("Grau de encantamento".to_owned(), enchantment_level.to_string()));
+                    details.facts.push(("Enchantment Grade".to_owned(), enchantment_level.to_string()));
                 }
                 details.options.extend(option_data.iter().filter_map(option_text));
             }
@@ -104,9 +104,9 @@ impl ItemDetailsData {
     pub fn shop(metadata: &ResourceMetadata, quantity: Option<u32>, price: u32) -> Self {
         let mut details = Self::from_metadata(metadata, true);
         if let Some(quantity) = quantity {
-            details.facts.push(("Quantidade".to_owned(), quantity.to_string()));
+            details.facts.push(("Quantity".to_owned(), quantity.to_string()));
         }
-        details.facts.push(("Preço".to_owned(), format!("{} z", price)));
+        details.facts.push(("Price".to_owned(), format!("{} z", price)));
         details
     }
 }
@@ -218,22 +218,22 @@ struct ItemDetailsBody {
 impl ItemDetailsBody {
     fn new(details: ItemDetailsData) -> Self {
         let mut lines = Vec::new();
-        lines.push(DetailLine { text: "Descrição e efeitos".to_owned(), kind: LineKind::Section });
+        lines.push(DetailLine { text: "Description & Effects".to_owned(), kind: LineKind::Section });
         if details.description.is_empty() {
-            append_text(&mut lines, "Descrição não disponível nos arquivos do cliente.", LineKind::Text);
+            append_text(&mut lines, "No description available in the client files.", LineKind::Text);
         } else {
             for description in &details.description {
                 append_text(&mut lines, description, LineKind::Text);
             }
         }
 
-        lines.push(DetailLine { text: "Dados do item".to_owned(), kind: LineKind::Section });
+        lines.push(DetailLine { text: "Item Stats".to_owned(), kind: LineKind::Section });
         for (label, value) in &details.facts {
             append_text(&mut lines, &format!("{label}: {value}"), LineKind::Fact);
         }
 
         if !details.cards.is_empty() {
-            lines.push(DetailLine { text: "Cartas equipadas".to_owned(), kind: LineKind::Section });
+            lines.push(DetailLine { text: "Socketed Cards".to_owned(), kind: LineKind::Section });
             for card in &details.cards {
                 lines.push(DetailLine { text: card.name.clone(), kind: LineKind::Card });
                 for description in &card.description {
@@ -243,7 +243,7 @@ impl ItemDetailsBody {
         }
 
         if !details.options.is_empty() {
-            lines.push(DetailLine { text: "Opções adicionais".to_owned(), kind: LineKind::Section });
+            lines.push(DetailLine { text: "Bonus Options".to_owned(), kind: LineKind::Section });
             for option in &details.options {
                 append_text(&mut lines, option, LineKind::Text);
             }
@@ -278,7 +278,7 @@ impl Element<ClientState> for ItemDetailsBody {
         let heading = Area { left: area.left + 69.0, top: area.top + 13.0, width: area.width - 80.0, height: 27.0 };
         layout.add_text(heading, &self.details.name, FontSize(15.0), Color::rgb_u8(231, 222, 180), Color::WHITE,
             HorizontalAlignment::Left { offset: 0.0, border: 0.0 }, VerticalAlignment::Center { offset: 0.0 }, OverflowBehavior::Shrink);
-        let status = if self.details.identified { "Item identificado" } else { "Item não identificado" };
+        let status = if self.details.identified { "Identified Item" } else { "Unidentified Item" };
         layout.add_text(Area { top: heading.top + 28.0, height: 20.0, ..heading }, status, FontSize(12.0),
             Color::rgb_u8(176, 189, 175), Color::WHITE, HorizontalAlignment::Left { offset: 0.0, border: 0.0 },
             VerticalAlignment::Center { offset: 0.0 }, OverflowBehavior::Shrink);
@@ -350,7 +350,7 @@ impl CustomWindow<ClientState> for ItemDetailsWindow {
         use korangar_interface::prelude::*;
 
         window! {
-            title: "Informações do item",
+            title: "Item Details",
             class: Self::window_class(),
             theme: InterfaceThemeType::InGame,
             minimum_width: 400.0,

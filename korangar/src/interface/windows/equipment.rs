@@ -161,7 +161,7 @@ where
                 self.frame,
                 PanelStyle { header: 68.0, inset: 28.0, footer: 18.0, minimum_height: 510.0,
                     title_left: 45.0, title_width: 250.0, close_right: 9.0, close_top: 27.0 },
-                |_| "Equipamento".to_owned(),
+                |_| "Equipment".to_owned(),
                 ErasedElement::new([
                 equip_box(self.items_path, EquipPosition::HEAD_TOP),
                 equip_box(self.items_path, EquipPosition::HEAD_MIDDLE),

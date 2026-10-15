@@ -99,7 +99,7 @@ where
                 self.frame,
                 PanelStyle { header: 36.0, inset: 25.0, footer: 15.0, minimum_height: 250.0,
                     title_left: 45.0, title_width: 250.0, close_right: 9.0, close_top: 11.0 },
-                |_| "Inventário".to_owned(),
+                |_| "Inventory".to_owned(),
                 ErasedElement::new(std::array::from_fn::<_, INVENTORY_ROWS, _>(|row| {
                 split! {
                     gaps: theme().window().gaps(),

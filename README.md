@@ -6,28 +6,30 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
-FreokRO is a custom game project with its own visual identity. Its client adapts [Korangar](https://github.com/vE5li/korangar), a Rust Ragnarok Online client with real-time lighting and a customizable interface. Upstream Korangar supports Linux, Windows, and macOS; the FreokRO build and local installation documented here were validated on Windows.
+FreokRO (Free of Korean Ragnarok Online) is a custom game project with its own visual identity. Its client adapts [Korangar](https://github.com/vE5li/korangar), a Rust Ragnarok Online client with real-time lighting and a customizable interface. Upstream Korangar supports Linux, Windows, and macOS; the FreokRO build and local installation documented here were validated on Windows.
 
 The emblem above is the project's visual direction. The FreokRO branch now contains original flat RSW, GND, and GAT drafts for every active map. See the [map-authoring model](map-authoring/README.md) and [technical status](TECHNICAL_STATUS_FREOKRO.md) for installation and validation details.
 
-## 🔒 Private development line
+## 🌿 FreokRO development branch
 
-This repository is the separate **FreokRO private client workspace** for personalized art, interfaces, and game features. It starts from the validated October 13 `freokro` checkpoint of the [public Korangar fork](https://github.com/piabapiaba801/korangar/tree/freokro). The simplified `freokro-base` repository remains local while its release checks are completed. Private changes are reviewed before any deliberate transfer to the public base; neither repository updates the other automatically.
+The [`freokro` branch](https://github.com/piabapiaba801/korangar/tree/freokro) contains the personalized **FreokRO** client, including its original HUD artwork and current interface work. These changes were developed in a separate private workspace and are now deliberately published on this branch at the owner's request. The simplified `freokro-base` remains a separate local candidate; publishing this branch does not turn that candidate into a completed release.
 
 ## 🚧 Work in progress — October 15, 2026
 
-### Private HUD in-game checkpoint — October 15, 2026
+### Current in-game HUD — October 15, 2026
 
-The owner confirmed the action HUD, restored ten-segment base EXP bar, and four-tab chat together in the local private client. The screenshot records the current state before matching frames are added to the minimap, mission tracker, and character overview. Those three windows still have the earlier plain appearance in this capture.
+The latest owner-provided screenshot records the current FreokRO interface: matching black steel and red gemstone frames for character status, chat, Inventory, Equipment, Attributes, Skill Tree, Minimap, and Quests, together with HP/SP, two action rows, and the restored ten-segment base EXP bar. The Skill Tree has eight columns and at least eight rows, a clear draggable header, and points/distribution controls inside its bottom rail.
 
-Matching frames for the minimap, mission tracker, Character Overview, and Stats window are now built locally in the private client. Their visual alignment and controls await a new in-game review; the screenshot remains the last owner-validated view.
+The HUD's Portuguese interface labels have now been translated into familiar English RPG terms, including **Overview**, **Skill Tree**, **Attributes**, **Stat Points**, **Inventory**, **Equipment**, **World Map**, **Quests**, and chat channels **General / Combat / Party / Whisper**. The screenshot below was captured immediately before this text-only update and still shows the previous Portuguese labels. The English build requires a new in-game text check.
 
-![Current private FreokRO HUD with action bars, base EXP, chat, minimap, missions, and character overview](docs/screenshots/freokro-private-hud-xp-chat-validated-2026-10-15.png)
+![Current FreokRO in-game HUD with matching themed panels, expanded Skill Tree, action bars, base EXP, and chat](docs/screenshots/freokro-hud-current-2026-10-15.png)
+
+The deployed Windows client and its launcher are named **FreokRO** (`FreokRO.exe`). The technical build package retains its existing internal `korangar` name.
 
 - **Playable local visual checkpoint:** the owner confirmed the redesigned login, world selection, character selection/creation, and lateral movement in the independent test client. Occupied slots display the selected character's current in-game sprite; an empty slot displays the creation preview.
 - **Authored map baseline:** all 1,265 active map names have project-generated RSW, GND, and GAT triplets. Names and dimensions remain compatibility references. Navigation, warps, and visual details still need map-by-map work.
 - **Temporary character art:** turquoise Azuk has front and side frames. Rear/diagonal views, hair and class variants, equipment, NPCs, and monsters still need original art. The male character remains a static original placeholder.
-- **Separate release lines:** this private `freokro` branch is the personalized working client. The simplified `freokro-base` repository has its own history and includes the generated maps. Private interface changes are kept in this line until explicitly selected for public release.
+- **Separate release lines:** `freokro` is the personalized working client, now published on the branch linked above. The simplified `freokro-base` repository has its own history and includes the generated maps; its release checks remain separate.
 - **Private in-game HUD:** a Devilian-inspired skin changes the camera pitch, character status, target HP, party panel, quest tracker, larger current-area map panel, central HP/SP, two skill rows, and base EXP shown in exactly ten segments. Party actions use the 20220406 server protocol. A global atlas remains to be built. The existing map files, character sprites, and login/world/character screens are unchanged. The earlier Classic skin remains selectable.
 
 ![Edited FreokRO WIP selection showing the currently selected in-game sprite](docs/screenshots/freokro-character-selection-sprite-clean-2026-10-13.png)
@@ -46,7 +48,7 @@ When the client and the [FreokRO rAthena emulator](https://github.com/piabapiaba
 
 ## 🧩 FreokRO adaptation
 
-`freokro` is the active branch in this private repository. The [public Korangar fork](https://github.com/piabapiaba801/korangar) retains `dev`, `rebase`, and `main` as separate branches; the private repository began from its October 13 `freokro` checkpoint. Neither upstream nor fork `main` is modified by private development. The client requires the [FreokRO rAthena fork](https://github.com/piabapiaba801/freokro-rathena-korangar), configured for protocol `20220406` without packet obfuscation. The original Ragexe line uses `PACKETVER 20250716` and runs separately.
+`freokro` is the active personalized development branch, published to the [Korangar fork](https://github.com/piabapiaba801/korangar/tree/freokro) and mirrored in the private workspace repository. The fork retains `dev`, `rebase`, and `main` as separate branches. The client requires the [FreokRO rAthena fork](https://github.com/piabapiaba801/freokro-rathena-korangar), configured for protocol `20220406` without packet obfuscation. The original Ragexe line uses `PACKETVER 20250716` and runs separately.
 
 The [FreokRO Auction HUD](https://github.com/piabapiaba801/freokro-auction-hud) is a separate process in a **private** repository. The base game does not require it; the **Black Market** interface does. The server handles **Black Market (7007)** and opens the local HUD bridge when the skill is used in town. This client implements the regular item and equipment windows. Check protocol, skill, and auction changes across all three projects.
 

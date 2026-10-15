@@ -48,7 +48,7 @@ impl CustomWindow<ClientState> for QuestTrackerWindow {
                 self.frame,
                 PanelStyle { header: 41.0, inset: 18.0, footer: 13.0, minimum_height: 114.0,
                     title_left: 44.0, title_width: 196.0, close_right: 6.0, close_top: 13.0 },
-                |_| "Missões".to_owned(),
+                |_| "Quests".to_owned(),
                 ErasedElement::new(QuestBody::default()),
             ),
         }
@@ -64,10 +64,10 @@ impl Element<ClientState> for QuestBody {
     fn create_layout_info(&mut self, state: &Context<ClientState>, _: ElementStoreMut, resolvers: &mut dyn Resolvers<ClientState>) -> Self::LayoutInfo {
         self.lines.clear();
         for quest in state.get(&client_state().quests()).iter().take(6) {
-            self.lines.push((format!("Missão #{}", quest.quest_id), true));
-            if quest.objective_details.is_empty() { self.lines.push(("Em andamento".to_owned(), false)); }
+            self.lines.push((format!("Quest #{}", quest.quest_id), true));
+            if quest.objective_details.is_empty() { self.lines.push(("In Progress".to_owned(), false)); }
             for detail in quest.objective_details.iter().take(3) {
-                let name = if detail.mob_name.is_empty() { "Objetivo" } else { &detail.mob_name };
+                let name = if detail.mob_name.is_empty() { "Objective" } else { &detail.mob_name };
                 let progress = if detail.total_count > 0 { format!(" {}/{}", detail.kill_count, detail.total_count) } else { String::new() };
                 self.lines.push((format!("  {}{}", name, progress), false));
             }

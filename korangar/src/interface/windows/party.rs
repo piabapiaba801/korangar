@@ -163,7 +163,7 @@ impl Element<ClientState> for PartyBody {
                 let top = area.top + self.visible_indices.len() as f32 * 42.0;
                 let self_id = state.try_get(&this_player()).map(|player| AccountId(player.get_common().entity_id.0));
                 let leader = members.iter().any(|member| Some(member.account_id) == self_id && member.leader);
-                let labels = ["Passar liderança", "Remover do grupo"];
+                let labels = ["Promote to Leader", "Kick from Party"];
                 let handlers: [&dyn ClickHandler<ClientState>; 2] = [&self.leader_handler, &self.remove_handler];
                 for index in 0..2 {
                     let button = Area { left: area.left + 4.0, top: top + index as f32 * 27.0, width: area.width - 8.0, height: 24.0 };

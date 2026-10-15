@@ -87,7 +87,7 @@ impl Element<ClientState> for WorldMapButton {
         }
         layout.add_text(
             Area { width: info.area.width - 35.0, ..info.area },
-            "Mapa mundi",
+            "World Map",
             FontSize(12.0),
             if hovered { Color::rgb_u8(255, 236, 215) } else { Color::rgb_u8(220, 207, 194) },
             Color::rgb_u8(255, 191, 116),
@@ -118,7 +118,7 @@ impl CustomWindow<ClientState> for WorldMapWindow {
     fn to_window<'a>(self) -> impl Window<ClientState> + 'a {
         use korangar_interface::prelude::*;
         window! {
-            title: "Mapa mundi",
+            title: "World Map",
             class: Self::window_class(),
             theme: InterfaceThemeType::InGame,
             minimum_width: 560.0,

@@ -24,7 +24,7 @@ impl CustomWindow<ClientState> for TargetWindow {
         use korangar_interface::prelude::*;
 
         window! {
-            title: "Alvo",
+            title: "Target",
             class: Self::window_class(),
             theme: InterfaceThemeType::InGame,
             minimum_width: 320.0,
@@ -51,7 +51,7 @@ impl Element<ClientState> for TargetBody {
         self.ratio = 0.0;
         if let Some(id) = *state.get(&client_state().selected_target()) {
             if let Some(entity) = state.get(&client_state().entities()).iter().find(|entity| entity.get_entity_id() == id && entity.get_entity_type() == EntityType::Monster) {
-                self.name = entity.get_details().map(|details| details.split('#').next().unwrap_or(details).to_owned()).unwrap_or_else(|| "Monstro".to_owned());
+                self.name = entity.get_details().map(|details| details.split('#').next().unwrap_or(details).to_owned()).unwrap_or_else(|| "Monster".to_owned());
                 let (current, maximum) = entity.health_values();
                 self.health = format!("{current} / {maximum}");
                 self.ratio = if maximum == 0 { 0.0 } else { (current as f32 / maximum as f32).clamp(0.0, 1.0) };

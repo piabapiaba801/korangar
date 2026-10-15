@@ -1,6 +1,14 @@
 # FreokRO technical status — October 15, 2026
 
-## Private HUD checkpoint — October 15, 2026
+## Current FreokRO client checkpoint
+
+- The [latest owner-provided capture](docs/screenshots/freokro-hud-current-2026-10-15.png) is the current visual reference for the black steel/red gemstone HUD: Character Overview, chat, Inventory, Equipment, Attributes, eight-column Skill Tree, Minimap, Quests, HP/SP, two action rows, and the ten-segment base EXP bar. It records the final spacing pass before English labels were applied.
+- Portuguese HUD labels, hints, party/target controls, item-details headings, and client-generated chat feedback now use conventional English RPG wording. Names, descriptions, and messages supplied by game data or the server retain their source language. This is a text-only HUD pass; the latest English wording still needs the owner's in-game check.
+- The Windows product name, deployed executable, and local shortcut are **FreokRO**, **FreokRO.exe**, and **FreokRO.lnk**. The source workspace and internal Cargo package retain their technical names. The physical deployment is `client/game-private/FreokRO.exe`; its technical status document is copied alongside the client.
+- At the owner's explicit request, this checkpoint and the earlier local HUD commits are published to `piabapiaba801/korangar`, branch `freokro`, and mirrored to `piabapiaba801/freokro-priv`, branch `freokro`. This is a deliberate publication of the personalized line; it does not complete the separate public-base candidate's release checks.
+- Reproduce the Windows build with `cargo +nightly-2026-02-01 build --release --locked -p korangar --features unicode,debug`. Compilation and matching deployed-file hashes verify the delivered binary; they do not validate every gameplay interaction.
+
+## Earlier HUD iteration history — October 15, 2026
 
 - The private action HUD, its ten-segment base EXP bar, and the four-tab chat use the locally generated black-metal and red-gem visual language. The owner's [current in-game capture](docs/screenshots/freokro-private-hud-xp-chat-validated-2026-10-15.png) shows these modules together. The EXP bar had disappeared because its saved bottom-center anchor was below the screen; the client now recovers that saved position relative to the action HUD. The owner confirmed the EXP bar is visible again in this capture.
 - The chat frame uses inset history text, a contained active-tab tint, matching lower red-gem controls, and a padded message field. The current capture is the visual checkpoint for this layout.
@@ -36,7 +44,7 @@
 
 ## Current repository state
 
-- Active personalized development branch: `freokro` in the private `freokro-priv` repository. It began from the [FreokRO Korangar fork checkpoint](https://github.com/piabapiaba801/korangar/tree/freokro); that fork's `main`, `dev`, and `rebase` branches remain separate.
+- Active development and publication branch: `freokro` in the [FreokRO Korangar fork](https://github.com/piabapiaba801/korangar/tree/freokro), mirrored in the private `freokro-priv` workspace. The fork's `main`, `dev`, and `rebase` branches remain separate.
 - The preserved client work before map migration is documented in [TECHNICAL_STATUS_DEV.md](TECHNICAL_STATUS_DEV.md). The server is in the [FreokRO rAthena repository](https://github.com/piabapiaba801/freokro-rathena-korangar); the Auction HUD is a separate private project.
 - `5573be9b` introduced the FreokRO emblem and project identity in the README. `cc374ebd` introduced the first map inventory and Prontera terrain pilot.
 - `3b5e7e6` replaced the menu map with the FreokRO video. `0cb8ddc` fixed the black screen by skipping directional shadow passes on frames without a map. Together they form the current startup checkpoint on `freokro`.

@@ -266,7 +266,7 @@ where
                 ErasedElement::new((
                 CharacterStatus::new(self.player_path),
                 collapsible! {
-                    text: "Visão geral",
+                    text: "Overview",
                     initially_expanded: false,
                     children: (
                         split! {

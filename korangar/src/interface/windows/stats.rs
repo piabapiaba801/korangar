@@ -107,7 +107,7 @@ impl<P: Path<ClientState, u32>> Element<ClientState> for StatPointsHeader<P> {
     type LayoutInfo = BaseLayoutInfo;
 
     fn create_layout_info(&mut self, state: &Context<ClientState>, _: ElementStoreMut, resolvers: &mut dyn Resolvers<ClientState>) -> Self::LayoutInfo {
-        self.text = format!("Pontos disponíveis: {}", state.get(&self.points_path));
+        self.text = format!("Stat Points: {}", state.get(&self.points_path));
         with_single_resolver(resolvers, |resolver| BaseLayoutInfo { area: resolver.with_height(28.0) })
     }
 
@@ -209,7 +209,7 @@ where
                 self.frame,
                 PanelStyle { header: 50.0, inset: 18.0, footer: 12.0, minimum_height: 255.0,
                     title_left: 27.0, title_width: 175.0, close_right: 30.0, close_top: 15.0 },
-                |_| "Atributos".to_owned(),
+                |_| "Attributes".to_owned(),
                 ErasedElement::new((
                 StatPointsHeader { points_path: self.player_path.stat_points(), text: String::new() },
                 stat_row!(strength_text, strength, bonus_strength, strength_stat_points_cost, Strength),

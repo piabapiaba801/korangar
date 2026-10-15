@@ -1384,13 +1384,13 @@ impl Client {
                 }
                 NetworkEvent::PartyChatMessage { account_id: _, text } => {
                     self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::in_channel(
-                        format!("[Grupo] {}", text.trim_end_matches('\0')),
+                        format!("[Party] {}", text.trim_end_matches('\0')),
                         MessageColor::Rgb { red: 112, green: 213, blue: 227 }, ChatChannel::Party,
                     ));
                 }
                 NetworkEvent::WhisperMessage { sender, text } => {
                     self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::in_channel(
-                        format!("[De {sender}] {}", text.trim_end_matches('\0')),
+                        format!("[From {sender}] {}", text.trim_end_matches('\0')),
                         MessageColor::Rgb { red: 215, green: 169, blue: 237 }, ChatChannel::Private,
                     ));
                     *self.client_state.follow_mut(client_state().chat_window().recipient()) = sender;
@@ -1398,9 +1398,9 @@ impl Client {
                 NetworkEvent::WhisperResult { result } => {
                     if result != 0 {
                         let message = match result {
-                            1 => "O jogador está desconectado ou não foi encontrado.",
-                            2 | 3 => "Esse jogador está bloqueando mensagens privadas.",
-                            _ => "Não foi possível entregar a mensagem privada.",
+                            1 => "Player is offline or could not be found.",
+                            2 | 3 => "This player is blocking whispers.",
+                            _ => "Whisper could not be delivered.",
                         };
                         self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::in_channel(
                             message.to_owned(), MessageColor::Error, ChatChannel::Private,
@@ -1451,9 +1451,9 @@ impl Client {
                     if let Some(player) = self.client_state.try_follow(this_entity()) {
                         let player_id = player.get_entity_id();
                         if source_entity_id == player_id || destination_entity_id == player_id {
-                            let direction = if source_entity_id == player_id { "Dano causado" } else { "Dano recebido" };
-                            let amount = damage_amount.map(|value| value.to_string()).unwrap_or_else(|| "Esquiva".to_owned());
-                            let critical = if is_critical { " (crítico)" } else { "" };
+                            let direction = if source_entity_id == player_id { "Damage dealt" } else { "Damage taken" };
+                            let amount = damage_amount.map(|value| value.to_string()).unwrap_or_else(|| "Miss".to_owned());
+                            let critical = if is_critical { " (Critical)" } else { "" };
                             self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::in_channel(
                                 format!("{direction}: {amount}{critical}"),
                                 MessageColor::Rgb { red: 239, green: 183, blue: 119 }, ChatChannel::Battle,
@@ -2562,7 +2562,7 @@ impl Client {
                             let position = player.get_tile_position();
                             let map = self.current_map_name.as_deref().unwrap_or("mapa desconhecido");
                             self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::new(
-                                format!("Localização: {map} ({}, {})", position.x, position.y),
+                                format!("Location: {map} ({}, {})", position.x, position.y),
                                 MessageColor::Server,
                             ));
                         }
@@ -2581,18 +2581,18 @@ impl Client {
                 InputEvent::SendPartyMessage { text } => {
                     if self.client_state.follow(client_state().party_members()).is_empty() {
                         self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::in_channel(
-                            "Você precisa estar em um grupo para usar este canal.".to_owned(), MessageColor::Error, ChatChannel::Party,
+                            "Join a party to use this channel.".to_owned(), MessageColor::Error, ChatChannel::Party,
                         ));
                     } else if self.networking_system.send_party_message(self.client_state.follow(client_state().player_name()), &text).is_err() {
                         self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::in_channel(
-                            "Não foi possível enviar a mensagem ao grupo.".to_owned(), MessageColor::Error, ChatChannel::Party,
+                            "Party message could not be sent.".to_owned(), MessageColor::Error, ChatChannel::Party,
                         ));
                     }
                 }
                 InputEvent::SendPrivateMessage { recipient, text } => {
                     let sent = self.networking_system.send_whisper(&recipient, &text).is_ok();
                     self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::in_channel(
-                        if sent { format!("[Para {recipient}] {text}") } else { "Não foi possível enviar a mensagem privada.".to_owned() },
+                        if sent { format!("[To {recipient}] {text}") } else { "Whisper could not be sent.".to_owned() },
                         if sent { MessageColor::Rgb { red: 215, green: 169, blue: 237 } } else { MessageColor::Error }, ChatChannel::Private,
                     ));
                 }
@@ -4223,14 +4223,15 @@ impl ApplicationHandler for Client {
                     .with_visible(false);
                 let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 
-                let backend_name = self.graphics_engine.get_backend_name();
-                window.set_title(&format!("{CLIENT_NAME} ({})", str::to_uppercase(&backend_name)));
+                window.set_title(CLIENT_NAME);
                 window.set_cursor_visible(false);
 
                 self.window = Some(window);
 
                 #[cfg(feature = "debug")]
                 print_debug!("created {}", "window".magenta());
+                #[cfg(feature = "debug")]
+                print_debug!("rendering backend: {}", self.graphics_engine.get_backend_name());
             });
         }
 
