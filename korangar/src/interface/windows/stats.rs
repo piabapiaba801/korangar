@@ -157,6 +157,7 @@ where
                     children: (
                         text! {
                             text: client_state().localization().$text_name(),
+                            horizontal_alignment: HorizontalAlignment::Left { offset: 10.0, border: 0.0 },
                             overflow_behavior: OverflowBehavior::Shrink,
                         },
                         split! {

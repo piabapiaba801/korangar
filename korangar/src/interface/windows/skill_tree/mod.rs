@@ -121,6 +121,7 @@ where
                                 self.window_state_path.pending_skill_points(),
                             ),
                             height: 20.0,
+                            horizontal_alignment: HorizontalAlignment::Left { offset: 12.0, border: 0.0 },
                         },
                         either! {
                             selector: self.window_state_path.currently_skilling(),
