@@ -1,0 +1,1 @@
+Built-in ImageGen, October 15, 2026. Transparent production frame for a compact horizontal mission tracker, approximately 2.5:1. Style references: chat-frame-v1.png and action-hud-v2.png. Blackened silver/obsidian gothic metal, small ruby gems, thin border, blank title band, quiet dark interior for live mission text. No text, icons, or sample content.

@@ -1110,6 +1110,12 @@ impl Client {
                         this_player().manually_asserted().job_level(),
                         this_player(),
                         self.library.clone(),
+                        self.texture_loader.create_color(
+                            "freokro private character frame",
+                            image::load_from_memory(include_bytes!("../assets/ui/character-frame-v1.png"))
+                                .expect("embedded character frame image is valid").to_rgba8(),
+                            true,
+                        ),
                     ));
                     let chat_frame = self.texture_loader.create_color(
                         "freokro private chat frame",
@@ -1633,7 +1639,12 @@ impl Client {
                     if self.client_state.follow(client_state().quests()).is_empty() {
                         self.interface.close_window_with_class(WindowClass::QuestTracker);
                     } else if !self.interface.is_window_with_class_open(WindowClass::QuestTracker) {
-                        self.interface.open_window(QuestTrackerWindow);
+                        self.interface.open_window(QuestTrackerWindow::new(self.texture_loader.create_color(
+                            "freokro private quest frame",
+                            image::load_from_memory(include_bytes!("../assets/ui/quests-frame-v1.png"))
+                                .expect("embedded quest frame image is valid").to_rgba8(),
+                            true,
+                        )));
                     }
                 }
                 NetworkEvent::QuestAdded { quest } => {
@@ -1657,7 +1668,14 @@ impl Client {
                         objective_count: quest.objective_count,
                         objective_details: details,
                     });
-                    if !self.interface.is_window_with_class_open(WindowClass::QuestTracker) { self.interface.open_window(QuestTrackerWindow); }
+                    if !self.interface.is_window_with_class_open(WindowClass::QuestTracker) {
+                        self.interface.open_window(QuestTrackerWindow::new(self.texture_loader.create_color(
+                            "freokro private quest frame",
+                            image::load_from_memory(include_bytes!("../assets/ui/quests-frame-v1.png"))
+                                .expect("embedded quest frame image is valid").to_rgba8(),
+                            true,
+                        )));
+                    }
                 }
                 NetworkEvent::QuestObjectives { objectives } => {
                     for objective in objectives {
@@ -2253,6 +2271,12 @@ impl Client {
                                 this_player().manually_asserted().job_level(),
                                 this_player(),
                                 self.library.clone(),
+                                self.texture_loader.create_color(
+                                    "freokro private character frame",
+                                    image::load_from_memory(include_bytes!("../assets/ui/character-frame-v1.png"))
+                                        .expect("embedded character frame image is valid").to_rgba8(),
+                                    true,
+                                ),
                             )),
                         }
                     }
@@ -2264,6 +2288,12 @@ impl Client {
                             false => self.interface.open_window(MiniMapWindow::new(
                                 self.current_map_name.clone().unwrap_or_else(|| "map".to_owned()),
                                 map.mini_map().clone(),
+                                self.texture_loader.create_color(
+                                    "freokro private minimap frame",
+                                    image::load_from_memory(include_bytes!("../assets/ui/minimap-frame-v1.png"))
+                                        .expect("embedded minimap frame image is valid").to_rgba8(),
+                                    true,
+                                ),
                             )),
                         }
                     }
@@ -2312,7 +2342,15 @@ impl Client {
                     if self.client_state.try_follow(this_entity()).is_some() {
                         match self.interface.is_window_with_class_open(WindowClass::Stats) {
                             true => self.interface.close_window_with_class(WindowClass::Stats),
-                            false => self.interface.open_window(StatsWindow::new(this_player().manually_asserted())),
+                            false => self.interface.open_window(StatsWindow::new(
+                                this_player().manually_asserted(),
+                                self.texture_loader.create_color(
+                                    "freokro private stats frame",
+                                    image::load_from_memory(include_bytes!("../assets/ui/character-frame-v1.png"))
+                                        .expect("embedded stats frame image is valid").to_rgba8(),
+                                    true,
+                                ),
+                            )),
                         }
                     }
                 }
@@ -3011,6 +3049,12 @@ impl Client {
                             self.interface.open_window(MiniMapWindow::new(
                                 self.current_map_name.clone().unwrap_or_else(|| "map".to_owned()),
                                 map.mini_map().clone(),
+                                self.texture_loader.create_color(
+                                    "freokro private minimap frame",
+                                    image::load_from_memory(include_bytes!("../assets/ui/minimap-frame-v1.png"))
+                                        .expect("embedded minimap frame image is valid").to_rgba8(),
+                                    true,
+                                ),
                             ));
 
                             map.set_ambient_sound_sources(&self.audio_engine);

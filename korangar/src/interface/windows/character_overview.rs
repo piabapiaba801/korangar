@@ -9,7 +9,7 @@ use korangar_interface::window::{CustomWindow, Window};
 use ragnarok_packets::JobId;
 use rust_state::{Context, Path, Selector};
 
-use crate::graphics::{Color, CornerDiameter, ShadowPadding};
+use crate::graphics::{Color, CornerDiameter, ShadowPadding, Texture};
 use crate::input::InputEvent;
 use crate::interface::windows::WindowClass;
 use crate::loaders::{FontSize, OverflowBehavior};
@@ -18,6 +18,7 @@ use crate::state::localization::LocalizationPathExt;
 use crate::state::theme::InterfaceThemeType;
 use crate::state::{ClientState, ClientStatePathExt, client_state};
 use crate::world::{JobIdentity, Library, Player};
+use super::themed_panel::{PanelStyle, ThemedPanel};
 
 struct ClassTitle<P> {
     player_path: P,
@@ -209,16 +210,18 @@ pub struct CharacterOverviewWindow<A, B, C, D> {
     job_level_path: C,
     player_path: D,
     library: Arc<Library>,
+    frame: Arc<Texture>,
 }
 
 impl<A, B, C, D> CharacterOverviewWindow<A, B, C, D> {
-    pub fn new(player_name_path: A, base_level_path: B, job_level_path: C, player_path: D, library: Arc<Library>) -> Self {
+    pub fn new(player_name_path: A, base_level_path: B, job_level_path: C, player_path: D, library: Arc<Library>, frame: Arc<Texture>) -> Self {
         Self {
             player_name_path,
             base_level_path,
             job_level_path,
             player_path,
             library,
+            frame,
         }
     }
 }
@@ -237,14 +240,30 @@ where
     fn to_window<'a>(self) -> impl Window<ClientState> + 'a {
         use korangar_interface::prelude::*;
 
+        let class_title = ClassTitle::new(self.player_path, self.library);
+
         window! {
-            title: ClassTitle::new(self.player_path, self.library),
+            title: "",
             class: Self::window_class(),
             theme: InterfaceThemeType::InGame,
             minimum_width: 270.0,
             maximum_width: 270.0,
-            closable: true,
-            elements: (
+            minimum_height: 205.0,
+            maximum_height: 600.0,
+            title_height: 0.0,
+            title_gap: 0.0,
+            border: 0.0,
+            gaps: 0.0,
+            closable: false,
+            resizable: false,
+            background_color: Color::TRANSPARENT,
+            shadow_color: Color::TRANSPARENT,
+            elements: ThemedPanel::new(
+                self.frame,
+                PanelStyle { header: 42.0, inset: 18.0, footer: 12.0, minimum_height: 205.0,
+                    title_left: 27.0, title_width: 175.0, close_right: 30.0, close_top: 15.0 },
+                move |state| state.get(&class_title).clone(),
+                ErasedElement::new((
                 CharacterStatus::new(self.player_path),
                 collapsible! {
                     text: "Visão geral",
@@ -321,6 +340,7 @@ where
                         },
                     ),
                 },
+                )),
             ),
         }
     }

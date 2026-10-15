@@ -20,6 +20,8 @@ This repository is the separate **FreokRO private client workspace** for persona
 
 The owner confirmed the action HUD, restored ten-segment base EXP bar, and four-tab chat together in the local private client. The screenshot records the current state before matching frames are added to the minimap, mission tracker, and character overview. Those three windows still have the earlier plain appearance in this capture.
 
+Matching frames for the minimap, mission tracker, Character Overview, and Stats window are now built locally in the private client. Their visual alignment and controls await a new in-game review; the screenshot remains the last owner-validated view.
+
 ![Current private FreokRO HUD with action bars, base EXP, chat, minimap, missions, and character overview](docs/screenshots/freokro-private-hud-xp-chat-validated-2026-10-15.png)
 
 - **Playable local visual checkpoint:** the owner confirmed the redesigned login, world selection, character selection/creation, and lateral movement in the independent test client. Occupied slots display the selected character's current in-game sprite; an empty slot displays the creation preview.

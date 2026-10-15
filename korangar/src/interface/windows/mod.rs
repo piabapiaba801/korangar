@@ -44,6 +44,7 @@ mod skin;
 mod skill_tree;
 mod stats;
 mod target;
+mod themed_panel;
 #[cfg(feature = "debug")]
 mod theme_inspector;
 

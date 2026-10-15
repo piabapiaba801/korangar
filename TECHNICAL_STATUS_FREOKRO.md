@@ -7,6 +7,12 @@
 - The minimap, quest tracker, and character overview in the capture still use the older plain window style. Their matching private theme is the next implementation step; their gameplay data and controls must remain functional.
 - This is a local private-client checkpoint. The image and this note do not validate every map, mission, stat interaction, chat channel, or gameplay route, and no remote publication is implied.
 
+## Matching private panels — local build, awaiting in-game review
+
+- Three transparent panel assets were generated with the existing chat and action HUD art as style references: `korangar/assets/ui/minimap-frame-v1.png`, `quests-frame-v1.png`, and `character-frame-v1.png`. Their prompts are stored beside the images.
+- The compact minimap now draws its live map, portal/player markers, coordinates, and world-map action over the new frame. The quest tracker draws live quest rows over its matching frame. Character Overview and the separate Stats window share the character frame while retaining portrait/vitals, collapsible controls, and stat actions.
+- The panels use a shared frame wrapper with themed title, close control, and drag handling. The `unicode,debug` release build passed locally. Visual alignment, expanded Character Overview, long quest lists, map changes, and stat interactions still need the owner's in-game validation. The validated screenshot above predates these new panels.
+
 ## Simplified public-base candidate (local only)
 
 - Character selection now reads the selected slot's job, sex, and head identifier and loads the same animation resource paths used by the in-world player. It draws the first idle frame instead of the former fixed gender portrait. Hair, class, equipment, and color variants remain visually collapsed into the currently authored placeholder for each sex.

@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use korangar_interface::element::store::{ElementStore, ElementStoreMut};
 use korangar_interface::element::{BaseLayoutInfo, Element};
 use korangar_interface::layout::alignment::{HorizontalAlignment, VerticalAlignment};
@@ -7,12 +9,19 @@ use korangar_interface::window::{CustomWindow, Window};
 use rust_state::Context;
 
 use super::WindowClass;
-use crate::graphics::{Color, CornerDiameter, ShadowPadding};
+use super::themed_panel::{PanelStyle, ThemedPanel};
+use crate::graphics::{Color, CornerDiameter, ShadowPadding, Texture};
 use crate::loaders::{FontSize, OverflowBehavior};
 use crate::state::theme::InterfaceThemeType;
 use crate::state::{ClientState, ClientStatePathExt, client_state};
 
-pub struct QuestTrackerWindow;
+pub struct QuestTrackerWindow {
+    frame: Arc<Texture>,
+}
+
+impl QuestTrackerWindow {
+    pub fn new(frame: Arc<Texture>) -> Self { Self { frame } }
+}
 
 impl CustomWindow<ClientState> for QuestTrackerWindow {
     fn window_class() -> Option<WindowClass> { Some(WindowClass::QuestTracker) }
@@ -20,13 +29,28 @@ impl CustomWindow<ClientState> for QuestTrackerWindow {
     fn to_window<'a>(self) -> impl Window<ClientState> + 'a {
         use korangar_interface::prelude::*;
         window! {
-            title: "Missões",
+            title: "",
             class: Self::window_class(),
             theme: InterfaceThemeType::InGame,
             minimum_width: 284.0,
             maximum_width: 284.0,
-            closable: true,
-            elements: QuestBody::default(),
+            minimum_height: 114.0,
+            maximum_height: 500.0,
+            title_height: 0.0,
+            title_gap: 0.0,
+            border: 0.0,
+            gaps: 0.0,
+            closable: false,
+            resizable: false,
+            background_color: Color::TRANSPARENT,
+            shadow_color: Color::TRANSPARENT,
+            elements: ThemedPanel::new(
+                self.frame,
+                PanelStyle { header: 41.0, inset: 18.0, footer: 13.0, minimum_height: 114.0,
+                    title_left: 28.0, title_width: 100.0, close_right: 31.0, close_top: 13.0 },
+                |_| "Missões".to_owned(),
+                ErasedElement::new(QuestBody::default()),
+            ),
         }
     }
 }
@@ -56,7 +80,7 @@ impl Element<ClientState> for QuestBody {
         for (index, (line, heading)) in self.lines.iter().enumerate() {
             let row = Area { left: area.left + 4.0, top: area.top + 4.0 + index as f32 * 22.0, width: area.width - 8.0, height: 20.0 };
             if *heading {
-                layout.add_rectangle(row, CornerDiameter::uniform(2.0), Color::rgba_u8(47, 39, 45, 220), Color::TRANSPARENT, ShadowPadding::uniform(0.0));
+                layout.add_rectangle(row, CornerDiameter::uniform(2.0), Color::rgba_u8(84, 28, 37, 170), Color::TRANSPARENT, ShadowPadding::uniform(0.0));
             }
             layout.add_text(row, line, FontSize(13.0),
                 if *heading { Color::rgb_u8(239, 202, 113) } else { Color::rgb_u8(220, 219, 205) },

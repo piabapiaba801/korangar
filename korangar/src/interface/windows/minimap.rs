@@ -1,14 +1,18 @@
+use std::sync::Arc;
+
 use korangar_interface::element::store::{ElementStore, ElementStoreMut};
 use korangar_interface::element::{BaseLayoutInfo, Element};
+use korangar_interface::event::{ClickHandler, EventQueue};
 use korangar_interface::layout::alignment::{HorizontalAlignment, VerticalAlignment};
 use korangar_interface::layout::area::Area;
-use korangar_interface::layout::{Resolvers, WindowLayout, with_single_resolver};
+use korangar_interface::layout::{Icon, MouseButton, Resolvers, WindowLayout, with_single_resolver};
 use korangar_interface::window::{CustomWindow, Window};
 use rust_state::Context;
 
 use crate::input::InputEvent;
-use crate::graphics::{Color, CornerDiameter, ShadowPadding};
+use crate::graphics::{Color, CornerDiameter, ShadowPadding, Texture};
 use crate::interface::windows::WindowClass;
+use super::themed_panel::{PanelStyle, ThemedPanel};
 use crate::loaders::{FontSize, OverflowBehavior};
 use crate::state::theme::InterfaceThemeType;
 use crate::state::{ClientState, ClientStatePathExt, client_state, this_player};
@@ -17,11 +21,12 @@ use crate::world::{EntityType, MiniMapData};
 pub struct MiniMapWindow {
     map_name: String,
     data: MiniMapData,
+    frame: Arc<Texture>,
 }
 
 impl MiniMapWindow {
-    pub fn new(map_name: String, data: MiniMapData) -> Self {
-        Self { map_name, data }
+    pub fn new(map_name: String, data: MiniMapData, frame: Arc<Texture>) -> Self {
+        Self { map_name, data, frame }
     }
 }
 
@@ -34,17 +39,67 @@ impl CustomWindow<ClientState> for MiniMapWindow {
         use korangar_interface::prelude::*;
 
         window! {
-            title: "Minimap",
+            title: "",
             class: Self::window_class(),
             theme: InterfaceThemeType::InGame,
             minimum_width: 224.0,
             maximum_width: 224.0,
-            closable: true,
-            elements: (
-                MiniMapBody::new(self.map_name, self.data, false),
-                button! { text: "Mapa mundi", event: InputEvent::ToggleWorldMapWindow },
+            minimum_height: 300.0,
+            maximum_height: 300.0,
+            title_height: 0.0,
+            title_gap: 0.0,
+            border: 0.0,
+            gaps: 0.0,
+            closable: false,
+            resizable: false,
+            background_color: Color::TRANSPARENT,
+            shadow_color: Color::TRANSPARENT,
+            elements: ThemedPanel::new(
+                self.frame,
+                PanelStyle { header: 48.0, inset: 16.0, footer: 10.0, minimum_height: 300.0,
+                    title_left: 28.0, title_width: 80.0, close_right: 30.0, close_top: 17.0 },
+                |_| "Minimap".to_owned(),
+                ErasedElement::new((MiniMapBody::new(self.map_name, self.data, false), WorldMapButton)),
             ),
         }
+    }
+}
+
+struct WorldMapButton;
+
+impl ClickHandler<ClientState> for WorldMapButton {
+    fn handle_click(&self, _: &Context<ClientState>, queue: &mut EventQueue<ClientState>) {
+        queue.queue(InputEvent::ToggleWorldMapWindow);
+    }
+}
+
+impl Element<ClientState> for WorldMapButton {
+    type LayoutInfo = BaseLayoutInfo;
+
+    fn create_layout_info(&mut self, _: &Context<ClientState>, _: ElementStoreMut, resolvers: &mut dyn Resolvers<ClientState>) -> Self::LayoutInfo {
+        with_single_resolver(resolvers, |resolver| BaseLayoutInfo { area: resolver.with_height(26.0) })
+    }
+
+    fn lay_out<'a>(&'a self, _: &'a Context<ClientState>, _: ElementStore<'a>, info: &'a Self::LayoutInfo, layout: &mut WindowLayout<'a, ClientState>) {
+        let hovered = info.area.check().run(layout);
+        if hovered {
+            layout.register_click_handler(MouseButton::Left, self);
+        }
+        layout.add_text(
+            Area { width: info.area.width - 35.0, ..info.area },
+            "Mapa mundi",
+            FontSize(12.0),
+            if hovered { Color::rgb_u8(255, 236, 215) } else { Color::rgb_u8(220, 207, 194) },
+            Color::rgb_u8(255, 191, 116),
+            HorizontalAlignment::Center { offset: 0.0, border: 0.0 },
+            VerticalAlignment::Center { offset: 0.0 },
+            OverflowBehavior::Shrink,
+        );
+        layout.add_icon(
+            Area { left: info.area.left + info.area.width - 25.0, top: info.area.top + 7.0, width: 11.0, height: 11.0 },
+            Icon::ArrowRight,
+            if hovered { Color::rgb_u8(255, 227, 205) } else { Color::rgb_u8(224, 200, 181) },
+        );
     }
 }
 
@@ -146,7 +201,7 @@ impl Element<ClientState> for MiniMapBody {
         );
 
         let longest = self.data.map_width.max(self.data.map_height).max(1) as f32;
-        let map_size = if self.expanded { 476.0 } else { 182.0 };
+        let map_size = if self.expanded { 476.0 } else { (frame.width - 6.0).min(182.0) };
         let map_width = map_size * self.data.map_width as f32 / longest;
         let map_height = map_size * self.data.map_height as f32 / longest;
         let map_area = Area {

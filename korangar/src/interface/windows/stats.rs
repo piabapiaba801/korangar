@@ -1,11 +1,14 @@
 use std::cell::{Cell, UnsafeCell};
+use std::sync::Arc;
 
 use korangar_interface::window::{CustomWindow, Window};
 use ragnarok_packets::StatUpType;
 use rust_state::{Path, PathExt, Selector};
 
 use crate::input::InputEvent;
+use crate::graphics::{Color, Texture};
 use crate::interface::windows::WindowClass;
+use super::themed_panel::{PanelStyle, ThemedPanel};
 use crate::loaders::OverflowBehavior;
 use crate::state::localization::LocalizationPathExt;
 use crate::state::theme::InterfaceThemeType;
@@ -88,14 +91,14 @@ where
     }
 }
 
-#[derive(Default)]
 pub struct StatsWindow<A> {
     player_path: A,
+    frame: Arc<Texture>,
 }
 
 impl<A> StatsWindow<A> {
-    pub fn new(player_path: A) -> Self {
-        Self { player_path }
+    pub fn new(player_path: A, frame: Arc<Texture>) -> Self {
+        Self { player_path, frame }
     }
 }
 
@@ -157,11 +160,27 @@ where
         }
 
         window! {
-            title: client_state().localization().stats_window_title(),
+            title: "",
             class: Self::window_class(),
             theme: InterfaceThemeType::InGame,
-            closable: true,
-            elements: (
+            minimum_width: 270.0,
+            maximum_width: 270.0,
+            minimum_height: 255.0,
+            maximum_height: 600.0,
+            title_height: 0.0,
+            title_gap: 0.0,
+            border: 0.0,
+            gaps: 0.0,
+            closable: false,
+            resizable: false,
+            background_color: Color::TRANSPARENT,
+            shadow_color: Color::TRANSPARENT,
+            elements: ThemedPanel::new(
+                self.frame,
+                PanelStyle { header: 42.0, inset: 18.0, footer: 12.0, minimum_height: 255.0,
+                    title_left: 27.0, title_width: 175.0, close_right: 30.0, close_top: 15.0 },
+                |_| "Atributos".to_owned(),
+                ErasedElement::new((
                 split! {
                     children: (
                         text! {
@@ -181,6 +200,7 @@ where
                 stat_row!(intelligence_text, intelligence, bonus_intelligence, intelligence_stat_points_cost, Intelligence),
                 stat_row!(dexterity_text, dexterity, bonus_dexterity, dexterity_stat_points_cost, Dexterity),
                 stat_row!(luck_text, luck, bonus_luck, luck_stat_points_cost, Luck),
+                )),
             ),
         }
     }
