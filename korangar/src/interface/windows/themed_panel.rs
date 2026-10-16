@@ -35,7 +35,9 @@ struct PanelDrag {
 impl ClickHandler<ClientState> for PanelDrag {
     fn handle_click(&self, _: &Context<ClientState>, queue: &mut EventQueue<ClientState>) {
         queue.queue(Event::SetMouseMode {
-            mouse_mode: MouseMode::MovingWindow { window_id: self.window_id.get() },
+            mouse_mode: MouseMode::MovingWindow {
+                window_id: self.window_id.get(),
+            },
         });
     }
 }
@@ -47,13 +49,16 @@ struct PanelClose {
 
 impl ClickHandler<ClientState> for PanelClose {
     fn handle_click(&self, _: &Context<ClientState>, queue: &mut EventQueue<ClientState>) {
-        queue.queue(Event::CloseWindow { window_id: self.window_id.get() });
+        queue.queue(Event::CloseWindow {
+            window_id: self.window_id.get(),
+        });
     }
 }
 
 pub struct ThemedPanel {
     frame: Arc<Texture>,
     style: PanelStyle,
+    gaps: f32,
     title: Box<dyn Fn(&Context<ClientState>) -> String>,
     title_text: String,
     content: ElementBox<ClientState>,
@@ -62,6 +67,11 @@ pub struct ThemedPanel {
 }
 
 impl ThemedPanel {
+    pub fn with_gaps(mut self, gaps: f32) -> Self {
+        self.gaps = gaps;
+        self
+    }
+
     pub fn new(
         frame: Arc<Texture>,
         style: PanelStyle,
@@ -71,6 +81,7 @@ impl ThemedPanel {
         Self {
             frame,
             style,
+            gaps: 0.0,
             title: Box::new(title),
             title_text: String::new(),
             content,
@@ -104,11 +115,13 @@ impl Element<ClientState> for ThemedPanel {
                 width: available.width - self.style.inset * 2.0,
                 height: available.height.unwrap_or(self.style.minimum_height),
             };
-            let mut content_resolver = Resolver::new(content_area, 0.0, resolver.get_text_layouter());
+            let mut content_resolver = Resolver::new(content_area, self.gaps, resolver.get_text_layouter());
             self.content.create_layout_info(state, store.child_store(0), &mut content_resolver);
             let content_height = content_resolver.push_available_area().top - content_area.top;
             let height = (self.style.header + content_height + self.style.footer).max(self.style.minimum_height);
-            PanelLayout { area: resolver.with_height(height) }
+            PanelLayout {
+                area: resolver.with_height(height),
+            }
         })
     }
 
@@ -132,7 +145,10 @@ impl Element<ClientState> for ThemedPanel {
         if close_hovered {
             layout.register_click_handler(MouseButton::Left, &self.close);
         }
-        let header_area = Area { height: self.style.header, ..area };
+        let header_area = Area {
+            height: self.style.header,
+            ..area
+        };
         if header_area.check().run(layout) && !close_hovered {
             layout.register_click_handler(MouseButton::Left, &self.drag);
         }

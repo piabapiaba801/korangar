@@ -1,5 +1,15 @@
 # FreokRO technical status — October 15, 2026
 
+## Owner feedback and panel corrections — October 16, 2026
+
+- **Installed panel correction build:** client SHA-256 `78E978A72FBF7AC1C6458D887C87E5EDD9A600A1CCCABB3851F591232C320917`; map server SHA-256 `8B8F65C4E48C58D68CD15BA155C1F679D5104B9444FEADC56DCB0E86B2ADE388`. Both final Windows builds passed. This client supersedes the previous delivery hash. The previously validated executable is backed up at `client/game-private/backups/FreokRO-before-service-polish-20261016-013551.exe`.
+- **Validated in game by the owner:** WASD movement, physical Numpad shortcuts, and F1. **Friends** is provisionally accepted for the functions tested so far; this does not establish that every social operation passed.
+- Guild, Mailbox and Companion screenshots exposed a layout defect: `scroll_view!` does not accept a `height` property, so those supplied values were silently ignored. Each new service scroll area now has its own bounded resolver. Lists no longer consume the remaining panel height or push actions/footer beyond the window.
+- New service panels now use explicit vertical gaps, horizontal separation between actions, inset content, titles positioned inside their steel rails, and transparent button backgrounds with red hover feedback. Mailbox, Guild and Companion frames have bounded dimensions so their bottom borders remain visible. Companion uses the same steel/red-gem frame family as the other service windows.
+- The auction's false "not tradable" result was traced to `pc_can_trade_item`: it required full durability for all item types. The shared server check now applies durability only to weapons, armor and shadow gear, retaining rental, bound-item and trade restrictions. Auction feedback distinguishes those restrictions from a repair requirement.
+- Sixteen isolated C++ regression cases passed using the actual production predicate bodies and stubbed surrounding services. These cover consumables/materials without durability, damaged/full equipment, binding permissions, rentals, trade restrictions and invalid inventory indices. The Windows map server rebuilt successfully. These tests do not execute a real auction transaction.
+- The new panel arrangement and a new auction listing still require the owner's in-game validation after restarting the updated client/server.
+
 ## Local test delivery — October 16, 2026
 
 - The final `unicode,debug` release client was copied to the existing `client/game-private/FreokRO.exe`; compiled and installed SHA-256 match: `CCFD61A383458FFA22250B0D9BD3D4593BD02BE26F0018C02D03C82F6A7FC9A3`. This supersedes the earlier English-only executable hash below.

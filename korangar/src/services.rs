@@ -135,7 +135,7 @@ impl Client {
                 self.interface.open_window(PetsWindow::new(
                     self.texture_loader.create_color(
                         "freokro companion frame",
-                        image::load_from_memory(include_bytes!("../assets/ui/character-frame-v1.png"))
+                        image::load_from_memory(include_bytes!("../assets/ui/skill-tree-frame-v1.png"))
                             .expect("pet frame")
                             .to_rgba8(),
                         true,

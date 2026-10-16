@@ -31,6 +31,8 @@ The existing **Alt + key** window shortcuts remain the interface standard. New s
 | Social and party management / Guild / Direct trade | Alt+P / Alt+G / Alt+T |
 | Auction / Skill binding editor | Alt+B / Alt+K |
 
+The owner has validated WASD, physical Numpad shortcuts and F1 in game. Friends is provisionally accepted for the functions tested so far. The Guild, Mailbox and Companion spacing/footer corrections and the auction tradability repair require a new gameplay check.
+
 The skill shortcut fix targets the two visible action rows. Earlier custom bindings targeted hidden rows; new bindings are stored separately in `client/hotkey_settings_v2.ron`. The original settings file is preserved. Learned skill levels constrain casts, and a selected enemy can be used when the cursor is away from it.
 
 Native service windows cover reading mail, collecting Zeny/items and deleting empty letters; pet hatching, target selection for taming/catalog skills, feeding, performance, renaming, accessory use/removal, returning to an egg, and server-confirmed VIP auto-feed; party creation/invitations, guild creation/invitations/member list/chat/leaving, and direct trade with separate offer locking and final confirmation. Friends, whispers, party roster/leadership and NPC shop flows retain their existing handlers. Pet combat, KO, bonuses and evolution rules remain server-authoritative; the local pet loyalty ceiling is 750.
