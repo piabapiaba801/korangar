@@ -31,7 +31,7 @@ The existing **Alt + key** window shortcuts remain the interface standard. New s
 | Social and party management / Guild / Direct trade | Alt+P / Alt+G / Alt+T |
 | Auction / Skill binding editor | Alt+B / Alt+K |
 
-The owner has validated WASD, physical Numpad shortcuts and F1 in game. Friends is provisionally accepted for the functions tested so far. The Guild, Mailbox and Companion spacing/footer corrections and the auction tradability repair require a new gameplay check.
+The owner has validated WASD, physical Numpad shortcuts and F1 in game. Friends is provisionally accepted for the functions tested so far. The owner approved the Guild, Mailbox and Companion spacing/footer corrections and the auction tradability repair on October 16, 2026, and authorized publication. Detailed validation scope and remaining technical limits are recorded in [the technical status](TECHNICAL_STATUS_FREOKRO.md).
 
 The skill shortcut fix targets the two visible action rows. Earlier custom bindings targeted hidden rows; new bindings are stored separately in `client/hotkey_settings_v2.ron`. The original settings file is preserved. Learned skill levels constrain casts, and a selected enemy can be used when the cursor is away from it.
 

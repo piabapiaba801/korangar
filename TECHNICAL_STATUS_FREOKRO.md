@@ -1,4 +1,10 @@
-# FreokRO technical status — October 15, 2026
+# FreokRO technical status — October 16, 2026
+
+## Approved checkpoint — October 16, 2026
+
+The owner approved the delivered local corrections and authorized remote publication. This checkpoint includes the refined Guild, Mailbox and Companion panels, transparent action-button backgrounds, centered titles, complete lower borders, and the correction that exempts consumables/materials from equipment durability requirements in trading and auctions.
+
+WASD, physical Numpad shortcuts and F1 were explicitly validated in game. Friends remains provisionally accepted for the functions tested so far. Approval of this delivery is not an exhaustive audit of every two-player operation, pet evolution, auction transaction or crash-recovery scenario; the technical limitations recorded below remain applicable.
 
 ## Owner feedback and panel corrections — October 16, 2026
 
@@ -8,7 +14,7 @@
 - New service panels now use explicit vertical gaps, horizontal separation between actions, inset content, titles positioned inside their steel rails, and transparent button backgrounds with red hover feedback. Mailbox, Guild and Companion frames have bounded dimensions so their bottom borders remain visible. Companion uses the same steel/red-gem frame family as the other service windows.
 - The auction's false "not tradable" result was traced to `pc_can_trade_item`: it required full durability for all item types. The shared server check now applies durability only to weapons, armor and shadow gear, retaining rental, bound-item and trade restrictions. Auction feedback distinguishes those restrictions from a repair requirement.
 - Sixteen isolated C++ regression cases passed using the actual production predicate bodies and stubbed surrounding services. These cover consumables/materials without durability, damaged/full equipment, binding permissions, rentals, trade restrictions and invalid inventory indices. The Windows map server rebuilt successfully. These tests do not execute a real auction transaction.
-- The new panel arrangement and a new auction listing still require the owner's in-game validation after restarting the updated client/server.
+- The owner subsequently approved this delivered correction checkpoint and requested local/remote publication on October 16, 2026. This approval supersedes the earlier pending-review note for the delivery.
 
 ## Local test delivery — October 16, 2026
 
