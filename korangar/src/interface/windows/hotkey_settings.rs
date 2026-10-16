@@ -18,16 +18,23 @@ struct HotkeyTextSelector {
 
 impl HotkeyTextSelector {
     fn new(index: usize) -> Self {
-        Self { index, text: UnsafeCell::default() }
+        Self {
+            index,
+            text: UnsafeCell::default(),
+        }
     }
 }
 
 impl Selector<ClientState, String> for HotkeyTextSelector {
     fn select<'a>(&'a self, state: &'a ClientState) -> Option<&'a String> {
         let hotbar = client_state().hotbar().follow_safe(state);
-        let label = if hotbar.capture_slot() == Some(self.index) { "Pressione tecla..." }
-            else if hotbar.binding(self.index).is_empty() { "Sem atalho" }
-            else { hotbar.binding(self.index) };
+        let label = if hotbar.capture_slot() == Some(self.index) {
+            "Press a key..."
+        } else if hotbar.binding(self.index).is_empty() {
+            "Default"
+        } else {
+            hotbar.binding(self.index)
+        };
         unsafe {
             *self.text.get() = label.to_string();
             Some(self.text.as_ref_unchecked())
@@ -44,22 +51,22 @@ impl CustomWindow<ClientState> for HotkeySettingsWindow {
         use korangar_interface::prelude::*;
 
         window! {
-            title: "Atalhos da hotbar",
+            title: "Skill Shortcuts",
             class: Self::window_class(),
             theme: InterfaceThemeType::InGame,
             closable: true,
             elements: (
-                text! { text: "1: F1-F9 | 2: 1-9 | 3/4: clique em Definir e pressione outra tecla. Esc cancela; Delete limpa." },
+                text! { text: "Top: Numpad 1-9 | Bottom: F1-F9. WASD moves; Alt opens HUD windows. Esc cancels; Delete restores the default." },
                 std::array::from_fn::<_, 18, _>(|index| {
                     let binding_text: Text<String, _, _, _, _, _, _, _, _> = text! { text: HotkeyTextSelector::new(index) };
                     split! {
                         gaps: theme().window().gaps(),
                         children: (
-                            text! { text: format!("{}.{}", index / 9 + 3, index % 9 + 1) },
+                            text! { text: format!("Row {} / {}", if index < 9 { 2 } else { 1 }, index % 9 + 1) },
                             binding_text,
                             button! {
-                                text: "Definir",
-                                tooltip: "Pressione a nova tecla. Esc cancela; Delete limpa.",
+                                text: "Bind",
+                                tooltip: "Press a key. Esc cancels; Delete restores the default. WASD and Alt are reserved.",
                                 event: move |state: &Context<ClientState>, queue: &mut EventQueue<ClientState>| {
                                     state.update_value_with(client_state().hotbar().capture_slot(), move |slot| *slot = Some(index));
                                     queue.queue(Event::Unfocus);

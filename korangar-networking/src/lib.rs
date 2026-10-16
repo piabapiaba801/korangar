@@ -587,6 +587,13 @@ where
         }
     }
 
+    /// Send an explicitly typed native game-service request over the
+    /// authenticated map connection.
+    pub fn send_game_service(&mut self, packet: impl MapServerPacket + ClientPacket) -> Result<(), NotConnectedError> {
+        self.map_server_packet_version()?;
+        self.send_map_server_packet(packet)
+    }
+
     fn create_login_server_packet_handler(
         packet_callback: Callback,
         packet_version: SupportedPacketVersion,
@@ -638,7 +645,14 @@ where
         }
     }
 
-    pub fn create_character(&mut self, slot: usize, name: String, sex: Sex, hair_style: u16, hair_color: u16) -> Result<(), NotConnectedError> {
+    pub fn create_character(
+        &mut self,
+        slot: usize,
+        name: String,
+        sex: Sex,
+        hair_style: u16,
+        hair_color: u16,
+    ) -> Result<(), NotConnectedError> {
         let start_job_id = JobId(0);
 
         match self.character_server_packet_version()? {
@@ -746,7 +760,9 @@ where
 
     pub fn send_whisper(&mut self, recipient: &str, text: &str) -> Result<(), NotConnectedError> {
         match self.map_server_packet_version()? {
-            SupportedPacketVersion::_20220406 => self.send_map_server_packet(WhisperRequestPacket::new(recipient.to_owned(), text.to_owned())),
+            SupportedPacketVersion::_20220406 => {
+                self.send_map_server_packet(WhisperRequestPacket::new(recipient.to_owned(), text.to_owned()))
+            }
         }
     }
 

@@ -4,6 +4,7 @@ pub mod character_slots;
 pub mod hotbar;
 pub mod inventory;
 pub mod localization;
+pub mod services;
 pub mod skills;
 pub mod theme;
 
@@ -84,7 +85,11 @@ pub struct ChatMessage {
 
 impl ChatMessage {
     pub fn new(text: String, color: MessageColor) -> Self {
-        Self { text, color, channel: ChatChannel::General }
+        Self {
+            text,
+            color,
+            channel: ChatChannel::General,
+        }
     }
 
     pub fn in_channel(text: String, color: MessageColor, channel: ChatChannel) -> Self {
@@ -181,6 +186,7 @@ pub struct ClientState {
     party_name: String,
     party_members: Vec<PartyMember>,
     quests: Vec<Quest>,
+    services: services::ServicesState,
     /// List of items offered in the shop.
     // TODO: Unhide this
     #[hidden_element]
@@ -432,6 +438,7 @@ impl ClientState {
             party_name: String::new(),
             party_members: Vec::new(),
             quests: Vec::new(),
+            services: services::ServicesState::default(),
             shop_items,
             buy_cart,
             sell_items,

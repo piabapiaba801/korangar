@@ -180,12 +180,10 @@ where
             color,
         }
     })?;
-    packet_handler.register(|packet: OverheadMessagePacket| {
-        NetworkEvent::EntitySpeech {
-            entity_id: packet.entity_id,
-            text: packet.message,
-            color: MessageColor::Information,
-        }
+    packet_handler.register(|packet: OverheadMessagePacket| NetworkEvent::EntitySpeech {
+        entity_id: packet.entity_id,
+        text: packet.message,
+        color: MessageColor::Information,
     })?;
     packet_handler.register(|packet: ServerMessagePacket| NetworkEvent::ChatMessage {
         text: packet.message,
@@ -325,7 +323,97 @@ where
         NetworkEvent::UpdateStat { stat_type }
     })?;
     packet_handler.register_noop::<UpdateAttackRangePacket>()?;
-    packet_handler.register_noop::<NewMailStatusPacket>()?;
+    packet_handler.register(|packet: NewMailStatusPacket| NetworkEvent::NewMail {
+        available: packet.new_available != 0,
+    })?;
+    packet_handler.register(|packet: MailboxListPacket| NetworkEvent::MailboxList { packet })?;
+    packet_handler.register(|packet: MailBodyPacket| NetworkEvent::MailBody { packet })?;
+    packet_handler.register(|packet: MailZenyResultPacket| NetworkEvent::MailZenyResult { packet })?;
+    packet_handler.register(|packet: MailItemsResultPacket| NetworkEvent::MailItemsResult { packet })?;
+    packet_handler.register(|packet: MailDeletedPacket| NetworkEvent::MailDeleted { packet })?;
+    packet_handler.register(|packet: PetInformationPacket| NetworkEvent::PetInformation { packet })?;
+    packet_handler.register(|packet: PetUpdatePacket| NetworkEvent::PetUpdate { packet })?;
+    packet_handler.register(|packet: PetEggsPacket| NetworkEvent::PetEggs { indices: packet.indices })?;
+    packet_handler.register(|packet: PetFeedResultPacket| NetworkEvent::PetFeedResult {
+        success: packet.success != 0,
+    })?;
+    packet_handler.register(|_: BeginPetCapturePacket| NetworkEvent::BeginPetCapture)?;
+    packet_handler.register(|packet: PetCaptureResultPacket| NetworkEvent::PetCaptureResult {
+        success: packet.success != 0,
+    })?;
+    packet_handler.register(|packet: InventoryItemUsedPacket| NetworkEvent::InventoryItemUsed { packet })?;
+    packet_handler.register(|p: PartyCreatedPacket| NetworkEvent::Social {
+        event: SocialEvent::PartyCreated(p),
+    })?;
+    packet_handler.register(|p: PartyInvitePacket| NetworkEvent::Social {
+        event: SocialEvent::PartyInvite(p),
+    })?;
+    packet_handler.register(|p: PartyInviteResultPacket| NetworkEvent::Social {
+        event: SocialEvent::PartyInviteResult(p),
+    })?;
+    packet_handler.register(|p: GuildPermissionsPacket| NetworkEvent::Social {
+        event: SocialEvent::GuildPermissions(p),
+    })?;
+    packet_handler.register(|p: GuildMembershipPacket| NetworkEvent::Social {
+        event: SocialEvent::GuildMembership(p),
+    })?;
+    packet_handler.register(|p: GuildCreatedPacket| NetworkEvent::Social {
+        event: SocialEvent::GuildCreated(p),
+    })?;
+    packet_handler.register(|p: GuildInviteResultPacket| NetworkEvent::Social {
+        event: SocialEvent::GuildInviteResult(p),
+    })?;
+    packet_handler.register(|p: GuildInvitePacket| NetworkEvent::Social {
+        event: SocialEvent::GuildInvite(p),
+    })?;
+    packet_handler.register(|p: GuildNoticePacket| NetworkEvent::Social {
+        event: SocialEvent::GuildNotice(p),
+    })?;
+    packet_handler.register(|p: GuildInformationPacket| NetworkEvent::Social {
+        event: SocialEvent::GuildInformation(p),
+    })?;
+    packet_handler.register(|p: GuildMembersPacket| NetworkEvent::Social {
+        event: SocialEvent::GuildMembers(p),
+    })?;
+    packet_handler.register(|p: GuildChatPacket| NetworkEvent::Social {
+        event: SocialEvent::GuildChat(p),
+    })?;
+    packet_handler.register(|p: TradeInvitePacket| NetworkEvent::Social {
+        event: SocialEvent::TradeInvite(p),
+    })?;
+    packet_handler.register(|p: TradeReplyPacket| NetworkEvent::Social {
+        event: SocialEvent::TradeReply(p),
+    })?;
+    packet_handler.register(|p: TradeItemAckPacket| NetworkEvent::Social {
+        event: SocialEvent::TradeItemAck(p),
+    })?;
+    packet_handler.register(|p: TradeLockPacket| NetworkEvent::Social {
+        event: SocialEvent::TradeLock(p),
+    })?;
+    packet_handler.register(|_: TradeCanceledPacket| NetworkEvent::Social {
+        event: SocialEvent::TradeCanceled,
+    })?;
+    packet_handler.register(|p: TradeCompletedPacket| NetworkEvent::Social {
+        event: SocialEvent::TradeCompleted(p),
+    })?;
+    packet_handler.register(|p: TradeOfferPacket| NetworkEvent::Social {
+        event: SocialEvent::TradeOffer(p),
+    })?;
+    packet_handler.register(|p: GuildMemberLeftPacket| NetworkEvent::Social {
+        event: SocialEvent::GuildMemberLeft(p),
+    })?;
+    packet_handler.register(|p: GuildMemberExpelledPacket| NetworkEvent::Social {
+        event: SocialEvent::GuildMemberExpelled(p),
+    })?;
+    packet_handler.register(|p: GuildMemberOnlinePacket| NetworkEvent::Social {
+        event: SocialEvent::GuildMemberOnline(p),
+    })?;
+    packet_handler.register(|p: GuildBrokenPacket| NetworkEvent::Social {
+        event: SocialEvent::GuildBroken(p),
+    })?;
+    packet_handler.register_noop::<GuildAlliancesPacket>()?;
+    packet_handler.register_noop::<GuildPositionsPacket>()?;
+    packet_handler.register_noop::<GuildCastlesPacket>()?;
     packet_handler.register_noop::<AchievementUpdatePacket>()?;
     packet_handler.register_noop::<AchievementListPacket>()?;
     packet_handler.register_noop::<CriticalWeightUpdatePacket>()?;
@@ -481,7 +569,10 @@ where
     })?;
     packet_handler.register_noop::<UpdatePartyInvitationStatePacket>()?;
     packet_handler.register_noop::<UpdateShowEquipPacket>()?;
-    packet_handler.register_noop::<UpdateConfigurationPacket>()?;
+    packet_handler.register(|p: UpdateConfigurationPacket| NetworkEvent::Configuration {
+        config_type: p.config_type,
+        value: p.value,
+    })?;
     packet_handler.register_noop::<NavigateToMonsterPacket>()?;
     packet_handler.register_noop::<MarkMinimapPositionPacket>()?;
     packet_handler.register(|packet: NextButtonPacket| {
@@ -511,8 +602,12 @@ where
     packet_handler.register_noop::<DisplayPlayerHealEffect>()?;
     packet_handler.register_noop::<StatusChangePacket>()?;
     packet_handler.register(|packet: QuestNotificationPacket1| NetworkEvent::QuestAdded { quest: packet })?;
-    packet_handler.register(|packet: HuntingQuestNotificationPacket| NetworkEvent::QuestObjectives { objectives: packet.objective_details })?;
-    packet_handler.register(|packet: HuntingQuestUpdateObjectivePacket| NetworkEvent::QuestObjectives { objectives: packet.objective_details })?;
+    packet_handler.register(|packet: HuntingQuestNotificationPacket| NetworkEvent::QuestObjectives {
+        objectives: packet.objective_details,
+    })?;
+    packet_handler.register(|packet: HuntingQuestUpdateObjectivePacket| NetworkEvent::QuestObjectives {
+        objectives: packet.objective_details,
+    })?;
     packet_handler.register(|packet: QuestRemovedPacket| NetworkEvent::QuestRemoved { quest_id: packet.quest_id })?;
     packet_handler.register(|packet: QuestListPacket| NetworkEvent::QuestList { quests: packet.quests })?;
     packet_handler.register(|packet: VisualEffectPacket| {
@@ -804,18 +899,27 @@ where
         account_id: packet.account_id,
         character_id: packet.character_id,
     })?;
-    packet_handler.register_noop::<PartyInvitePacket>()?;
-    packet_handler.register(|packet: PartyListPacket| NetworkEvent::PartyList { party_name: packet.party_name, members: packet.members })?;
+    packet_handler.register(|packet: PartyListPacket| NetworkEvent::PartyList {
+        party_name: packet.party_name,
+        members: packet.members,
+    })?;
     packet_handler.register(|packet: PartyMemberAddedPacket| NetworkEvent::PartyMemberAdded { member: packet })?;
     packet_handler.register(|packet: PartyMemberHealthPacket| NetworkEvent::PartyMemberHealth {
-        account_id: packet.account_id, health: packet.health, maximum_health: packet.maximum_health,
+        account_id: packet.account_id,
+        health: packet.health,
+        maximum_health: packet.maximum_health,
     })?;
     packet_handler.register(|packet: PartyMemberLevelPacket| NetworkEvent::PartyMemberLevel {
-        account_id: packet.account_id, job_id: packet.job_id, base_level: packet.base_level,
+        account_id: packet.account_id,
+        job_id: packet.job_id,
+        base_level: packet.base_level,
     })?;
-    packet_handler.register(|packet: PartyMemberRemovedPacket| NetworkEvent::PartyMemberRemoved { account_id: packet.account_id })?;
+    packet_handler.register(|packet: PartyMemberRemovedPacket| NetworkEvent::PartyMemberRemoved {
+        account_id: packet.account_id,
+    })?;
     packet_handler.register(|packet: PartyLeaderChangedPacket| NetworkEvent::PartyLeaderChanged {
-        old_leader: packet.old_leader, new_leader: packet.new_leader,
+        old_leader: packet.old_leader,
+        new_leader: packet.new_leader,
     })?;
     packet_handler.register_noop::<StatusChangeSequencePacket>()?;
     packet_handler.register_noop::<ReputationPacket>()?;

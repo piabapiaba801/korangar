@@ -52,11 +52,11 @@ fn type_name(item_type: u8) -> &'static str {
     }
 }
 
-fn option_text(option: &ItemOptions) -> Option<String> {
+pub(crate) fn option_text(option: &ItemOptions) -> Option<String> {
     if option.index == 0 {
         return None;
     }
-    let value = option.value.to_string();
+    let value = (option.value as i16).to_string();
     Some(match OPTION_TEMPLATES.get(&option.index) {
         Some(template) => template.replace("%%", "\u{0}").replace("%d", &value).replace('\0', "%"),
         None => format!("Option #{} · value {}", option.index, value),

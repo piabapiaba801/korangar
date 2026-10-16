@@ -14,7 +14,7 @@ use crate::loaders::{FontSize, OverflowBehavior};
 use crate::renderer::LayoutExt;
 use crate::state::skills::{LearnableSkill, LearnedSkill};
 use crate::state::theme::{GlobalThemePathExt, InterfaceThemePathExt, SkillTreeThemePathExt};
-use crate::state::{ClientState, client_theme};
+use crate::state::{ClientState, ClientStatePathExt, client_state, client_theme};
 
 struct LevelDisplay {
     maximum_level: SkillLevel,
@@ -129,7 +129,7 @@ where
             source,
             hotkey_label: match source {
                 SkillSource::Hotbar { slot } if slot.0 < 9 => Some(format!("F{}", slot.0 + 1)),
-                SkillSource::Hotbar { slot } if slot.0 < 18 => Some((slot.0 - 8).to_string()),
+                SkillSource::Hotbar { slot } if slot.0 < 18 => Some(format!("N{}", slot.0 - 8)),
                 _ => None,
             },
         }
@@ -150,6 +150,19 @@ where
         resolvers: &mut dyn Resolvers<ClientState>,
     ) -> Self::LayoutInfo {
         with_single_resolver(resolvers, |resolver| {
+            if let SkillSource::Hotbar { slot } = self.source {
+                let hotbar_path = client_state().hotbar();
+                let hotbar = state.get(&hotbar_path);
+                self.hotkey_label = if slot.0 < 18 && !hotbar.binding(slot.0 as usize).is_empty() {
+                    Some(hotbar.binding(slot.0 as usize).replace("Key", "").replace("Numpad", "N"))
+                } else if slot.0 < 9 {
+                    Some(format!("F{}", slot.0 + 1))
+                } else if slot.0 < 18 {
+                    Some(format!("N{}", slot.0 - 8))
+                } else {
+                    None
+                };
+            }
             let height = match self.source {
                 SkillSource::Hotbar { .. } => 38.0,
                 SkillSource::SkillTree => 40.0,

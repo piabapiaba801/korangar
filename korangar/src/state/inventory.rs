@@ -17,6 +17,16 @@ pub struct Inventory {
 }
 
 impl Inventory {
+    pub fn set_item_amount(&mut self, index: InventoryIndex, remaining: u16) {
+        if remaining == 0 {
+            self.items.retain(|item| item.index != index);
+        } else if let Some(item) = self.items.iter_mut().find(|item| item.index == index) {
+            if let InventoryItemDetails::Regular { amount, .. } = &mut item.details {
+                *amount = remaining;
+            }
+        }
+    }
+
     pub fn fill(&mut self, async_loader: &AsyncLoader, items: Vec<InventoryItem<NoMetadata>>) {
         self.items = items
             .into_iter()

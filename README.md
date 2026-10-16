@@ -16,6 +16,29 @@ The [`freokro` branch](https://github.com/piabapiaba801/korangar/tree/freokro) c
 
 ## 🚧 Work in progress — October 15, 2026
 
+### Controls and native services — October 15, 2026
+
+The existing **Alt + key** window shortcuts remain the interface standard. New service windows follow it.
+
+| Action | Default input |
+| --- | --- |
+| Walk, including diagonals | W / A / S / D; suspended while typing, in dialogs, or using Alt shortcuts |
+| Upper action row | Physical right-hand Numpad 1–9 |
+| Lower action row | F1–F9 |
+| Character / Inventory / Skill Tree / Attributes | Alt+C / Alt+E / Alt+S / Alt+A |
+| Equipment / Friends / Minimap | Alt+Q / Alt+Z / Alt+M |
+| Mailbox / Companion | Alt+L / Alt+J |
+| Social and party management / Guild / Direct trade | Alt+P / Alt+G / Alt+T |
+| Auction / Skill binding editor | Alt+B / Alt+K |
+
+The skill shortcut fix targets the two visible action rows. Earlier custom bindings targeted hidden rows; new bindings are stored separately in `client/hotkey_settings_v2.ron`. The original settings file is preserved. Learned skill levels constrain casts, and a selected enemy can be used when the cursor is away from it.
+
+Native service windows cover reading mail, collecting Zeny/items and deleting empty letters; pet hatching, target selection for taming/catalog skills, feeding, performance, renaming, accessory use/removal, returning to an egg, and server-confirmed VIP auto-feed; party creation/invitations, guild creation/invitations/member list/chat/leaving, and direct trade with separate offer locking and final confirmation. Friends, whispers, party roster/leadership and NPC shop flows retain their existing handlers. Pet combat, KO, bonuses and evolution rules remain server-authoritative; the local pet loyalty ceiling is 750.
+
+The separate local auction agent now recognizes `FreokRO.exe` and launches from the installed client. Its bridge uses the matching server runtime directory, a login-bound expiring session token and correlated request IDs. Seller cancellation is limited to an active listing without bids, with item delivery by mail and no listing-fee refund. The history includes completed/pending sales, purchases, cancellations and expirations. Creation verifies item identity and price limits; the first bid uses the server's minimum.
+
+**Validation:** focused control tests, packet tests, unique-header registration, Windows server/agent builds, and auction JavaScript syntax are checked locally. Gameplay acceptance is pending. The server startup test could not reach the local database because MariaDB was stopped; no financial operation was exercised against a character. The local auction bridge is for this single-machine distribution, not a remote multiplayer auction transport. Its existing escrow path crosses live inventory and SQL; crash recovery of `ESCROW_PENDING` still requires an inventory/listing audit and must not be described as fully atomic.
+
 ### Current in-game HUD — October 15, 2026
 
 The latest owner-provided screenshot records the current FreokRO interface: matching black steel and red gemstone frames for character status, chat, Inventory, Equipment, Attributes, Skill Tree, Minimap, and Quests, together with HP/SP, two action rows, and the restored ten-segment base EXP bar. The Skill Tree has eight columns and at least eight rows, a clear draggable header, and points/distribution controls inside its bottom rail.

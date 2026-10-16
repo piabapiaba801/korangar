@@ -1,6 +1,40 @@
 # FreokRO technical status — October 15, 2026
 
-## Current FreokRO client checkpoint
+## Local test delivery — October 16, 2026
+
+- The final `unicode,debug` release client was copied to the existing `client/game-private/FreokRO.exe`; compiled and installed SHA-256 match: `CCFD61A383458FFA22250B0D9BD3D4593BD02BE26F0018C02D03C82F6A7FC9A3`. This supersedes the earlier English-only executable hash below.
+- Map server Release x64 SHA-256: `30BF60779F699AAB69723CE4C3C11CDE52A807EFEEA8CDE751F6B2984AA8F53F`. Auction agent SHA-256: `B4521129A52D9A26FA2C85FC00A6ADB6112C4F2D10B87C1D732DC6557651414A`. The matching server, agent executable, and auction HTML are installed locally.
+- Ten focused tests passed across input mapping, packet encoding/decoding and unique packet-header registration. The final Windows builds and auction JavaScript syntax check passed. Existing dead-code and WebView2 assembly warnings remain.
+- A backup of the prior client and prior auction executable is in `rollback/controls-services-20261015-224444/`.
+- Live gameplay, two-player social/trade behavior, and financial balances/item delivery are **not validated** by compilation. The database was stopped during the attempted startup check. Start the local database and server before testing the client. No real character's money or items were used for verification.
+- In-game acceptance is still required for WASD, both action rows, all Alt toggles, mail collection, companion capture/hatching/feed, party/guild invitations and chat, direct trade, and auction create/bid/buy/cancel/mail delivery. Auction crash recovery and remote multiplayer transport retain the limitations documented below.
+
+## Controls and service implementation checkpoint
+
+### Controls and native services — October 15, 2026
+
+The existing **Alt + key** window shortcuts remain the interface standard. New service windows follow it.
+
+| Action | Default input |
+| --- | --- |
+| Walk, including diagonals | W / A / S / D; suspended while typing, in dialogs, or using Alt shortcuts |
+| Upper action row | Physical right-hand Numpad 1–9 |
+| Lower action row | F1–F9 |
+| Character / Inventory / Skill Tree / Attributes | Alt+C / Alt+E / Alt+S / Alt+A |
+| Equipment / Friends / Minimap | Alt+Q / Alt+Z / Alt+M |
+| Mailbox / Companion | Alt+L / Alt+J |
+| Social and party management / Guild / Direct trade | Alt+P / Alt+G / Alt+T |
+| Auction / Skill binding editor | Alt+B / Alt+K |
+
+The skill shortcut fix targets the two visible action rows. Earlier custom bindings targeted hidden rows; new bindings are stored separately in `client/hotkey_settings_v2.ron`. The original settings file is preserved. Learned skill levels constrain casts, and a selected enemy can be used when the cursor is away from it.
+
+Native service windows cover reading mail, collecting Zeny/items and deleting empty letters; pet hatching, target selection for taming/catalog skills, feeding, performance, renaming, accessory use/removal, returning to an egg, and server-confirmed VIP auto-feed; party creation/invitations, guild creation/invitations/member list/chat/leaving, and direct trade with separate offer locking and final confirmation. Friends, whispers, party roster/leadership and NPC shop flows retain their existing handlers. Pet combat, KO, bonuses and evolution rules remain server-authoritative; the local pet loyalty ceiling is 750.
+
+The separate local auction agent now recognizes `FreokRO.exe` and launches from the installed client. Its bridge uses the matching server runtime directory, a login-bound expiring session token and correlated request IDs. Seller cancellation is limited to an active listing without bids, with item delivery by mail and no listing-fee refund. The history includes completed/pending sales, purchases, cancellations and expirations. Creation verifies item identity and price limits; the first bid uses the server's minimum.
+
+**Validation:** focused control tests, packet tests, unique-header registration, Windows server/agent builds, and auction JavaScript syntax are checked locally. Gameplay acceptance is pending. The server startup test could not reach the local database because MariaDB was stopped; no financial operation was exercised against a character. The local auction bridge is for this single-machine distribution, not a remote multiplayer auction transport. Its existing escrow path crosses live inventory and SQL; crash recovery of `ESCROW_PENDING` still requires an inventory/listing audit and must not be described as fully atomic.
+
+## Earlier visual client checkpoint
 
 - The [latest owner-provided capture](docs/screenshots/freokro-hud-current-2026-10-15.png) is the current visual reference for the black steel/red gemstone HUD: Character Overview, chat, Inventory, Equipment, Attributes, eight-column Skill Tree, Minimap, Quests, HP/SP, two action rows, and the ten-segment base EXP bar. It records the final spacing pass before English labels were applied.
 - Portuguese HUD labels, hints, party/target controls, item-details headings, and client-generated chat feedback now use conventional English RPG wording. Names, descriptions, and messages supplied by game data or the server retain their source language. This is a text-only HUD pass; the latest English wording still needs the owner's in-game check.

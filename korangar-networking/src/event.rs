@@ -12,6 +12,50 @@ use crate::{
 /// An event triggered by one of the Ragnarok Online servers.
 #[derive(Debug)]
 pub enum NetworkEvent {
+    Social {
+        event: SocialEvent,
+    },
+    InventoryItemUsed {
+        packet: InventoryItemUsedPacket,
+    },
+    MailboxList {
+        packet: MailboxListPacket,
+    },
+    MailBody {
+        packet: MailBodyPacket,
+    },
+    MailZenyResult {
+        packet: MailZenyResultPacket,
+    },
+    MailItemsResult {
+        packet: MailItemsResultPacket,
+    },
+    MailDeleted {
+        packet: MailDeletedPacket,
+    },
+    NewMail {
+        available: bool,
+    },
+    Configuration {
+        config_type: u32,
+        value: u32,
+    },
+    PetInformation {
+        packet: PetInformationPacket,
+    },
+    PetUpdate {
+        packet: PetUpdatePacket,
+    },
+    PetEggs {
+        indices: Vec<u16>,
+    },
+    PetFeedResult {
+        success: bool,
+    },
+    PetCaptureResult {
+        success: bool,
+    },
+    BeginPetCapture,
     LoginServerConnected {
         character_servers: Vec<CharacterServerInformation>,
         login_data: LoginServerLoginData,
@@ -130,10 +174,19 @@ pub enum NetworkEvent {
         text: String,
         color: MessageColor,
     },
-    PartyChatMessage { account_id: AccountId, text: String },
-    WhisperMessage { sender: String, text: String },
-    WhisperResult { result: u8 },
-    /// Show a temporary speech balloon above the source entity and add it to chat.
+    PartyChatMessage {
+        account_id: AccountId,
+        text: String,
+    },
+    WhisperMessage {
+        sender: String,
+        text: String,
+    },
+    WhisperResult {
+        result: u8,
+    },
+    /// Show a temporary speech balloon above the source entity and add it to
+    /// chat.
     EntitySpeech {
         entity_id: EntityId,
         text: String,
@@ -152,16 +205,42 @@ pub enum NetworkEvent {
         health_points: usize,
         maximum_health_points: usize,
     },
-    PartyList { party_name: String, members: Vec<PartyMemberPacket> },
-    PartyMemberAdded { member: PartyMemberAddedPacket },
-    PartyMemberHealth { account_id: AccountId, health: i32, maximum_health: i32 },
-    PartyMemberLevel { account_id: AccountId, job_id: i16, base_level: i16 },
-    PartyMemberRemoved { account_id: AccountId },
-    PartyLeaderChanged { old_leader: AccountId, new_leader: AccountId },
-    QuestList { quests: Vec<Quest> },
-    QuestAdded { quest: QuestNotificationPacket1 },
-    QuestObjectives { objectives: Vec<HuntingObjective> },
-    QuestRemoved { quest_id: u32 },
+    PartyList {
+        party_name: String,
+        members: Vec<PartyMemberPacket>,
+    },
+    PartyMemberAdded {
+        member: PartyMemberAddedPacket,
+    },
+    PartyMemberHealth {
+        account_id: AccountId,
+        health: i32,
+        maximum_health: i32,
+    },
+    PartyMemberLevel {
+        account_id: AccountId,
+        job_id: i16,
+        base_level: i16,
+    },
+    PartyMemberRemoved {
+        account_id: AccountId,
+    },
+    PartyLeaderChanged {
+        old_leader: AccountId,
+        new_leader: AccountId,
+    },
+    QuestList {
+        quests: Vec<Quest>,
+    },
+    QuestAdded {
+        quest: QuestNotificationPacket1,
+    },
+    QuestObjectives {
+        objectives: Vec<HuntingObjective>,
+    },
+    QuestRemoved {
+        quest_id: u32,
+    },
     DamageEffect {
         source_entity_id: EntityId,
         destination_entity_id: EntityId,

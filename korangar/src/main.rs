@@ -39,6 +39,7 @@ mod loaders;
 #[cfg(feature = "debug")]
 mod networking;
 mod renderer;
+mod services;
 mod settings;
 mod startup;
 mod system;
@@ -51,7 +52,7 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, LazyLock, Mutex};
 use std::time::{Duration, Instant};
 
-use cgmath::{Point3, Vector3};
+use cgmath::{InnerSpace, Point3, Vector3};
 use image::{EncodableLayout, ImageFormat, ImageReader};
 use input::{MouseInputMode, MouseModeExt};
 use korangar_audio::{AudioEngine, SoundEffectKey};
@@ -72,8 +73,8 @@ use networking::{PacketHistory, PacketHistoryCallback};
 #[cfg(not(feature = "debug"))]
 use ragnarok_packets::handler::NoPacketCallback;
 use ragnarok_packets::{
-    AttackRange, BuyShopItemsResult, CharacterServerInformation, Direction, DisappearanceReason, EntityId, HotbarSlot, Quest, QuestDetails, SellItemsResult,
-    SkillId, SkillLevel, SkillType, StatType, TilePosition, UnitId, WorldPosition,
+    AttackRange, BuyShopItemsResult, CharacterServerInformation, Direction, DisappearanceReason, EntityId, HotbarSlot, Quest, QuestDetails,
+    SellItemsResult, SkillId, SkillLevel, SkillType, StatType, TilePosition, UnitId, WorldPosition,
 };
 use renderer::InterfaceRenderer;
 use rust_state::{Context, ManuallyAssertExt};
@@ -87,7 +88,9 @@ use state::inventory::InventoryPathExt;
 use state::localization::Localization;
 use state::skills::SkillTreePathExt;
 use state::theme::{CursorThemePathExt, IndicatorThemePathExt, InterfaceThemePathExt, WorldThemePathExt};
-use state::{ChatChannel, ChatMessage, ClientState, ClientStatePathExt, ClientStateRootExt, PartyMember, client_state, this_entity, this_player};
+use state::{
+    ChatChannel, ChatMessage, ClientState, ClientStatePathExt, ClientStateRootExt, PartyMember, client_state, this_entity, this_player,
+};
 #[cfg(feature = "debug")]
 use wgpu::Device;
 use wgpu::util::initialize_adapter_from_env_or_default;
@@ -115,6 +118,7 @@ use crate::renderer::{EffectRenderer, GameInterfaceRenderer};
 use crate::settings::{
     GameSettingsPathExt, GraphicsSettings, IN_GAME_THEMES_PATH, LightingMode, MENU_THEMES_PATH, ServiceSettingsPathExt, WORLD_THEMES_PATH,
 };
+use crate::state::services::{ServiceAction, ServicesState};
 use crate::state::skills::{LearnedSkill, SkillTreeLayoutPathExt, bring_skill_to_level};
 use crate::state::theme::{InterfaceTheme, InterfaceThemeType, WorldTheme};
 use crate::state::{BufferedAction, SelectedServicePath};
@@ -289,6 +293,8 @@ struct Client {
     input_event_buffer: Vec<InputEvent>,
     network_event_buffer: NetworkEventBuffer,
     speech_bubbles: Vec<SpeechBubble>,
+    auction_agent: Option<std::process::Child>,
+    auction_agent_attempted: bool,
     // TODO: Move or remove this.
     saved_login_data: Option<LoginServerLoginData>,
     // TODO: Move or remove this.
@@ -701,6 +707,8 @@ impl Client {
             input_event_buffer,
             network_event_buffer,
             speech_bubbles: Vec::new(),
+            auction_agent: None,
+            auction_agent_attempted: false,
             saved_login_data,
             saved_character_server,
             saved_login_server_address,
@@ -838,6 +846,171 @@ impl Client {
 
         for event in self.network_event_buffer.drain() {
             match event {
+                NetworkEvent::InventoryItemUsed { packet } => {
+                    if self
+                        .client_state
+                        .try_follow(this_entity())
+                        .is_some_and(|player| player.get_entity_id() == packet.entity)
+                    {
+                        if packet.success != 0 {
+                            self.client_state
+                                .follow_mut(client_state().inventory())
+                                .set_item_amount(packet.index, packet.remaining);
+                        } else {
+                            self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::new(
+                                "That item cannot be used right now.".to_owned(),
+                                MessageColor::Error,
+                            ));
+                        }
+                    }
+                }
+                NetworkEvent::Social { event } => self.input_event_buffer.push(InputEvent::NativeSocial { event }),
+                NetworkEvent::MailboxList { packet } => {
+                    let services = self.client_state.follow_mut(client_state().services());
+                    match packet.messages() {
+                        Ok(messages) => {
+                            services.mail = messages;
+                            services.mail_page = services.mail_page.min(services.mail.len().saturating_sub(1) / 7);
+                            services.mail_notice = format!(
+                                "{} messages. Select a letter to read or collect attachments.",
+                                services.mail.len()
+                            );
+                        }
+                        Err(error) => services.mail_notice = error.to_owned(),
+                    }
+                }
+                NetworkEvent::MailBody { packet } => {
+                    let services = self.client_state.follow_mut(client_state().services());
+                    if packet.mail_id == services.mail_selected_id {
+                        let length = usize::from(packet.text_length);
+                        if length <= packet.data.len() {
+                            let body = String::from_utf8_lossy(&packet.data[..length]).trim_end_matches('\0').to_owned();
+                            services.mail_body = format!("{} Zeny  |  {} item attachments\n\n{}", packet.zeny, packet.item_count, body);
+                            services.mail_zeny = packet.zeny;
+                            services.mail_items = packet.item_count;
+                            services.mail_loaded = true;
+                            services.mail_notice = "Mail opened. Attachments are delivered by the server.".to_owned();
+                        } else {
+                            services.mail_notice = "Received an incomplete letter. Refresh the mailbox.".to_owned();
+                        }
+                    }
+                }
+                NetworkEvent::MailZenyResult { packet } => {
+                    let services = self.client_state.follow_mut(client_state().services());
+                    if services.mail_selected_id == packet.mail_id {
+                        services.mail_pending_zeny = false;
+                        if packet.result == 0 {
+                            services.mail_zeny = 0;
+                        }
+                        services.mail_notice = if packet.result == 0 {
+                            "Zeny collected."
+                        } else {
+                            "Cannot collect Zeny. Check your balance limit and retry."
+                        }
+                        .to_owned();
+                    }
+                }
+                NetworkEvent::MailItemsResult { packet } => {
+                    let services = self.client_state.follow_mut(client_state().services());
+                    if services.mail_selected_id == packet.mail_id {
+                        services.mail_pending_items = false;
+                        if packet.result == 0 {
+                            services.mail_items = 0;
+                        }
+                        services.mail_notice = if packet.result == 0 {
+                            "Items collected."
+                        } else {
+                            "Cannot collect items. Check inventory space and weight."
+                        }
+                        .to_owned();
+                    }
+                }
+                NetworkEvent::MailDeleted { packet } => {
+                    let services = self.client_state.follow_mut(client_state().services());
+                    services.mail.retain(|mail| mail.id != packet.mail_id);
+                    services.mail_notice = "Empty letter deleted.".to_owned();
+                    if services.mail_selected_id == packet.mail_id {
+                        services.mail_selected_id = 0;
+                        services.mail_body.clear();
+                    }
+                }
+                NetworkEvent::NewMail { available } => {
+                    if available {
+                        self.client_state.follow_mut(client_state().services()).mail_notice = "New mail available (Alt+L).".to_owned();
+                    }
+                }
+                NetworkEvent::Configuration { config_type, value } => {
+                    if config_type == 2 {
+                        let services = self.client_state.follow_mut(client_state().services());
+                        services.pet_autofeed = value != 0;
+                        services.update_pet_description();
+                    }
+                }
+                NetworkEvent::PetInformation { packet } => {
+                    let services = self.client_state.follow_mut(client_state().services());
+                    services.pet_name = packet.name;
+                    services.pet_level = packet.level;
+                    services.pet_hunger = packet.hunger;
+                    services.pet_intimacy = packet.intimacy;
+                    services.update_pet_description();
+                }
+                NetworkEvent::PetUpdate { packet } => {
+                    let services = self.client_state.follow_mut(client_state().services());
+                    if packet.kind == 0 {
+                        services.pet_entity = packet.entity.0;
+                    }
+                    if services.pet_entity != 0 && services.pet_entity != packet.entity.0 {
+                        continue;
+                    }
+                    if packet.kind == 1 {
+                        services.pet_intimacy = packet.value.min(750) as u16;
+                    }
+                    if packet.kind == 2 {
+                        services.pet_hunger = packet.value.min(100) as u16;
+                    }
+                    if packet.kind == 6 {
+                        services.pet_eggs.clear();
+                    }
+                    services.update_pet_description();
+                }
+                NetworkEvent::PetEggs { indices } => {
+                    self.client_state.follow_mut(client_state().services()).pet_eggs = indices;
+                    if !self.interface.is_window_with_class_open(WindowClass::Pets) {
+                        self.input_event_buffer.push(InputEvent::GameService {
+                            action: ServiceAction::OpenPets,
+                        });
+                    }
+                }
+                NetworkEvent::PetFeedResult { success } => {
+                    self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::new(
+                        if success {
+                            "Companion fed."
+                        } else {
+                            "Unable to feed your companion. Check its food and hunger."
+                        }
+                        .to_owned(),
+                        MessageColor::Information,
+                    ));
+                }
+                NetworkEvent::BeginPetCapture => {
+                    self.client_state.follow_mut(client_state().services()).pet_capture_pending = true;
+                    self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::new(
+                        "Select a creature to continue. Press Escape to cancel.".to_owned(),
+                        MessageColor::Information,
+                    ));
+                }
+                NetworkEvent::PetCaptureResult { success } => {
+                    self.client_state.follow_mut(client_state().services()).pet_capture_pending = false;
+                    self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::new(
+                        if success {
+                            "Creature tamed! Check your inventory for its egg."
+                        } else {
+                            "Taming failed."
+                        }
+                        .to_owned(),
+                        MessageColor::Information,
+                    ));
+                }
                 NetworkEvent::LoginServerConnected {
                     character_servers,
                     login_data,
@@ -930,6 +1103,16 @@ impl Client {
                     }
                 }
                 NetworkEvent::MapServerDisconnected { reason } => {
+                    if let Some(mut agent) = self.auction_agent.take() {
+                        let _ = agent.kill();
+                    }
+                    self.auction_agent_attempted = false;
+                    *self.client_state.follow_mut(client_state().services()) = ServicesState::default();
+                    self.interface.close_window_with_class(WindowClass::Mailbox);
+                    self.interface.close_window_with_class(WindowClass::Pets);
+                    self.interface.close_window_with_class(WindowClass::Social);
+                    self.interface.close_window_with_class(WindowClass::Guild);
+                    self.interface.close_window_with_class(WindowClass::Trade);
                     self.client_state.follow_mut(client_state().party_members()).clear();
                     *self.client_state.follow_mut(client_state().party_name()) = String::new();
                     self.interface.close_window_with_class(WindowClass::Party);
@@ -1031,8 +1214,12 @@ impl Client {
                         self.interface.open_window(CharacterSelectionWindow::new(
                             client_state().character_slots(),
                             client_state().switch_request(),
-                            self.texture_loader.get_or_load("freokro\\female-preview.png", loaders::ImageType::Color).unwrap(),
-                            self.texture_loader.get_or_load("freokro\\male-preview.png", loaders::ImageType::Color).unwrap(),
+                            self.texture_loader
+                                .get_or_load("freokro\\female-preview.png", loaders::ImageType::Color)
+                                .unwrap(),
+                            self.texture_loader
+                                .get_or_load("freokro\\male-preview.png", loaders::ImageType::Color)
+                                .unwrap(),
                             self.sprite_loader.clone(),
                             self.action_loader.clone(),
                             self.animation_loader.clone(),
@@ -1053,6 +1240,7 @@ impl Client {
                     self.interface.open_window(ErrorWindow::new(message.to_owned()))
                 }
                 NetworkEvent::CharacterSelected { login_data, .. } => {
+                    self.client_state.follow_mut(client_state().services()).character_id = login_data.character_id.0;
                     self.audio_engine.play_sound_effect(self.main_menu_click_sound_effect);
 
                     let saved_login_data = self.saved_login_data.as_ref().unwrap();
@@ -1113,7 +1301,8 @@ impl Client {
                         self.texture_loader.create_color(
                             "freokro private character frame",
                             image::load_from_memory(include_bytes!("../assets/ui/character-frame-v1.png"))
-                                .expect("embedded character frame image is valid").to_rgba8(),
+                                .expect("embedded character frame image is valid")
+                                .to_rgba8(),
                             true,
                         ),
                     ));
@@ -1124,7 +1313,11 @@ impl Client {
                             .to_rgba8(),
                         true,
                     );
-                    self.interface.open_window(ChatWindow::new(client_state().chat_window(), client_state().chat_messages(), chat_frame));
+                    self.interface.open_window(ChatWindow::new(
+                        client_state().chat_window(),
+                        client_state().chat_messages(),
+                        chat_frame,
+                    ));
                     let hud_frame = self.texture_loader.create_color(
                         "freokro private action HUD",
                         image::load_from_memory(include_bytes!("../assets/ui/action-hud-v2.png"))
@@ -1202,6 +1395,12 @@ impl Client {
                     }
                 }
                 NetworkEvent::RemoveEntity { entity_id, reason } => {
+                    let services = self.client_state.follow_mut(client_state().services());
+                    if services.pet_entity == entity_id.0 {
+                        services.pet_entity = 0;
+                        services.pet_name.clear();
+                        services.update_pet_description();
+                    }
                     if *self.client_state.follow(client_state().selected_target()) == Some(entity_id) {
                         *self.client_state.follow_mut(client_state().selected_target()) = None;
                         self.interface.close_window_with_class(WindowClass::Target);
@@ -1383,16 +1582,30 @@ impl Client {
                         .push(ChatMessage::new(text, color));
                 }
                 NetworkEvent::PartyChatMessage { account_id: _, text } => {
-                    self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::in_channel(
-                        format!("[Party] {}", text.trim_end_matches('\0')),
-                        MessageColor::Rgb { red: 112, green: 213, blue: 227 }, ChatChannel::Party,
-                    ));
+                    self.client_state
+                        .follow_mut(client_state().chat_messages())
+                        .push(ChatMessage::in_channel(
+                            format!("[Party] {}", text.trim_end_matches('\0')),
+                            MessageColor::Rgb {
+                                red: 112,
+                                green: 213,
+                                blue: 227,
+                            },
+                            ChatChannel::Party,
+                        ));
                 }
                 NetworkEvent::WhisperMessage { sender, text } => {
-                    self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::in_channel(
-                        format!("[From {sender}] {}", text.trim_end_matches('\0')),
-                        MessageColor::Rgb { red: 215, green: 169, blue: 237 }, ChatChannel::Private,
-                    ));
+                    self.client_state
+                        .follow_mut(client_state().chat_messages())
+                        .push(ChatMessage::in_channel(
+                            format!("[From {sender}] {}", text.trim_end_matches('\0')),
+                            MessageColor::Rgb {
+                                red: 215,
+                                green: 169,
+                                blue: 237,
+                            },
+                            ChatChannel::Private,
+                        ));
                     *self.client_state.follow_mut(client_state().chat_window().recipient()) = sender;
                 }
                 NetworkEvent::WhisperResult { result } => {
@@ -1402,9 +1615,13 @@ impl Client {
                             2 | 3 => "This player is blocking whispers.",
                             _ => "Whisper could not be delivered.",
                         };
-                        self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::in_channel(
-                            message.to_owned(), MessageColor::Error, ChatChannel::Private,
-                        ));
+                        self.client_state
+                            .follow_mut(client_state().chat_messages())
+                            .push(ChatMessage::in_channel(
+                                message.to_owned(),
+                                MessageColor::Error,
+                                ChatChannel::Private,
+                            ));
                     }
                 }
                 NetworkEvent::EntitySpeech { entity_id, text, color } => {
@@ -1451,13 +1668,24 @@ impl Client {
                     if let Some(player) = self.client_state.try_follow(this_entity()) {
                         let player_id = player.get_entity_id();
                         if source_entity_id == player_id || destination_entity_id == player_id {
-                            let direction = if source_entity_id == player_id { "Damage dealt" } else { "Damage taken" };
+                            let direction = if source_entity_id == player_id {
+                                "Damage dealt"
+                            } else {
+                                "Damage taken"
+                            };
                             let amount = damage_amount.map(|value| value.to_string()).unwrap_or_else(|| "Miss".to_owned());
                             let critical = if is_critical { " (Critical)" } else { "" };
-                            self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::in_channel(
-                                format!("{direction}: {amount}{critical}"),
-                                MessageColor::Rgb { red: 239, green: 183, blue: 119 }, ChatChannel::Battle,
-                            ));
+                            self.client_state
+                                .follow_mut(client_state().chat_messages())
+                                .push(ChatMessage::in_channel(
+                                    format!("{direction}: {amount}{critical}"),
+                                    MessageColor::Rgb {
+                                        red: 239,
+                                        green: 183,
+                                        blue: 119,
+                                    },
+                                    ChatChannel::Battle,
+                                ));
                         }
                     }
                     let target_position = self
@@ -1574,19 +1802,26 @@ impl Client {
                 }
                 NetworkEvent::PartyList { party_name, members } => {
                     *self.client_state.follow_mut(client_state().party_name()) = party_name;
-                    *self.client_state.follow_mut(client_state().party_members()) = members.into_iter().map(|member| PartyMember {
-                        account_id: member.account_id,
-                        name: member.name,
-                        job_id: member.job_id,
-                        base_level: member.base_level,
-                        online: member.offline == 0,
-                        leader: member.leader == 0,
-                        health: 0,
-                        maximum_health: 0,
-                    }).collect();
+                    *self.client_state.follow_mut(client_state().party_members()) = members
+                        .into_iter()
+                        .map(|member| PartyMember {
+                            account_id: member.account_id,
+                            name: member.name,
+                            job_id: member.job_id,
+                            base_level: member.base_level,
+                            online: member.offline == 0,
+                            leader: member.leader == 0,
+                            health: 0,
+                            maximum_health: 0,
+                        })
+                        .collect();
                     if self.client_state.follow(client_state().party_members()).len() > 1 {
-                        if !self.interface.is_window_with_class_open(WindowClass::Party) { self.interface.open_window(PartyWindow::new(self.library.clone())); }
-                    } else { self.interface.close_window_with_class(WindowClass::Party); }
+                        if !self.interface.is_window_with_class_open(WindowClass::Party) {
+                            self.interface.open_window(PartyWindow::new(self.library.clone()));
+                        }
+                    } else {
+                        self.interface.close_window_with_class(WindowClass::Party);
+                    }
                 }
                 NetworkEvent::PartyMemberAdded { member } => {
                     if self.client_state.follow(client_state().party_name()).is_empty() {
@@ -1609,29 +1844,59 @@ impl Client {
                         self.interface.open_window(PartyWindow::new(self.library.clone()));
                     }
                 }
-                NetworkEvent::PartyMemberHealth { account_id, health, maximum_health } => {
-                    if let Some(member) = self.client_state.follow_mut(client_state().party_members()).iter_mut().find(|member| member.account_id == account_id) {
+                NetworkEvent::PartyMemberHealth {
+                    account_id,
+                    health,
+                    maximum_health,
+                } => {
+                    if let Some(member) = self
+                        .client_state
+                        .follow_mut(client_state().party_members())
+                        .iter_mut()
+                        .find(|member| member.account_id == account_id)
+                    {
                         member.health = health;
                         member.maximum_health = maximum_health;
                     }
                 }
-                NetworkEvent::PartyMemberLevel { account_id, job_id, base_level } => {
-                    if let Some(member) = self.client_state.follow_mut(client_state().party_members()).iter_mut().find(|member| member.account_id == account_id) {
+                NetworkEvent::PartyMemberLevel {
+                    account_id,
+                    job_id,
+                    base_level,
+                } => {
+                    if let Some(member) = self
+                        .client_state
+                        .follow_mut(client_state().party_members())
+                        .iter_mut()
+                        .find(|member| member.account_id == account_id)
+                    {
                         member.job_id = job_id;
                         member.base_level = base_level;
                     }
                 }
                 NetworkEvent::PartyMemberRemoved { account_id } => {
-                    let self_removed = self.client_state.try_follow(this_player())
+                    let self_removed = self
+                        .client_state
+                        .try_follow(this_player())
                         .is_some_and(|player| player.get_common().entity_id.0 == account_id.0);
                     let members = self.client_state.follow_mut(client_state().party_members());
-                    if self_removed { members.clear(); } else { members.retain(|member| member.account_id != account_id); }
-                    if members.len() <= 1 { self.interface.close_window_with_class(WindowClass::Party); }
+                    if self_removed {
+                        members.clear();
+                    } else {
+                        members.retain(|member| member.account_id != account_id);
+                    }
+                    if members.len() <= 1 {
+                        self.interface.close_window_with_class(WindowClass::Party);
+                    }
                 }
                 NetworkEvent::PartyLeaderChanged { old_leader, new_leader } => {
                     for member in self.client_state.follow_mut(client_state().party_members()) {
-                        if member.account_id == old_leader { member.leader = false; }
-                        if member.account_id == new_leader { member.leader = true; }
+                        if member.account_id == old_leader {
+                            member.leader = false;
+                        }
+                        if member.account_id == new_leader {
+                            member.leader = true;
+                        }
                     }
                 }
                 NetworkEvent::QuestList { quests } => {
@@ -1639,26 +1904,34 @@ impl Client {
                     if self.client_state.follow(client_state().quests()).is_empty() {
                         self.interface.close_window_with_class(WindowClass::QuestTracker);
                     } else if !self.interface.is_window_with_class_open(WindowClass::QuestTracker) {
-                        self.interface.open_window(QuestTrackerWindow::new(self.texture_loader.create_color(
-                            "freokro private quest frame",
-                            image::load_from_memory(include_bytes!("../assets/ui/quests-frame-v2.png"))
-                                .expect("embedded quest frame image is valid").to_rgba8(),
-                            true,
-                        )));
+                        self.interface.open_window(QuestTrackerWindow::new(
+                            self.texture_loader.create_color(
+                                "freokro private quest frame",
+                                image::load_from_memory(include_bytes!("../assets/ui/quests-frame-v2.png"))
+                                    .expect("embedded quest frame image is valid")
+                                    .to_rgba8(),
+                                true,
+                            ),
+                        ));
                     }
                 }
                 NetworkEvent::QuestAdded { quest } => {
                     let quests = self.client_state.follow_mut(client_state().quests());
-                    let details = quest.objective_details.into_iter().take(quest.objective_count as usize).map(|objective| QuestDetails {
-                        hunt_identification: objective.hunt_identification,
-                        objective_type: objective.objective_type,
-                        mob_id: objective.mob_id,
-                        minimum_level: objective.minimum_level,
-                        maximum_level: objective.maximum_level,
-                        kill_count: objective.mob_count,
-                        total_count: 0,
-                        mob_name: objective.mob_name,
-                    }).collect();
+                    let details = quest
+                        .objective_details
+                        .into_iter()
+                        .take(quest.objective_count as usize)
+                        .map(|objective| QuestDetails {
+                            hunt_identification: objective.hunt_identification,
+                            objective_type: objective.objective_type,
+                            mob_id: objective.mob_id,
+                            minimum_level: objective.minimum_level,
+                            maximum_level: objective.maximum_level,
+                            kill_count: objective.mob_count,
+                            total_count: 0,
+                            mob_name: objective.mob_name,
+                        })
+                        .collect();
                     quests.retain(|entry| entry.quest_id != quest.quest_id);
                     quests.push(Quest {
                         quest_id: quest.quest_id,
@@ -1669,19 +1942,26 @@ impl Client {
                         objective_details: details,
                     });
                     if !self.interface.is_window_with_class_open(WindowClass::QuestTracker) {
-                        self.interface.open_window(QuestTrackerWindow::new(self.texture_loader.create_color(
-                            "freokro private quest frame",
-                            image::load_from_memory(include_bytes!("../assets/ui/quests-frame-v2.png"))
-                                .expect("embedded quest frame image is valid").to_rgba8(),
-                            true,
-                        )));
+                        self.interface.open_window(QuestTrackerWindow::new(
+                            self.texture_loader.create_color(
+                                "freokro private quest frame",
+                                image::load_from_memory(include_bytes!("../assets/ui/quests-frame-v2.png"))
+                                    .expect("embedded quest frame image is valid")
+                                    .to_rgba8(),
+                                true,
+                            ),
+                        ));
                     }
                 }
                 NetworkEvent::QuestObjectives { objectives } => {
                     for objective in objectives {
-                        if let Some(detail) = self.client_state.follow_mut(client_state().quests()).iter_mut()
+                        if let Some(detail) = self
+                            .client_state
+                            .follow_mut(client_state().quests())
+                            .iter_mut()
                             .flat_map(|quest| &mut quest.objective_details)
-                            .find(|detail| detail.hunt_identification == objective.quest_id) {
+                            .find(|detail| detail.hunt_identification == objective.quest_id)
+                        {
                             detail.kill_count = objective.current_count;
                             detail.total_count = objective.total_count;
                         }
@@ -1690,9 +1970,14 @@ impl Client {
                 NetworkEvent::QuestRemoved { quest_id } => {
                     let quests = self.client_state.follow_mut(client_state().quests());
                     quests.retain(|quest| quest.quest_id != quest_id);
-                    if quests.is_empty() { self.interface.close_window_with_class(WindowClass::QuestTracker); }
+                    if quests.is_empty() {
+                        self.interface.close_window_with_class(WindowClass::QuestTracker);
+                    }
                 }
                 NetworkEvent::UpdateStat { stat_type } => {
+                    if let StatType::Zeny(zeny) = &stat_type {
+                        self.client_state.follow_mut(client_state().services()).trade_balance = format!("Available Zeny: {}", zeny);
+                    }
                     let revived = matches!(&stat_type, StatType::HealthPoints(value) if *value > 0);
                     if let Some(player) = self.client_state.try_follow_mut(this_player()) {
                         player.update_stat(stat_type);
@@ -2115,6 +2400,15 @@ impl Client {
         let input_event_measurement = Profiler::start_measurement("process user events");
 
         self.interface.process_events(&mut self.input_event_buffer);
+        if self.client_state.try_follow(this_entity()).is_some() {
+            self.ensure_auction_agent();
+        }
+        if self.client_state.follow(client_state().services()).trade_active && !self.interface.is_window_with_class_open(WindowClass::Trade)
+        {
+            self.input_event_buffer.push(InputEvent::GameService {
+                action: ServiceAction::CancelTrade,
+            });
+        }
         let interface_has_focus = self.interface.has_focus();
 
         if self.interface.get_mouse_mode().is_rotating_camera() {
@@ -2126,7 +2420,11 @@ impl Client {
         if !self.interface.is_window_with_class_open(WindowClass::HotkeySettings) {
             self.client_state.follow_mut(client_state().hotbar()).cancel_capture();
         }
-        let capture_was_active = self.client_state.follow(client_state().hotbar()).capture_slot().is_some();
+        let pet_capture_was_active = self.client_state.follow(client_state().services()).pet_capture_pending;
+        if pet_capture_was_active && self.input_system.escape_pressed() {
+            self.client_state.follow_mut(client_state().services()).pet_capture_pending = false;
+        }
+        let capture_was_active = pet_capture_was_active || self.client_state.follow(client_state().hotbar()).capture_slot().is_some();
         let dialog_open = self.interface.is_window_with_class_open(WindowClass::Dialog);
         if dialog_open {
             if self.input_system.key_pressed(KeyCode::ArrowUp) || self.input_system.key_pressed(KeyCode::ArrowLeft) {
@@ -2156,7 +2454,25 @@ impl Client {
             self.input_event_buffer.push(InputEvent::ToggleMenuWindow);
         }
 
+        if interface_has_focus && !dialog_open && self.input_system.alt_shortcut_active() {
+            self.input_system.handle_keyboard_input(
+                &mut self.input_event_buffer,
+                #[cfg(feature = "debug")]
+                false,
+                #[cfg(feature = "debug")]
+                false,
+            );
+        }
         if !interface_has_focus && !dialog_open {
+            if !player_dead && !capture_was_active && self.client_state.try_follow(this_entity()).is_some() {
+                #[cfg(feature = "debug")]
+                let use_debug_camera = *self.client_state.follow(client_state().render_options().use_debug_camera());
+                #[cfg(not(feature = "debug"))]
+                let use_debug_camera = false;
+                if !use_debug_camera {
+                    self.input_system.handle_movement(&mut self.input_event_buffer, client_tick);
+                }
+            }
             self.input_system.handle_keyboard_input(
                 &mut self.input_event_buffer,
                 #[cfg(feature = "debug")]
@@ -2166,8 +2482,12 @@ impl Client {
             );
         }
 
-        for event in self.input_event_buffer.drain(..) {
+        for event in std::mem::take(&mut self.input_event_buffer) {
             match event {
+                InputEvent::NativeSocial { event } => self.handle_social_event(event),
+                InputEvent::GameService { action } => {
+                    self.handle_game_service(action);
+                }
                 InputEvent::LogIn {
                     service_id,
                     username,
@@ -2274,7 +2594,8 @@ impl Client {
                                 self.texture_loader.create_color(
                                     "freokro private character frame",
                                     image::load_from_memory(include_bytes!("../assets/ui/character-frame-v1.png"))
-                                        .expect("embedded character frame image is valid").to_rgba8(),
+                                        .expect("embedded character frame image is valid")
+                                        .to_rgba8(),
                                     true,
                                 ),
                             )),
@@ -2291,7 +2612,8 @@ impl Client {
                                 self.texture_loader.create_color(
                                     "freokro private minimap frame",
                                     image::load_from_memory(include_bytes!("../assets/ui/minimap-frame-v2.png"))
-                                        .expect("embedded minimap frame image is valid").to_rgba8(),
+                                        .expect("embedded minimap frame image is valid")
+                                        .to_rgba8(),
                                     true,
                                 ),
                             )),
@@ -2318,7 +2640,8 @@ impl Client {
                                 self.texture_loader.create_color(
                                     "freokro private inventory frame",
                                     image::load_from_memory(include_bytes!("../assets/ui/inventory-frame-v1.png"))
-                                        .expect("embedded inventory frame image is valid").to_rgba8(),
+                                        .expect("embedded inventory frame image is valid")
+                                        .to_rgba8(),
                                     true,
                                 ),
                             )),
@@ -2334,7 +2657,8 @@ impl Client {
                                 self.texture_loader.create_color(
                                     "freokro private equipment frame",
                                     image::load_from_memory(include_bytes!("../assets/ui/equipment-frame-v1.png"))
-                                        .expect("embedded equipment frame image is valid").to_rgba8(),
+                                        .expect("embedded equipment frame image is valid")
+                                        .to_rgba8(),
                                     true,
                                 ),
                             )),
@@ -2353,7 +2677,8 @@ impl Client {
                                 self.texture_loader.create_color(
                                     "freokro private skill tree frame",
                                     image::load_from_memory(include_bytes!("../assets/ui/skill-tree-frame-v1.png"))
-                                        .expect("embedded skill tree frame image is valid").to_rgba8(),
+                                        .expect("embedded skill tree frame image is valid")
+                                        .to_rgba8(),
                                     true,
                                 ),
                             )),
@@ -2369,7 +2694,8 @@ impl Client {
                                 self.texture_loader.create_color(
                                     "freokro private stats frame",
                                     image::load_from_memory(include_bytes!("../assets/ui/character-frame-v1.png"))
-                                        .expect("embedded stats frame image is valid").to_rgba8(),
+                                        .expect("embedded stats frame image is valid")
+                                        .to_rgba8(),
                                     true,
                                 ),
                             )),
@@ -2432,15 +2758,24 @@ impl Client {
                     // Clear the name before opening the window.
                     self.client_state.follow_mut(client_state().create_character_name()).clear();
 
-                    self.interface
-                        .open_window(CharacterCreationWindow::new(
-                            client_state().create_character_name(),
-                            slot,
-                            self.texture_loader.get_or_load("freokro\\female-preview.png", loaders::ImageType::Color).unwrap(),
-                            self.texture_loader.get_or_load("freokro\\male-preview.png", loaders::ImageType::Color).unwrap(),
-                        ))
+                    self.interface.open_window(CharacterCreationWindow::new(
+                        client_state().create_character_name(),
+                        slot,
+                        self.texture_loader
+                            .get_or_load("freokro\\female-preview.png", loaders::ImageType::Color)
+                            .unwrap(),
+                        self.texture_loader
+                            .get_or_load("freokro\\male-preview.png", loaders::ImageType::Color)
+                            .unwrap(),
+                    ))
                 }
-                InputEvent::CreateCharacter { slot, name, sex, hair_style, hair_color } => {
+                InputEvent::CreateCharacter {
+                    slot,
+                    name,
+                    sex,
+                    hair_style,
+                    hair_color,
+                } => {
                     let _ = self.networking_system.create_character(slot, name, sex, hair_style, hair_color);
                 }
                 InputEvent::DeleteCharacter { character_id } => {
@@ -2455,6 +2790,29 @@ impl Client {
                 } => {
                     let _ = self.networking_system.switch_character_slot(origin_slot, destination_slot);
                 }
+                InputEvent::PlayerMoveRelative { horizontal, vertical } => {
+                    if let (Some(map), Some(player)) = (&self.map, self.client_state.try_follow(this_entity())) {
+                        let position = player.get_tile_position();
+                        let view = self.player_camera.view_direction();
+                        let forward = Vector3::new(view.x, 0.0, view.z).normalize();
+                        let right = self.player_camera.look_up_vector().cross(forward).normalize();
+                        let delta = right * f32::from(horizontal) + forward * f32::from(vertical);
+                        let scale = delta.x.abs().max(delta.z.abs()).max(0.001);
+                        let x = i32::from(position.x) + (delta.x / scale).round() as i32;
+                        let y = i32::from(position.y) + (delta.z / scale).round() as i32;
+                        if let (Ok(x), Ok(y)) = (u16::try_from(x), u16::try_from(y)) {
+                            let destination = TilePosition { x, y };
+                            if self.path_finder.find_walkable_path(map.as_ref(), position, destination).is_some() {
+                                let _ = self.networking_system.player_move(WorldPosition {
+                                    x,
+                                    y,
+                                    direction: Direction::North,
+                                });
+                                *self.client_state.follow_mut(client_state().buffered_action()) = None;
+                            }
+                        }
+                    }
+                }
                 InputEvent::PlayerMove { destination } => {
                     if self.client_state.try_follow(this_entity()).is_some() {
                         let _ = self.networking_system.player_move(WorldPosition {
@@ -2468,9 +2826,20 @@ impl Client {
                     *self.client_state.follow_mut(client_state().buffered_action()) = None;
                 }
                 InputEvent::PlayerInteract { entity_id } => {
-                    let target_is_monster = self.client_state.follow(client_state().entities()).iter().any(|entity| {
-                        entity.get_entity_id() == entity_id && entity.get_entity_type() == EntityType::Monster
-                    });
+                    let target_is_monster = self
+                        .client_state
+                        .follow(client_state().entities())
+                        .iter()
+                        .any(|entity| entity.get_entity_id() == entity_id && entity.get_entity_type() == EntityType::Monster);
+                    if self.client_state.follow(client_state().services()).pet_capture_pending {
+                        if target_is_monster {
+                            let _ = self
+                                .networking_system
+                                .send_game_service(ragnarok_packets::CapturePetPacket::new(entity_id));
+                            self.client_state.follow_mut(client_state().services()).pet_capture_pending = false;
+                        }
+                        continue;
+                    }
                     *self.client_state.follow_mut(client_state().selected_target()) = target_is_monster.then_some(entity_id);
                     if target_is_monster {
                         if !self.interface.is_window_with_class_open(WindowClass::Target) {
@@ -2580,21 +2949,48 @@ impl Client {
                 }
                 InputEvent::SendPartyMessage { text } => {
                     if self.client_state.follow(client_state().party_members()).is_empty() {
-                        self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::in_channel(
-                            "Join a party to use this channel.".to_owned(), MessageColor::Error, ChatChannel::Party,
-                        ));
-                    } else if self.networking_system.send_party_message(self.client_state.follow(client_state().player_name()), &text).is_err() {
-                        self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::in_channel(
-                            "Party message could not be sent.".to_owned(), MessageColor::Error, ChatChannel::Party,
-                        ));
+                        self.client_state
+                            .follow_mut(client_state().chat_messages())
+                            .push(ChatMessage::in_channel(
+                                "Join a party to use this channel.".to_owned(),
+                                MessageColor::Error,
+                                ChatChannel::Party,
+                            ));
+                    } else if self
+                        .networking_system
+                        .send_party_message(self.client_state.follow(client_state().player_name()), &text)
+                        .is_err()
+                    {
+                        self.client_state
+                            .follow_mut(client_state().chat_messages())
+                            .push(ChatMessage::in_channel(
+                                "Party message could not be sent.".to_owned(),
+                                MessageColor::Error,
+                                ChatChannel::Party,
+                            ));
                     }
                 }
                 InputEvent::SendPrivateMessage { recipient, text } => {
                     let sent = self.networking_system.send_whisper(&recipient, &text).is_ok();
-                    self.client_state.follow_mut(client_state().chat_messages()).push(ChatMessage::in_channel(
-                        if sent { format!("[To {recipient}] {text}") } else { "Whisper could not be sent.".to_owned() },
-                        if sent { MessageColor::Rgb { red: 215, green: 169, blue: 237 } } else { MessageColor::Error }, ChatChannel::Private,
-                    ));
+                    self.client_state
+                        .follow_mut(client_state().chat_messages())
+                        .push(ChatMessage::in_channel(
+                            if sent {
+                                format!("[To {recipient}] {text}")
+                            } else {
+                                "Whisper could not be sent.".to_owned()
+                            },
+                            if sent {
+                                MessageColor::Rgb {
+                                    red: 215,
+                                    green: 169,
+                                    blue: 237,
+                                }
+                            } else {
+                                MessageColor::Error
+                            },
+                            ChatChannel::Private,
+                        ));
                 }
                 InputEvent::NextDialog { npc_id } => {
                     let _ = self.networking_system.next_dialog(npc_id);
@@ -2665,20 +3061,23 @@ impl Client {
                         );
                         continue;
                     }
-                    if let Some(learnable_skill) = self.client_state.follow(client_state().hotbar()).get_skill_in_slot(slot).as_ref()
-                        && let Some(learned_skill) =
-                            self.client_state
-                                .follow(client_state().skill_tree().skills())
-                                .iter()
-                                .find(|learned_skill| {
-                                    learned_skill.skill_id == learnable_skill.skill_id
-                                        && learned_skill.skill_level.0 >= learnable_skill.maximum_level.0
-                                })
+                    if let Some(mut learnable_skill) = self.client_state.follow(client_state().hotbar()).get_skill_in_slot(slot).clone()
+                        && let Some(learned_skill) = self
+                            .client_state
+                            .follow(client_state().skill_tree().skills())
+                            .iter()
+                            .find(|learned_skill| learned_skill.skill_id == learnable_skill.skill_id && learned_skill.skill_level.0 > 0)
                     {
+                        learnable_skill.maximum_level =
+                            ragnarok_packets::SkillLevel(learnable_skill.maximum_level.0.max(1).min(learned_skill.skill_level.0));
                         match learned_skill.skill_type {
                             SkillType::Passive => {}
                             SkillType::Attack => {
-                                if let PickerTarget::Entity(entity_id) = input_report.mouse_target {
+                                let target = match input_report.mouse_target {
+                                    PickerTarget::Entity(entity_id) => Some(entity_id),
+                                    _ => *self.client_state.follow(client_state().selected_target()),
+                                };
+                                if let Some(entity_id) = target {
                                     let _ = self.networking_system.cast_skill(
                                         learnable_skill.skill_id,
                                         learnable_skill.maximum_level,
@@ -3051,8 +3450,12 @@ impl Client {
                             self.interface.open_window(CharacterSelectionWindow::new(
                                 client_state().character_slots(),
                                 client_state().switch_request(),
-                                self.texture_loader.get_or_load("freokro\\female-preview.png", loaders::ImageType::Color).unwrap(),
-                                self.texture_loader.get_or_load("freokro\\male-preview.png", loaders::ImageType::Color).unwrap(),
+                                self.texture_loader
+                                    .get_or_load("freokro\\female-preview.png", loaders::ImageType::Color)
+                                    .unwrap(),
+                                self.texture_loader
+                                    .get_or_load("freokro\\male-preview.png", loaders::ImageType::Color)
+                                    .unwrap(),
                                 self.sprite_loader.clone(),
                                 self.action_loader.clone(),
                                 self.animation_loader.clone(),
@@ -3074,7 +3477,8 @@ impl Client {
                                 self.texture_loader.create_color(
                                     "freokro private minimap frame",
                                     image::load_from_memory(include_bytes!("../assets/ui/minimap-frame-v2.png"))
-                                        .expect("embedded minimap frame image is valid").to_rgba8(),
+                                        .expect("embedded minimap frame image is valid")
+                                        .to_rgba8(),
                                     true,
                                 ),
                             ));
@@ -4037,7 +4441,8 @@ impl Client {
             let screen_size: ScreenSize = self.graphics_engine.get_window_size().into();
             let character_menu_open = self.interface.is_window_with_class_open(WindowClass::CharacterSelection)
                 || self.interface.is_window_with_class_open(WindowClass::CharacterCreation);
-            self.startup_scene.render(&self.bottom_interface_renderer, screen_size, character_menu_open);
+            self.startup_scene
+                .render(&self.bottom_interface_renderer, screen_size, character_menu_open);
 
             let mut interface_frame = self
                 .interface

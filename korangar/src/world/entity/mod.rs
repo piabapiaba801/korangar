@@ -719,6 +719,7 @@ impl Common {
 #[derive(Clone, RustState, StateWindow)]
 pub struct Player {
     common: Common,
+    pub zeny: u32,
     pub hair_id: usize,
     pub spell_points: usize,
     pub activity_points: usize,
@@ -779,6 +780,7 @@ impl Player {
 
         Self {
             common,
+            zeny: character_information.money.max(0) as u32,
             hair_id,
             spell_points,
             activity_points,
@@ -824,6 +826,7 @@ impl Player {
 
     pub fn update_stat(&mut self, stat_type: StatType) {
         match stat_type {
+            StatType::Zeny(value) => self.zeny = value,
             StatType::MaximumHealthPoints(value) => self.common.maximum_health_points = value as usize,
             StatType::MaximumSpellPoints(value) => self.maximum_spell_points = value as usize,
             StatType::HealthPoints(value) => self.common.health_points = value as usize,

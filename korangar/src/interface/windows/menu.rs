@@ -32,13 +32,19 @@ impl CustomWindow<ClientState> for MenuWindow {
                     event: InputEvent::ToggleGameSettingsWindow,
                 },
                 button! {
-                    text: "Atalhos da hotbar",
+                    text: "Skill Shortcuts (Alt+K)",
                     event: InputEvent::ToggleHotkeySettingsWindow,
                 },
                 button! {
                     text: "Skin",
                     event: InputEvent::ToggleSkinWindow,
                 },
+                button! { text: "Mailbox (Alt+L)", event: InputEvent::GameService { action: crate::state::services::ServiceAction::OpenMail } },
+                button! { text: "Companion (Alt+J)", event: InputEvent::GameService { action: crate::state::services::ServiceAction::OpenPets } },
+                button! { text: "Social & Party (Alt+P)", event: InputEvent::GameService { action: crate::state::services::ServiceAction::OpenSocial } },
+                button! { text: "Guild (Alt+G)", event: InputEvent::GameService { action: crate::state::services::ServiceAction::OpenGuild } },
+                button! { text: "Trade (Alt+T)", event: InputEvent::GameService { action: crate::state::services::ServiceAction::OpenTrade } },
+                button! { text: "Black Market (Alt+B)", event: InputEvent::GameService { action: crate::state::services::ServiceAction::OpenAuction } },
                 button! {
                     text: "Minimap (Alt+M)",
                     event: InputEvent::ToggleMiniMapWindow,

@@ -3,7 +3,9 @@
 
 pub mod handler;
 mod position;
-
+mod services;
+pub use services::*;
+mod social;
 use std::net::Ipv4Addr;
 
 use ragnarok_bytes::{
@@ -13,6 +15,7 @@ use ragnarok_bytes::{
 pub use ragnarok_macros::{CharacterServer, ClientPacket, LoginServer, MapServer, Packet, ServerPacket};
 #[cfg(not(feature = "derive"))]
 use ragnarok_macros::{CharacterServer, ClientPacket, LoginServer, MapServer, Packet, ServerPacket};
+pub use social::*;
 
 pub use self::position::{Direction, WorldPosition, WorldPosition2};
 
@@ -4370,13 +4373,19 @@ mod freokro_party_packet_tests {
     #[test]
     fn party_roster_decodes_server_wire_layout() {
         let packet = PartyListPacket::new("Grupo".to_owned(), vec![PartyMemberPacket {
-            account_id: AccountId(42), character_id: CharacterId(81), name: "Azuk".to_owned(),
-            map_name: "prontera".to_owned(), leader: 0, offline: 0, job_id: 4073, base_level: 200,
+            account_id: AccountId(42),
+            character_id: CharacterId(81),
+            name: "Azuk".to_owned(),
+            map_name: "prontera".to_owned(),
+            leader: 0,
+            offline: 0,
+            job_id: 4073,
+            base_level: 200,
         }]);
         let mut writer = ByteWriter::new();
         packet.packet_to_bytes(&mut writer).unwrap();
         let bytes = writer.into_inner();
-        assert_eq!(&bytes[..2], &0x0ae5u16.to_le_bytes());
+        assert_eq!(&bytes[..2], &0x0AE5u16.to_le_bytes());
         assert_eq!(bytes.len(), 82);
         assert_eq!(u16::from_le_bytes([bytes[2], bytes[3]]) as usize, bytes.len());
         let mut reader = ByteReader::without_metadata(&bytes);
@@ -4391,9 +4400,11 @@ mod freokro_party_packet_tests {
     fn leader_and_remove_requests_use_server_opcodes() {
         let mut writer = ByteWriter::new();
         ChangePartyLeaderPacket::new(AccountId(42)).packet_to_bytes(&mut writer).unwrap();
-        assert_eq!(writer.as_slice(), &[0xda, 0x07, 42, 0, 0, 0]);
+        assert_eq!(writer.as_slice(), &[0xDA, 0x07, 42, 0, 0, 0]);
         let mut writer = ByteWriter::new();
-        RemovePartyMemberPacket::new(AccountId(42), "Azuk".to_owned()).packet_to_bytes(&mut writer).unwrap();
+        RemovePartyMemberPacket::new(AccountId(42), "Azuk".to_owned())
+            .packet_to_bytes(&mut writer)
+            .unwrap();
         assert_eq!(&writer.as_slice()[..6], &[0x03, 0x01, 42, 0, 0, 0]);
         assert_eq!(writer.as_slice().len(), 30);
     }

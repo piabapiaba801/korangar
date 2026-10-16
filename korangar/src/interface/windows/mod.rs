@@ -28,23 +28,25 @@ mod login;
 mod maps;
 mod menu;
 mod minimap;
-mod party;
-mod quest_tracker;
 #[cfg(feature = "debug")]
 mod packet_inspector;
+mod party;
 #[cfg(feature = "debug")]
 mod profiler;
+mod quest_tracker;
 #[cfg(feature = "debug")]
 mod render_options;
 mod respawn;
 mod sell;
 mod sell_cart;
 mod server_selection;
-mod skin;
+mod services;
 mod skill_tree;
+mod skin;
 mod stats;
 mod target;
 mod themed_panel;
+pub use self::services::{GuildWindow, MailboxWindow, PetsWindow, SocialWindow, TradeWindow};
 #[cfg(feature = "debug")]
 mod theme_inspector;
 
@@ -75,25 +77,26 @@ pub use self::hotkey_settings::HotkeySettingsWindow;
 pub use self::interface_settings::InterfaceSettingsWindow;
 pub use self::inventory::InventoryWindow;
 pub use self::item_details::{ItemDetailsData, ItemDetailsWindow};
+pub(crate) use self::item_details::option_text;
 pub use self::login::{LoginWindow, LoginWindowState, LoginWindowStatePathExt};
 #[cfg(feature = "debug")]
 pub use self::maps::MapsWindow;
 pub use self::menu::MenuWindow;
 pub use self::minimap::{MiniMapWindow, WorldMapWindow};
-pub use self::party::PartyWindow;
-pub use self::quest_tracker::QuestTrackerWindow;
 #[cfg(feature = "debug")]
 pub use self::packet_inspector::PacketInspectorWindow;
+pub use self::party::PartyWindow;
 #[cfg(feature = "debug")]
 pub use self::profiler::{ProfilerWindow, ProfilerWindowState};
+pub use self::quest_tracker::QuestTrackerWindow;
 #[cfg(feature = "debug")]
 pub use self::render_options::RenderOptionsWindow;
 pub use self::respawn::RespawnWindow;
 pub use self::sell::SellWindow;
 pub use self::sell_cart::SellCartWindow;
 pub use self::server_selection::ServerSelectionWindow;
-pub use self::skin::SkinWindow;
 pub use self::skill_tree::{SkillTreeWindow, SkillTreeWindowState, SkillTreeWindowStatePathExt};
+pub use self::skin::SkinWindow;
 pub use self::stats::StatsWindow;
 pub use self::target::TargetWindow;
 #[cfg(feature = "debug")]
@@ -130,6 +133,11 @@ pub enum WindowClass {
     WorldMap,
     Party,
     QuestTracker,
+    Mailbox,
+    Pets,
+    Social,
+    Guild,
+    Trade,
     Respawn,
     SelectServer,
     Sell,

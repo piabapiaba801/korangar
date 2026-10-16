@@ -82,13 +82,31 @@ struct ItemInspectHandler<P> {
     item_path: P,
 }
 
+struct ItemUseHandler<P> {
+    item_path: P,
+}
+impl<P: Path<ClientState, InventoryItem<ResourceMetadata>, false>> ClickHandler<ClientState> for ItemUseHandler<P> {
+    fn handle_click(&self, state: &Context<ClientState>, queue: &mut EventQueue<ClientState>) {
+        if let Some(item) = state.try_get(&self.item_path) {
+            queue.queue(InputEvent::GameService {
+                action: crate::state::services::ServiceAction::UseInventoryItem { index: item.index.0 },
+            });
+            queue.queue(Event::SetMouseMode {
+                mouse_mode: MouseMode::Default,
+            });
+        }
+    }
+}
+
 impl<P> ClickHandler<ClientState> for ItemInspectHandler<P>
 where
     P: Path<ClientState, InventoryItem<ResourceMetadata>, false>,
 {
     fn handle_click(&self, state: &Context<ClientState>, queue: &mut EventQueue<ClientState>) {
         if let Some(item) = state.try_get(&self.item_path) {
-            queue.queue(InputEvent::InspectItem { details: ItemDetailsData::inventory(item) });
+            queue.queue(InputEvent::InspectItem {
+                details: ItemDetailsData::inventory(item),
+            });
         }
     }
 }
@@ -97,6 +115,7 @@ pub struct ItemBox<A> {
     item_path: A,
     handler: ItemBoxHandler<A>,
     inspect_handler: ItemInspectHandler<A>,
+    use_handler: ItemUseHandler<A>,
     amount_display: AmountDisplay,
 }
 
@@ -112,6 +131,7 @@ where
             item_path,
             handler: ItemBoxHandler::new(item_path, source),
             inspect_handler: ItemInspectHandler { item_path },
+            use_handler: ItemUseHandler { item_path },
             amount_display: AmountDisplay::default(),
         }
     }
@@ -182,6 +202,9 @@ where
             if state.try_get(&self.item_path).is_some() {
                 layout.register_click_handler(MouseButton::Right, &self.inspect_handler);
                 layout.register_click_handler(MouseButton::DoubleRight, &self.inspect_handler);
+                if matches!(self.handler.source, ItemSource::Inventory) {
+                    layout.register_click_handler(MouseButton::DoubleLeft, &self.use_handler);
+                }
             }
         }
 

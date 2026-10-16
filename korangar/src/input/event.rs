@@ -22,6 +22,16 @@ use crate::world::ResourceMetadata;
 /// An event triggered by the user through mouse or keyboard input.
 #[derive(Clone, Debug)]
 pub enum InputEvent {
+    NativeSocial {
+        event: ragnarok_packets::SocialEvent,
+    },
+    GameService {
+        action: crate::state::services::ServiceAction,
+    },
+    PlayerMoveRelative {
+        horizontal: i8,
+        vertical: i8,
+    },
     /// Log in to the login server.
     LogIn {
         /// Id of the selected service.
@@ -133,8 +143,13 @@ pub enum InputEvent {
         /// Id of the entity to interact with.
         entity_id: EntityId,
     },
-    RemovePartyMember { account_id: ragnarok_packets::AccountId, name: String },
-    ChangePartyLeader { account_id: ragnarok_packets::AccountId },
+    RemovePartyMember {
+        account_id: ragnarok_packets::AccountId,
+        name: String,
+    },
+    ChangePartyLeader {
+        account_id: ragnarok_packets::AccountId,
+    },
     /// Pick up an item from the ground.
     PickUpItem {
         /// Id of the item entity to pick up.
@@ -145,8 +160,13 @@ pub enum InputEvent {
         /// Text of the message.
         text: String,
     },
-    SendPartyMessage { text: String },
-    SendPrivateMessage { recipient: String, text: String },
+    SendPartyMessage {
+        text: String,
+    },
+    SendPrivateMessage {
+        recipient: String,
+        text: String,
+    },
     /// Action for the "Next"-button in a dialog.
     NextDialog {
         /// Id of the NPC the player is in a dialog with.
@@ -174,7 +194,9 @@ pub enum InputEvent {
         item: InventoryItem<ResourceMetadata>,
     },
     /// Show the native item information panel.
-    InspectItem { details: ItemDetailsData },
+    InspectItem {
+        details: ItemDetailsData,
+    },
     /// Move a skill in the user interface.
     MoveSkill {
         /// Source of the move.
@@ -240,7 +262,9 @@ pub enum InputEvent {
         items: Vec<SoldItemInformation>,
     },
     /// Up a stat.
-    StatUp { stat_type: StatUpType },
+    StatUp {
+        stat_type: StatUpType,
+    },
     /// Distribute skill points to meet all requirements for a given skill and
     /// put a single point into the provided skill. If the player does not
     /// have enough skill points, this will skill as much of the
@@ -332,7 +356,9 @@ pub enum InputEvent {
     CameraDecelerate,
     /// Open a window to inspect a frame.
     #[cfg(feature = "debug")]
-    InspectFrame { measurement: FrameMeasurement },
+    InspectFrame {
+        measurement: FrameMeasurement,
+    },
 }
 
 impl From<InputEvent> for Event<ClientState> {

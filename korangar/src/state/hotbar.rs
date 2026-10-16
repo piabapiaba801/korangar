@@ -20,11 +20,16 @@ pub struct Hotbar {
 
 impl Default for Hotbar {
     fn default() -> Self {
-        let bindings = std::fs::read_to_string("client/hotkey_settings.ron")
+        let bindings = std::fs::read_to_string("client/hotkey_settings_v2.ron")
             .ok()
             .and_then(|data| ron::from_str::<[String; 18]>(&data).ok())
             .unwrap_or_else(|| std::array::from_fn(|_| String::new()));
-        Self { skills: std::array::from_fn(|_| None), visible_rows: 2, bindings, capture_slot: None }
+        Self {
+            skills: std::array::from_fn(|_| None),
+            visible_rows: 2,
+            bindings,
+            capture_slot: None,
+        }
     }
 }
 
@@ -44,7 +49,7 @@ impl Hotbar {
         self.bindings[index] = binding;
         self.capture_slot = None;
         if let Ok(data) = ron::ser::to_string_pretty(&self.bindings, ron::ser::PrettyConfig::new()) {
-            let _ = std::fs::write("client/hotkey_settings.ron", data);
+            let _ = std::fs::write("client/hotkey_settings_v2.ron", data);
         }
     }
 
